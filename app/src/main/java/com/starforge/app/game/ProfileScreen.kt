@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -56,7 +57,9 @@ fun ProfileScreen(
     onRanking: () -> Unit,
     onFriends: () -> Unit,
     onAvatarClick: () -> Unit,
-    onAchievementsClick: () -> Unit
+    onAchievementsClick: () -> Unit,
+    onSignOut: () -> Unit,
+    isRegistered: Boolean
 ) {
     val p = profile ?: Profile()
     var editing by remember { mutableStateOf(false) }
@@ -117,16 +120,19 @@ fun ProfileScreen(
         Spacer(Modifier.size(24.dp))
         Text("Estatísticas globais", style = MaterialTheme.typography.titleLarge, color = Ink)
         Spacer(Modifier.size(12.dp))
+        // As três métricas com cor são as mesmas do cartão do Início (pontos/acertos/jogos),
+        // para a cor significar sempre o mesmo. As restantes ficam neutras — são detalhe,
+        // não devem gritar tanto como as principais.
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatCell("Jogos", "${p.jogos}", Purple, Modifier.weight(1f))
             StatCell("Pontos", "${p.pontos}", Gold, Modifier.weight(1f))
             StatCell("Acertos", "${(p.taxaAcertos * 100).toInt()}%", Teal, Modifier.weight(1f))
+            StatCell("Jogos", "${p.jogos}", Coral, Modifier.weight(1f))
         }
         Spacer(Modifier.size(10.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatCell("Vitórias", "${p.vitorias}", Coral, Modifier.weight(1f))
-            StatCell("Recorde", "${p.recorde}", Gold, Modifier.weight(1f))
-            StatCell("Streak", "${p.maxStreak}", Purple, Modifier.weight(1f))
+            StatCell("Vitórias", "${p.vitorias}", Lavender, Modifier.weight(1f))
+            StatCell("Recorde", "${p.recorde}", Lavender, Modifier.weight(1f))
+            StatCell("Streak", "${p.maxStreak}", Lavender, Modifier.weight(1f))
         }
 
         Spacer(Modifier.size(24.dp))
@@ -136,7 +142,26 @@ fun ProfileScreen(
             ModeStatsCard(label, p.modos[id] ?: ModeStats())
             Spacer(Modifier.size(12.dp))
         }
-        Spacer(Modifier.size(12.dp))
+
+        // Terminar sessão vive só aqui, no fim do Perfil: é raro e destrutivo, por isso
+        // aparece pequeno, alinhado à direita e discreto — não compete com nenhuma ação.
+        if (isRegistered) {
+            Spacer(Modifier.size(20.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Row(
+                    Modifier
+                        .stickerBlock(fillColor = Cream, cornerRadius = 16.dp, shadowOffset = 3.dp, borderWidth = 2.dp)
+                        .clickable(onClick = onSignOut)
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.Logout, contentDescription = null, tint = Coral, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.size(8.dp))
+                    Text("Terminar sessão", style = MaterialTheme.typography.labelLarge, color = Coral)
+                }
+            }
+        }
+        Spacer(Modifier.size(16.dp))
       }
     }
 }

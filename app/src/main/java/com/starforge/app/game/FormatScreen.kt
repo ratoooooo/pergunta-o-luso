@@ -2,6 +2,7 @@ package com.starforge.app.game
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +30,8 @@ import com.starforge.app.ui.theme.Coral
 import com.starforge.app.ui.theme.Cream
 import com.starforge.app.ui.theme.Gold
 import com.starforge.app.ui.theme.Ink
+import com.starforge.app.ui.theme.stickerCircle
+import com.starforge.app.ui.theme.Lavender
 import com.starforge.app.ui.theme.Purple
 import com.starforge.app.ui.theme.Teal
 import com.starforge.app.ui.theme.stickerBlock
@@ -56,23 +59,34 @@ fun FormatScreen(
     }
 }
 
+/**
+ * Cartão neutro com emblema colorido, como no ecrã de Modo. Antes o cartão inteiro era
+ * pintado com a cor do formato, o que punha Coral (que noutros ecrãs significa "cancelar/
+ * destrutivo") e Teal ("confirmar") a identificar formatos de jogo. A cor identificadora
+ * passou para o emblema; a superfície fica neutra.
+ */
 @Composable
 private fun FormatOption(title: String, subtitle: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .stickerBlock(fillColor = color, cornerRadius = 26.dp, shadowOffset = 6.dp)
+            .stickerBlock(fillColor = Lavender, cornerRadius = 26.dp, shadowOffset = 6.dp)
             .clickable(onClick = onClick)
-            .padding(horizontal = 22.dp, vertical = 20.dp),
+            .padding(horizontal = 18.dp, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = textColorFor(color), modifier = Modifier.size(34.dp))
+        Box(
+            Modifier.size(52.dp).stickerCircle(fillColor = color, shadowOffset = 3.dp, borderWidth = 2.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = textColorFor(color), modifier = Modifier.size(28.dp))
+        }
         Spacer(Modifier.size(16.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, color = textColorFor(color))
-            Text(subtitle, style = MaterialTheme.typography.bodyLarge, color = textColorFor(color))
+            Text(title, style = MaterialTheme.typography.titleLarge, color = Ink)
+            Text(subtitle, style = MaterialTheme.typography.bodyLarge, color = Ink)
         }
         Spacer(Modifier.size(10.dp))
-        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = textColorFor(color), modifier = Modifier.size(28.dp))
+        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = Ink, modifier = Modifier.size(28.dp))
     }
 }

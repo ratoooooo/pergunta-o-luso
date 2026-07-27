@@ -35,8 +35,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
             onHistoryClick = viewModel::goToHistory,
             onProfileClick = viewModel::goToProfile,
             onFriendsClick = viewModel::goToFriends,
-            onLoginClick = viewModel::goToLogin,
-            onSignOut = viewModel::signOut
+            onLoginClick = viewModel::goToLogin
         )
 
         state.screen == GameScreen.HISTORY -> HistoryScreen(
@@ -57,7 +56,9 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
             onRanking = viewModel::goToRanking,
             onFriends = viewModel::goToFriends,
             onAvatarClick = viewModel::goToAvatar,
-            onAchievementsClick = viewModel::goToAchievements
+            onAchievementsClick = viewModel::goToAchievements,
+            onSignOut = viewModel::signOut,
+            isRegistered = state.userInfo?.isAnonymous == false
         )
 
         state.screen == GameScreen.AVATAR -> com.starforge.app.game.avatar.AvatarPickerScreen(

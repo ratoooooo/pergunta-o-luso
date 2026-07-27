@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Login
-import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -52,8 +51,7 @@ fun StartScreen(
     onHistoryClick: () -> Unit,
     onProfileClick: () -> Unit,
     onFriendsClick: () -> Unit,
-    onLoginClick: () -> Unit,
-    onSignOut: () -> Unit
+    onLoginClick: () -> Unit
 ) {
     val isRegistered = userInfo != null && !userInfo.isAnonymous
 
@@ -82,13 +80,14 @@ fun StartScreen(
 
             Spacer(Modifier.size(28.dp))
 
-            StickerButton("JOGAR", Icons.Rounded.PlayArrow, onPlayClick, modifier = Modifier.fillMaxWidth())
+            // Hierarquia de cor: Dourado = ação primária do ecrã (uma só), Roxo = ação
+            // secundária//navegação, Teal = ação positiva de conta. Terminar sessão saiu daqui
+            // para o Perfil — é raro e destrutivo, não compete com JOGAR.
+            StickerButton("JOGAR", Icons.Rounded.PlayArrow, onPlayClick, fillColor = Gold, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.size(16.dp))
-            StickerButton("HISTÓRICO", Icons.Rounded.History, onHistoryClick, fillColor = Gold, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.size(16.dp))
-            if (isRegistered) {
-                StickerButton("TERMINAR SESSÃO", Icons.Rounded.Logout, onSignOut, fillColor = Coral, modifier = Modifier.fillMaxWidth())
-            } else {
+            StickerButton("HISTÓRICO", Icons.Rounded.History, onHistoryClick, fillColor = Purple, modifier = Modifier.fillMaxWidth())
+            if (!isRegistered) {
+                Spacer(Modifier.size(16.dp))
                 StickerButton("LOGIN / CRIAR CONTA", Icons.Rounded.Login, onLoginClick, fillColor = Teal, modifier = Modifier.fillMaxWidth())
             }
         }

@@ -1,5 +1,6 @@
 package com.starforge.app.game
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -20,8 +22,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -95,44 +102,47 @@ fun FriendsScreen(
             Spacer(Modifier.size(14.dp))
         }
 
+        // As três zonas passaram a separadores: só uma lista visível de cada vez. Empilhá-las
+        // enchia o ecrã de títulos e de "vazios" mesmo quando não havia nada pendente.
+        var aba by rememberSaveable { mutableIntStateOf(0) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FriendTab("Amigos", friends.lista.size, aba == 0, Modifier.weight(1f)) { aba = 0 }
+            FriendTab("Recebidos", friends.recebidos.size, aba == 1, Modifier.weight(1f), destaque = friends.recebidos.isNotEmpty()) { aba = 1 }
+            FriendTab("Enviados", friends.enviados.size, aba == 2, Modifier.weight(1f)) { aba = 2 }
+        }
+        Spacer(Modifier.size(16.dp))
+
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            item { SectionTitle("Os teus amigos (${friends.lista.size})") }
-            if (friends.lista.isEmpty()) {
-                item { EmptyNote("Ainda não tens amigos. Procura jogadores pelo nome.") }
-            } else {
-                items(friends.lista, key = { "f-${it.uid}" }) { f ->
+            when (aba) {
+                0 -> if (friends.lista.isEmpty()) {
+                    item { EmptyNote("Ainda não tens amigos. Procura jogadores pelo nome.") }
+                } else items(friends.lista, key = { "f-${it.uid}" }) { f ->
                     val online = f.uid in onlineUids
                     FriendRow(
                         f, profiles[f.uid], fill = Lavender,
                         subtitleOverride = if (online) null else "Offline"
                     ) {
-                        // Challenging needs the friend to have the app open — the invite is only
-                        // delivered while they are listening.
+                        // Desafiar exige o amigo com a app aberta — o convite só é entregue
+                        // enquanto ele está à escuta.
                         if (online && desafioPara == null) {
                             ActionCircle(Icons.Rounded.SportsKabaddi, "Desafiar", Gold) { onChallenge(f) }
                         }
                     }
                 }
-            }
 
-            item { Spacer(Modifier.size(8.dp)); SectionTitle("Pedidos recebidos (${friends.recebidos.size})") }
-            if (friends.recebidos.isEmpty()) {
-                item { EmptyNote("Sem pedidos pendentes.") }
-            } else {
-                items(friends.recebidos, key = { "r-${it.uid}" }) { f ->
-                    FriendRow(f, profiles[f.uid], fill = Teal) {
-                        ActionCircle(Icons.Rounded.Check, "Aceitar", Gold) { onAccept(f) }
+                1 -> if (friends.recebidos.isEmpty()) {
+                    item { EmptyNote("Sem pedidos pendentes.") }
+                } else items(friends.recebidos, key = { "r-${it.uid}" }) { f ->
+                    FriendRow(f, profiles[f.uid], fill = Lavender) {
+                        ActionCircle(Icons.Rounded.Check, "Aceitar", Teal) { onAccept(f) }
                         Spacer(Modifier.size(8.dp))
                         ActionCircle(Icons.Rounded.Close, "Recusar", Coral) { onDecline(f) }
                     }
                 }
-            }
 
-            item { Spacer(Modifier.size(8.dp)); SectionTitle("Pedidos enviados (${friends.enviados.size})") }
-            if (friends.enviados.isEmpty()) {
-                item { EmptyNote("Não enviaste pedidos.") }
-            } else {
-                items(friends.enviados, key = { "s-${it.uid}" }) { f ->
+                else -> if (friends.enviados.isEmpty()) {
+                    item { EmptyNote("Não enviaste pedidos.") }
+                } else items(friends.enviados, key = { "s-${it.uid}" }) { f ->
                     FriendRow(f, profiles[f.uid], fill = Cream, subtitleOverride = "À espera de resposta") {
                         ActionCircle(Icons.Rounded.Close, "Cancelar", Coral) { onCancel(f) }
                     }
@@ -140,6 +150,48 @@ fun FriendsScreen(
             }
             item { Spacer(Modifier.size(12.dp)) }
         }
+    }
+}
+
+/** Separador das três zonas de Amigos, com contador e ponto de aviso quando há pendentes. */
+@Composable
+private fun FriendTab(
+    label: String,
+    count: Int,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    destaque: Boolean = false,
+    onClick: () -> Unit
+) {
+    // Rótulo em cima, contador por baixo: com os três nomes numa só linha o contador
+    // era cortado nos separadores mais estreitos.
+    Column(
+        modifier
+            .stickerBlock(
+                fillColor = if (selected) Purple else Lavender,
+                cornerRadius = 16.dp, shadowOffset = 4.dp, borderWidth = 2.dp
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (destaque && !selected) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(Coral))
+                Spacer(Modifier.size(5.dp))
+            }
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (selected) Cream else Ink,
+                maxLines = 1
+            )
+        }
+        Text(
+            "$count",
+            style = MaterialTheme.typography.labelLarge,
+            color = if (selected) Cream else Ink
+        )
     }
 }
 

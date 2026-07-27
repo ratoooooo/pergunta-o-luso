@@ -30,6 +30,7 @@ import com.starforge.app.ui.theme.Gold
 import com.starforge.app.ui.theme.Ink
 import com.starforge.app.ui.theme.Purple
 import com.starforge.app.ui.theme.StickerButton
+import com.starforge.app.ui.theme.Teal
 import com.starforge.app.ui.theme.stickerBlock
 import com.starforge.app.ui.theme.stickerCircle
 import com.starforge.app.ui.theme.textColorFor
@@ -64,7 +65,7 @@ fun ChallengeOverlay(convite: Convite, onAccept: () -> Unit, onDecline: () -> Un
                 Pill(GameMode.displayNameForId(convite.modo), Coral)
             }
             Spacer(Modifier.size(22.dp))
-            StickerButton("ACEITAR", Icons.Rounded.Check, onAccept, fillColor = Gold, modifier = Modifier.fillMaxWidth())
+            StickerButton("ACEITAR", Icons.Rounded.Check, onAccept, fillColor = Teal, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.size(12.dp))
             StickerButton("RECUSAR", Icons.Rounded.Close, onDecline, fillColor = Coral, modifier = Modifier.fillMaxWidth())
         }

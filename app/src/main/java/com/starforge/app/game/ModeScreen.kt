@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import com.starforge.app.ui.theme.Coral
 import com.starforge.app.ui.theme.Cream
 import com.starforge.app.ui.theme.Ink
+import com.starforge.app.ui.theme.stickerCircle
+import com.starforge.app.ui.theme.Lavender
 import com.starforge.app.ui.theme.Purple
 import com.starforge.app.ui.theme.Teal
 import com.starforge.app.ui.theme.stickerBlock
@@ -68,30 +70,29 @@ fun ModeScreen(
 
         modes.forEach { mode ->
             val color = ModeColors.getValue(mode)
-            val onColor = textColorFor(color)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(MODE_CARD_HEIGHT)
-                    .stickerBlock(fillColor = color, cornerRadius = 26.dp, shadowOffset = 6.dp)
+                    .stickerBlock(fillColor = Lavender, cornerRadius = 26.dp, shadowOffset = 6.dp)
                     .clickable { onModeSelected(mode) }
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    Modifier.size(52.dp).clip(CircleShape).background(Cream),
+                    Modifier.size(52.dp).stickerCircle(fillColor = color, shadowOffset = 3.dp, borderWidth = 2.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(ModeIcons.getValue(mode), contentDescription = null, tint = Ink, modifier = Modifier.size(28.dp))
+                    Icon(ModeIcons.getValue(mode), contentDescription = null, tint = textColorFor(color), modifier = Modifier.size(28.dp))
                 }
                 Spacer(Modifier.size(16.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(text = mode.displayName, style = MaterialTheme.typography.titleLarge, color = onColor)
+                    Text(text = mode.displayName, style = MaterialTheme.typography.titleLarge, color = Ink)
                     Spacer(Modifier.size(4.dp))
-                    Text(text = mode.tagline, style = MaterialTheme.typography.bodyLarge, color = onColor)
+                    Text(text = mode.tagline, style = MaterialTheme.typography.bodyLarge, color = Ink)
                 }
                 Spacer(Modifier.size(10.dp))
-                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = onColor, modifier = Modifier.size(28.dp))
+                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = Ink, modifier = Modifier.size(28.dp))
             }
             Spacer(Modifier.size(18.dp))
         }

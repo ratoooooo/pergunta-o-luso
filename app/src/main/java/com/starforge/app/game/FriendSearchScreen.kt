@@ -1,6 +1,13 @@
 package com.starforge.app.game
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -68,6 +75,17 @@ fun FriendSearchScreen(
     }
 }
 
+/** Indicador de estado: sem sombra nem contorno, para não parecer um botão. */
+@Composable
+private fun StatusIcon(icon: ImageVector, desc: String, color: Color) {
+    Box(
+        Modifier.size(36.dp).clip(CircleShape).background(color),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, contentDescription = desc, tint = Ink, modifier = Modifier.size(18.dp))
+    }
+}
+
 @Composable
 private fun ResultRow(p: Profile, friends: FriendsState, onAdd: (Profile) -> Unit) {
     val isFriend = friends.lista.any { it.uid == p.uid }
@@ -85,9 +103,11 @@ private fun ResultRow(p: Profile, friends: FriendsState, onAdd: (Profile) -> Uni
             else -> null
         }
     ) {
+        // Só a linha acionável tem botão. Os outros estados são etiquetas — antes eram
+        // círculos com onClick vazio, que pareciam botões e não faziam nada.
         when {
-            isFriend -> ActionCircle(Icons.Rounded.Check, "Já é amigo", Teal) { }
-            sent -> ActionCircle(Icons.Rounded.Schedule, "Pedido pendente", Neutral) { }
+            isFriend -> StatusIcon(Icons.Rounded.Check, "Já é amigo", Teal)
+            sent -> StatusIcon(Icons.Rounded.Schedule, "Pedido pendente", Neutral)
             received -> Text("Vê os pedidos", style = MaterialTheme.typography.labelLarge, color = Ink)
             else -> ActionCircle(Icons.Rounded.PersonAdd, "Adicionar", Gold) { onAdd(p) }
         }
