@@ -1,0 +1,248 @@
+{
+  /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
+  "rules": {
+    "categorias": {
+      ".read": true,
+      ".write": false
+    },
+    "scores": {
+      ".read": "auth != null",
+      ".indexOn": "score",
+      "$scoreId": {
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['uid', 'modo', 'categoria', 'score', 'correctCount', 'total', 'timestamp'])",
+        "uid": { ".validate": "auth != null && newData.val() === auth.uid" },
+        "modo": { ".validate": "newData.isString()" },
+        "categoria": { ".validate": "newData.isString()" },
+        "score": { ".validate": "newData.isNumber()" },
+        "correctCount": { ".validate": "newData.isNumber()" },
+        "total": { ".validate": "newData.isNumber()" },
+        "timestamp": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "jogadores": {
+      ".read": true,
+      /* Player search (friends) does a prefix query on the lower-cased name. */
+      ".indexOn": "nomeBusca",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['nome']) || newData.hasChildren(['jogos'])",
+        "nome": { ".validate": "newData.isString()" },
+        "nomeBusca": { ".validate": "newData.isString()" },
+        "atualizadoEm": { ".validate": "newData.isNumber()" },
+        "jogos": { ".validate": "newData.isNumber()" },
+        "pontos": { ".validate": "newData.isNumber()" },
+        "respostasCertas": { ".validate": "newData.isNumber()" },
+        "respostasTotais": { ".validate": "newData.isNumber()" },
+        "vitorias": { ".validate": "newData.isNumber()" },
+        "recorde": { ".validate": "newData.isNumber()" },
+        "maxStreak": { ".validate": "newData.isNumber()" },
+        "xpTotal": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "avatar": { ".validate": "newData.isString()" },
+        "partidasPerfeitas": { ".validate": "newData.isNumber()" },
+        "multiVitorias": {
+          "$fmt": { ".validate": "newData.isNumber()" }
+        },
+        "multiJogos": {
+          "$fmt": { ".validate": "newData.isNumber()" }
+        },
+        "categorias": {
+          "$cat": {
+            "jogos": { ".validate": "newData.isNumber()" },
+            "vitorias": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "modos": {
+          "$modo": {
+            "jogos": { ".validate": "newData.isNumber()" },
+            "pontos": { ".validate": "newData.isNumber()" },
+            "respostasCertas": { ".validate": "newData.isNumber()" },
+            "respostasTotais": { ".validate": "newData.isNumber()" },
+            "vitorias": { ".validate": "newData.isNumber()" },
+            "recorde": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "$other": { ".validate": false }
+      }
+    },
+    "amigos": {
+      "$uid": {
+        /* Only the owner ever reads their own friends + request queues. */
+        ".read": "auth != null && auth.uid === $uid",
+        "pedidosEnviados": {
+          "$outro": {
+            /* The owner manages their own sent requests. The other player may only DELETE it
+               (when they accept or decline) — never create one on the owner's behalf. */
+            ".write": "auth != null && (auth.uid === $uid || (auth.uid === $outro && !newData.exists()))",
+            ".validate": "newData.hasChildren(['nome', 'ts'])",
+            "nome": { ".validate": "newData.isString()" },
+            "ts": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "pedidosRecebidos": {
+          "$outro": {
+            /* Created (and withdrawn) by the SENDER, i.e. $outro; the owner may only delete it
+               when accepting or declining. */
+            ".write": "auth != null && (auth.uid === $outro || (auth.uid === $uid && !newData.exists()))",
+            ".validate": "newData.hasChildren(['nome', 'ts'])",
+            "nome": { ".validate": "newData.isString()" },
+            "ts": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "lista": {
+          "$outro": {
+            /* The owner writes their own side. The other player may only write into this list
+               while a request the owner SENT to them is still pending (that is the accept step),
+               or to remove themselves — so nobody can add themselves as a friend unilaterally. */
+            ".write": "auth != null && (auth.uid === $uid || (auth.uid === $outro && (!newData.exists() || root.child('amigos').child($uid).child('pedidosEnviados').child($outro).exists())))",
+            ".validate": "newData.hasChildren(['nome', 'ts'])",
+            "nome": { ".validate": "newData.isString()" },
+            "ts": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    },
+    "convites": {
+      "$uid": {
+        /* Only the owner reads their own invites — nobody can see someone else's. */
+        ".read": "auth != null && auth.uid === $uid",
+        "enviados": {
+          "$outro": {
+            /* The challenger owns this entry. The invited player may only answer it (set
+               `estado`) while the matching inbox entry still exists, or delete it. */
+            ".write": "auth != null && (auth.uid === $uid || (auth.uid === $outro && (!newData.exists() || root.child('convites').child($outro).child('recebidos').child($uid).exists())))",
+            ".validate": "newData.hasChildren(['nome', 'formato', 'categoria', 'modo', 'salaId', 'ts', 'estado'])",
+            "nome": { ".validate": "newData.isString()" },
+            "formato": { ".validate": "newData.isString()" },
+            "categoria": { ".validate": "newData.isString()" },
+            "modo": { ".validate": "newData.isString()" },
+            "salaId": { ".validate": "newData.isString()" },
+            "ts": { ".validate": "newData.isNumber()" },
+            "estado": { ".validate": "newData.isString() && newData.val().matches(/^(pendente|aceite|recusado)$/)" },
+            "$other": { ".validate": false }
+          }
+        },
+        "recebidos": {
+          "$outro": {
+            /* Created (and withdrawn) by the CHALLENGER, i.e. $outro. The owner may only delete
+               it — that is what accepting or declining does. */
+            ".write": "auth != null && (auth.uid === $outro || (auth.uid === $uid && !newData.exists()))",
+            ".validate": "newData.hasChildren(['nome', 'formato', 'categoria', 'modo', 'salaId', 'ts', 'estado'])",
+            "nome": { ".validate": "newData.isString()" },
+            "formato": { ".validate": "newData.isString()" },
+            "categoria": { ".validate": "newData.isString()" },
+            "modo": { ".validate": "newData.isString()" },
+            "salaId": { ".validate": "newData.isString()" },
+            "ts": { ".validate": "newData.isNumber()" },
+            "estado": { ".validate": "newData.isString()" },
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    },
+    "presenca": {
+      /* Online-presence counter for "A JOGAR AGORA". Public read (only the child count is
+         used); each client may write only its own boolean, auto-removed via onDisconnect. */
+      ".read": true,
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.isBoolean()"
+      }
+    },
+    "matchmaking": {
+      "waiting": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      },
+      "notify": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null",
+          ".validate": "newData.isString()"
+        }
+      }
+    },
+    "salas1x1": {
+      "$salaId": {
+        ".read": "auth != null",
+        /* Immutable host-authored data (questions + player ids): create once, then locked. */
+        "meta": {
+          ".write": "auth != null && !data.exists()",
+          ".validate": "newData.hasChildren(['hostUid', 'perguntas'])"
+        },
+        /* Each player may write only their own player node. Scores are capped at the
+           mathematical maximum (10 questions x 400 pts) as a serverless anti-cheat floor. */
+        "jogadores": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            "pontuacao": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4000" },
+            "respostasCertas": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10" }
+          }
+        },
+        "pontuacoes": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4000"
+          }
+        },
+        "perguntaInicios": {
+          "$index": {
+            ".write": "auth != null",
+            ".validate": "newData.isNumber()"
+          }
+        }
+      }
+    },
+    "matchmakingN": {
+      "$format": {
+        "pending": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "notify": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null",
+            ".validate": "newData.isString()"
+          }
+        }
+      }
+    },
+    "multisalas": {
+      "$salaId": {
+        ".read": "auth != null",
+        /* Same discipline as 1x1: immutable host data create-once, per-player score nodes
+           locked to owner and capped at the mathematical maximum. */
+        "meta": {
+          ".write": "auth != null && !data.exists()",
+          ".validate": "newData.hasChildren(['hostUid', 'perguntas'])"
+        },
+        "jogadores": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            "pontuacao": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4000" },
+            "respostasCertas": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10" }
+          }
+        },
+        "pontuacoes": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4000"
+          }
+        },
+        "perguntaInicios": {
+          "$index": {
+            ".write": "auth != null",
+            ".validate": "newData.isNumber()"
+          }
+        }
+      }
+    }
+  }
+}
