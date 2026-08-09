@@ -40,7 +40,9 @@ fun MultiMatchHost(
             onSelectAnswer = vm::selectAnswer,
             onLeave = { vm.leave(); onExit() },
             onPlayAgain = { vm.leave(); restart++ },
-            onHome = { vm.leave(); onExit() }
+            onHome = { vm.leave(); onExit() },
+            onForceStart = vm::forceStartGame,
+            onSwitchLobby = vm::switchLobby
         )
     }
 }

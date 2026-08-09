@@ -22,9 +22,15 @@ import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.max
 
+import com.ratoooooo.perguntaoluso.data.ScoreRepository
+import com.ratoooooo.perguntaoluso.data.LobbyData
+
 enum class MultiPhase { SEARCHING, MATCHED, IN_GAME, PODIUM, ERROR }
 
 private const val QUESTION_COUNT = 10
+
+/** Carência de toques ao abrir cada pergunta — ver INPUT_GRACE_MS no GameViewModel (Fase 28). */
+private const val INPUT_GRACE_MS = 350L
 private const val BASE_QUESTION_MILLIS = 15_000L
 private const val TICK_MS = 100L
 private const val MATCHED_REVEAL_MS = 2_500L
@@ -46,7 +52,11 @@ data class MultiUiState(
     val categoria: String = "",
     val modo: String = "classico",
     val phase: MultiPhase = MultiPhase.SEARCHING,
+    val openLobbies: List<LobbyData> = emptyList(),
+    val currentLobbyId: String? = null,
     val joinedCount: Int = 1,
+    val isHost: Boolean = false,
+    val myUid: String = "",
     val myName: String = "Tu",
     val perguntas: List<Question> = emptyList(),
     val currentIndex: Int = 0,
@@ -56,6 +66,8 @@ data class MultiUiState(
     val currentEvent: ChaoticEvent? = null,
     val selectedOption: String? = null,
     val isAnswered: Boolean = false,
+    /** `false` na carência inicial da pergunta — bloqueia toques herdados da anterior. */
+    val aceitaToques: Boolean = true,
     val remainingMillis: Long = BASE_QUESTION_MILLIS,
     val durationMillis: Long = BASE_QUESTION_MILLIS,
     // podium
@@ -73,7 +85,8 @@ class MultiMatchViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
     private val profileRepository: ProfileRepository = ProfileRepository(),
     private val questionRepository: QuestionRepository = QuestionRepository(),
-    private val matchRepository: MultiMatchRepository = MultiMatchRepository()
+    private val matchRepository: MultiMatchRepository = MultiMatchRepository(),
+    private val scoreRepository: ScoreRepository = ScoreRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MultiUiState())
@@ -82,9 +95,9 @@ class MultiMatchViewModel(
     private lateinit var format: MatchFormat
     private var categoria: String = ""
     private var modo: String = "classico"
-    private var queueKey: String = ""
     private var myUid: String = ""
     private var salaId: String? = null
+    private var currentLobbyId: String? = null
     private var serverOffset: Long = 0L
     private var streak: Int = 0
     private var maxStreak: Int = 0
@@ -94,47 +107,160 @@ class MultiMatchViewModel(
 
     private var observeJob: Job? = null
     private var timerJob: Job? = null
+    private var lobbyJob: Job? = null
+    private var openLobbiesJob: Job? = null
 
     private val isCaotico get() = modo == "caotico"
 
+    /**
+     * Quantas perguntas esta partida tem mesmo. No matchmaking aleatório são sempre
+     * [QUESTION_COUNT]; numa sala privada são as do quiz da comunidade escolhido. Usar o valor
+     * real evita terminar cedo, indexar fora dos limites, e gravar em `/scores` um `total` que
+     * não corresponde ao que foi jogado.
+     */
+    private val totalPerguntas: Int
+        get() = _uiState.value.perguntas.size.takeIf { it > 0 } ?: QUESTION_COUNT
+
+    /**
+     * Limpa TODO o estado por-partida antes de começar outra (Fase 28).
+     *
+     * O `MultiMatchHost` faz `key(restart) { viewModel() }`, mas `viewModel()` resolve pelo
+     * `ViewModelStore` da Activity — a `key()` muda a identidade da composição, **não** a do
+     * ViewModel. "NOVO JOGO" reutiliza sempre a mesma instância, e estas variáveis privadas
+     * sobreviviam de uma partida para a seguinte:
+     *
+     *  - `gameStarted` ficava `true`, e como o `observeRoom` só arranca com `!gameStarted`,
+     *    a segunda partida ficava eternamente em "À procura de adversário";
+     *  - `finished` ficava `true`, e como o `leave()` só escreve na RTDB com `!finished`,
+     *    a saída deixava de ser publicada — do outro lado o jogador continuava "presente";
+     *  - `openLobbiesJob` nunca era cancelado em lado nenhum, acumulando listeners.
+     */
+    private fun resetMatchState() {
+        lobbyJob?.cancel(); lobbyJob = null
+        observeJob?.cancel(); observeJob = null
+        timerJob?.cancel(); timerJob = null
+        openLobbiesJob?.cancel(); openLobbiesJob = null
+        salaId = null
+        currentLobbyId = null
+        gameStarted = false
+        finished = false
+        aggregated = false
+        streak = 0
+        maxStreak = 0
+    }
+
     fun start(format: MatchFormat, categoria: String, modo: String) {
+        resetMatchState()
         this.format = format
         this.categoria = categoria
         this.modo = modo
-        this.queueKey = MatchFormat.queueKey(format, categoria, modo)
         _uiState.value = MultiUiState(format = format, categoria = categoria, modo = modo)
         viewModelScope.launch {
             try {
                 val user = authRepository.ensureSignedIn()
                 myUid = user.uid
                 val nome = runCatching { profileRepository.loadProfile(myUid).nomeVisivel }.getOrDefault("Convidado")
-                _uiState.value = _uiState.value.copy(myName = nome)
-                val questions = questionRepository.loadGameQuestions(categoria, QUESTION_COUNT)
+                _uiState.value = _uiState.value.copy(myUid = myUid, myName = nome)
                 serverOffset = runCatching { matchRepository.serverTimeOffset() }.getOrDefault(0L)
 
-                when (val res = matchRepository.joinQueue(format, queueKey, myUid, nome)) {
-                    is FormResult.Host -> {
-                        val id = matchRepository.createRoom(format, queueKey, myUid, res.membros, questions, categoria, modo)
-                        salaId = id
-                        matchRepository.setupDisconnect(id, myUid)
-                        observeRoom(id)
-                    }
-                    FormResult.Waiting -> {
-                        viewModelScope.launch {
-                            matchRepository.listenForMatch(queueKey, myUid).collect { id ->
-                                if (salaId == null) {
-                                    salaId = id
-                                    matchRepository.joinRoom(id, myUid, nome)
-                                    matchRepository.setupDisconnect(id, myUid)
-                                    matchRepository.clearNotify(queueKey, myUid)
-                                    observeRoom(id)
-                                }
-                            }
-                        }
+                openLobbiesJob = viewModelScope.launch {
+                    matchRepository.observeOpenLobbies(format.id).collect { lobbies ->
+                        _uiState.value = _uiState.value.copy(openLobbies = lobbies)
                     }
                 }
+
+                val (lobbyId, isHost) = matchRepository.findOrCreateLobby(format, categoria, modo, myUid, nome)
+                currentLobbyId = lobbyId
+                _uiState.value = _uiState.value.copy(currentLobbyId = lobbyId, isHost = isHost)
+                listenToLobby(lobbyId)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(phase = MultiPhase.ERROR, error = e.message ?: "Erro no matchmaking")
+            }
+        }
+    }
+
+    private fun listenToLobby(lobbyId: String) {
+        lobbyJob?.cancel()
+        lobbyJob = viewModelScope.launch {
+            matchRepository.observeLobby(format.id, lobbyId).collect { lobby ->
+                if (lobby == null || lobby.estado == "cancelled") {
+                    if (salaId == null) {
+                        _uiState.value = _uiState.value.copy(phase = MultiPhase.ERROR, error = "A sala de espera foi cancelada")
+                    }
+                    return@collect
+                }
+
+                val count = lobby.membros.size
+                val playerLives = lobby.membros.map { (uid, name) ->
+                    PlayerLive(uid = uid, nome = name, score = 0, team = null, isMe = uid == myUid, left = false)
+                }
+                _uiState.value = _uiState.value.copy(
+                    categoria = lobby.categoria,
+                    modo = lobby.modo,
+                    currentLobbyId = lobbyId,
+                    joinedCount = count,
+                    players = playerLives,
+                    isHost = (lobby.hostUid == myUid)
+                )
+
+                if (lobby.estado == "started" && lobby.salaId != null && salaId == null) {
+                    salaId = lobby.salaId
+                    matchRepository.joinRoom(lobby.salaId, myUid, _uiState.value.myName)
+                    matchRepository.setupDisconnect(lobby.salaId, myUid)
+                    observeRoom(lobby.salaId)
+                } else if (lobby.estado == "waiting" && lobby.hostUid == myUid && count >= format.players && salaId == null) {
+                    val questions = questionRepository.loadGameQuestions(lobby.categoria, QUESTION_COUNT)
+                    val id = matchRepository.startLobbyRoom(format.id, lobbyId, myUid, lobby.membros, questions, lobby.categoria, lobby.modo)
+                    salaId = id
+                    matchRepository.setupDisconnect(id, myUid)
+                    observeRoom(id)
+                }
+            }
+        }
+    }
+
+    fun switchLobby(targetLobby: LobbyData) {
+        if (targetLobby.lobbyId == currentLobbyId || targetLobby.membros.any { it.first == myUid }) return
+        val oldLobbyId = currentLobbyId
+        viewModelScope.launch {
+            lobbyJob?.cancel()
+            if (oldLobbyId != null) {
+                runCatching { matchRepository.leaveLobby(format.id, oldLobbyId, myUid) }
+            }
+            this@MultiMatchViewModel.categoria = targetLobby.categoria
+            this@MultiMatchViewModel.modo = targetLobby.modo
+            this@MultiMatchViewModel.currentLobbyId = targetLobby.lobbyId
+            _uiState.value = _uiState.value.copy(
+                categoria = targetLobby.categoria,
+                modo = targetLobby.modo,
+                currentLobbyId = targetLobby.lobbyId,
+                isHost = (targetLobby.hostUid == myUid)
+            )
+            val joined = matchRepository.joinLobbyById(format.id, targetLobby.lobbyId, myUid, _uiState.value.myName)
+            if (joined) {
+                listenToLobby(targetLobby.lobbyId)
+            } else {
+                val (newId, isHost) = matchRepository.findOrCreateLobby(format, categoria, modo, myUid, _uiState.value.myName)
+                this@MultiMatchViewModel.currentLobbyId = newId
+                _uiState.value = _uiState.value.copy(currentLobbyId = newId, isHost = isHost)
+                listenToLobby(newId)
+            }
+        }
+    }
+
+    fun forceStartGame() {
+        val lobbyId = currentLobbyId ?: return
+        if (salaId != null || !_uiState.value.isHost) return
+        viewModelScope.launch {
+            try {
+                val questions = questionRepository.loadGameQuestions(categoria, QUESTION_COUNT)
+                val currentPlayers = _uiState.value.players.map { it.uid to it.nome }
+                val id = matchRepository.startLobbyRoom(format.id, lobbyId, myUid, currentPlayers, questions, categoria, modo)
+                salaId = id
+                matchRepository.setupDisconnect(id, myUid)
+                observeRoom(id)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(phase = MultiPhase.ERROR, error = e.message ?: "Erro ao iniciar sala")
             }
         }
     }
@@ -146,10 +272,10 @@ class MultiMatchViewModel(
      * random matchmaking.
      */
     fun startExisting(format: MatchFormat, categoria: String, modo: String, salaId: String) {
+        resetMatchState()
         this.format = format
         this.categoria = categoria
         this.modo = modo
-        this.queueKey = ""
         _uiState.value = MultiUiState(format = format, categoria = categoria, modo = modo)
         viewModelScope.launch {
             try {
@@ -193,7 +319,18 @@ class MultiMatchViewModel(
         _uiState.value = _uiState.value.copy(perguntas = room.perguntas, players = live, joinedCount = room.jogadores.size)
 
         // All present + questions loaded → reveal the match, then start.
-        if (!gameStarted && room.perguntas.size == QUESTION_COUNT && room.jogadores.size >= format.players) {
+        // Fase 25: era `room.perguntas.size == QUESTION_COUNT`. O matchmaking aleatório escreve
+        // sempre 10 perguntas, mas uma sala privada usa o quiz da comunidade escolhido, que pode
+        // ter qualquer número — com 1 ou 7 perguntas a condição nunca era verdadeira e a sala
+        // ficava eternamente em "À procura de adversário". `meta` é escrita de uma só vez
+        // (create-once), por isso `isNotEmpty()` já garante que as perguntas chegaram inteiras.
+        // Fase 30: era `>= format.players`, que no Grupo é 10. O arranque manual ("INICIAR
+        // JOGO", e o auto-arranque aos 60 s) cria a sala com os jogadores que lá estão — quatro,
+        // por exemplo — e depois este portão exigia dez e nunca deixava entrar: a sala existia,
+        // o lobby ficava `started`, e toda a gente continuava presa em "À procura de jogadores".
+        // O número certo é quantos membros a sala tem MESMO, que o anfitrião fixou ao criá-la.
+        val esperados = room.membros.size.takeIf { it > 0 } ?: format.players
+        if (!gameStarted && room.perguntas.isNotEmpty() && room.jogadores.size >= esperados) {
             gameStarted = true
             _uiState.value = _uiState.value.copy(phase = MultiPhase.MATCHED)
             viewModelScope.launch {
@@ -212,6 +349,21 @@ class MultiMatchViewModel(
                 if (leaver != null) { finishTeamWalkover(room, leaver); return }
             }
             val active = room.membros.filter { room.jogadores[it]?.estado != "off" && room.jogadores[it]?.desistiu != true }
+
+            // Fase 28: o walkover só existia no ramo `teamBased`, ou seja, apenas em 2x2. Num 1x1
+            // o adversário podia sair e o jogador que ficava continuava a responder sozinho até à
+            // décima pergunta, com o outro ainda no marcador — era o comportamento reportado.
+            // O 1x1 autónomo tinha esta deteção; perdeu-se ao ser dobrado no MultiMatch.
+            //
+            // A condição é genérica em vez de específica do 1x1: se sobrar UM só jogador activo
+            // numa sala que tinha mais do que um, a partida não tem como continuar. No Grupo, sair
+            // um de quatro deixa três activos e o jogo segue — que é o comportamento documentado.
+            if (!format.teamBased && room.membros.size > 1 && active.size == 1 &&
+                active.first() == myUid && !room.pontuacoes.containsKey(myUid)
+            ) {
+                finishSoloWalkover(); return
+            }
+
             if (active.isNotEmpty() && active.all { room.pontuacoes.containsKey(it) }) { showPodium(room); return }
             maybeAdvance(room)
         }
@@ -228,8 +380,16 @@ class MultiMatchViewModel(
             selectedOption = null,
             isAnswered = false,
             remainingMillis = duration,
-            durationMillis = duration
+            durationMillis = duration,
+            aceitaToques = false
         )
+        viewModelScope.launch {
+            delay(INPUT_GRACE_MS)
+            val s = _uiState.value
+            if (s.currentIndex == index && !s.isAnswered) {
+                _uiState.value = s.copy(aceitaToques = true)
+            }
+        }
         viewModelScope.launch {
             // Refresh the server-clock offset each question so a stale one-time value can't drift.
             serverOffset = runCatching { matchRepository.serverTimeOffset() }.getOrDefault(serverOffset)
@@ -260,7 +420,7 @@ class MultiMatchViewModel(
         val state = _uiState.value
         val question = state.currentQuestion ?: return
         val id = salaId ?: return
-        if (state.isAnswered) return
+        if (state.isAnswered || !state.aceitaToques) return
 
         val isCorrect = option == question.respostaCorreta
         val remainingSeconds = ceil(state.remainingMillis / 1000.0).toInt()
@@ -305,7 +465,7 @@ class MultiMatchViewModel(
         if (!allAnswered && !timerExpired) return
         timerJob?.cancel()
         val next = index + 1
-        if (next < QUESTION_COUNT) beginQuestion(next) else finishGame()
+        if (next < totalPerguntas) beginQuestion(next) else finishGame()
     }
 
     private fun finishGame() {
@@ -334,12 +494,22 @@ class MultiMatchViewModel(
                         modo = modo,
                         score = st.myScore,
                         correctCount = st.myCorrect,
-                        total = QUESTION_COUNT,
+                        total = totalPerguntas,
                         won = won,
                         maxStreak = maxStreak,
                         formato = format.id,
                         categoria = categoria
                     )
+                )
+            }
+            runCatching {
+                scoreRepository.saveScore(
+                    modo = modo,
+                    categoria = categoria,
+                    score = st.myScore,
+                    correctCount = st.myCorrect,
+                    total = totalPerguntas,
+                    formato = format.id
                 )
             }
         }
@@ -395,6 +565,28 @@ class MultiMatchViewModel(
         }
     }
 
+    /**
+     * Sobrou só este jogador numa sala sem equipas (1x1, ou Grupo esvaziado). Fecha a partida
+     * já, em vez de o deixar a responder sozinho contra ninguém.
+     */
+    private fun finishSoloWalkover() {
+        if (finished) return
+        finished = true
+        timerJob?.cancel()
+        val id = salaId
+        viewModelScope.launch {
+            if (id != null) {
+                runCatching { matchRepository.writeFinal(id, myUid, _uiState.value.myScore) }
+                runCatching { matchRepository.cancelDisconnect(id, myUid) }
+            }
+        }
+        _uiState.value = _uiState.value.copy(
+            phase = MultiPhase.PODIUM, walkover = true, iWon = true,
+            resultTitle = "Adversário desistiu!"
+        )
+        aggregateProfile(true)
+    }
+
     private fun finishTeamWalkover(room: MultiRoom, leaverUid: String) {
         if (finished) return
         finished = true
@@ -411,22 +603,36 @@ class MultiMatchViewModel(
     }
 
     fun leave() {
+        // Lidos e limpos de forma SÍNCRONA: o `MultiMatchHost` faz `vm.leave(); restart++`, e o
+        // `start()` que se segue chamaria `resetMatchState()` antes de esta corrotina correr —
+        // a saída acabava por ser escrita com `salaId` já a null, ou seja, nunca era publicada.
+        val id = salaId
+        val lobbyId = currentLobbyId
+        val jaTerminou = finished
+        val fmt = format.id
+        val uid = myUid
+        salaId = null
+        currentLobbyId = null
+        lobbyJob?.cancel(); lobbyJob = null
+        observeJob?.cancel(); observeJob = null
+        timerJob?.cancel(); timerJob = null
+        openLobbiesJob?.cancel(); openLobbiesJob = null
+
         viewModelScope.launch {
-            val id = salaId
-            if (id != null && !finished) {
-                runCatching { matchRepository.leaveRoom(id, myUid) }
-                matchRepository.cancelDisconnect(id, myUid)
-            } else if (id == null && myUid.isNotEmpty() && queueKey.isNotEmpty()) {
-                runCatching { matchRepository.cancelQueue(queueKey, myUid) }
+            if (id != null && !jaTerminou) {
+                runCatching { matchRepository.leaveRoom(id, uid) }
+                runCatching { matchRepository.cancelDisconnect(id, uid) }
+            } else if (lobbyId != null && !jaTerminou) {
+                runCatching { matchRepository.leaveLobby(fmt, lobbyId, uid) }
             }
-            observeJob?.cancel()
-            timerJob?.cancel()
         }
     }
 
     override fun onCleared() {
+        lobbyJob?.cancel()
         observeJob?.cancel()
         timerJob?.cancel()
+        openLobbiesJob?.cancel()
         super.onCleared()
     }
 }
