@@ -115,3 +115,6 @@ google-services.json
 
 # Lockfile de skills do tooling (não é código do projeto)
 skills-lock.json
+
+# macOS
+.DS_Store

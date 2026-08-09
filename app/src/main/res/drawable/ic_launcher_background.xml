@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Fundo do ícone adaptativo: Purple do sistema Sticker (ui/theme/Color.kt).
+     Escolhido em vez de Gold porque sobre dourado a bandeira do mastro desaparecia
+     e o casco Coral ficava quente-sobre-quente; sobre roxo saltam as quatro cores. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#6650a4" />
+    <solid android:color="#6C3CE0" />
 </shape>
