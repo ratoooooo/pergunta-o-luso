@@ -1,8 +1,25 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
 }
+
+// Credenciais de assinatura. `keystore.properties` está no .gitignore e NUNCA é commitado —
+// ver `keystore.properties.example` para o formato. As variáveis de ambiente servem de
+// alternativa (CI, ou quem prefira não ter o ficheiro em disco). Sem nenhum dos dois, o build
+// de release ainda corre e produz um APK **não assinado**, o que mantém o projeto compilável
+// para quem não tem a chave.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(key: String, env: String): String? =
+    keystoreProps.getProperty(key)?.takeIf { it.isNotBlank() } ?: System.getenv(env)
+
+val releaseStoreFile = signingValue("storeFile", "POL_STORE_FILE")
+val hasReleaseSigning = releaseStoreFile != null && rootProject.file(releaseStoreFile).exists()
 
 android {
     namespace = "com.ratoooooo.perguntaoluso"
@@ -18,10 +35,26 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigning) {
+                storeFile = rootProject.file(releaseStoreFile!!)
+                storePassword = signingValue("storePassword", "POL_STORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "POL_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "POL_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Sem chave configurada fica deliberadamente por assinar, em vez de cair no
+            // certificado de debug — um APK assinado em debug é aceite pelo `adb install` e
+            // recusado pela Play Store, o que dá um falso positivo tardio.
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
         }
     }
     compileOptions {
