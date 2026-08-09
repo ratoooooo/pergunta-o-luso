@@ -31,6 +31,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
             profile = state.profile,
             playingNow = state.playingNow,
             onPlayClick = viewModel::goToFormatSelect,
+            onCommunityClick = viewModel::goToCustomCategories,
             onRankingClick = viewModel::goToRanking,
             onHistoryClick = viewModel::goToHistory,
             onProfileClick = viewModel::goToProfile,
@@ -154,8 +155,20 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
 
         state.screen == GameScreen.CATEGORY_SELECT -> CategoryScreen(
             categories = state.categories,
+            formato = state.pendingMultiFormat,
             onCategorySelected = viewModel::selectCategory,
             onBack = viewModel::backToStart
+        )
+
+        state.screen == GameScreen.CUSTOM_CATEGORIES -> CustomCategoriesScreen(
+            onPlayCustomCategorySolo = viewModel::playCustomCategory,
+            onCreatePrivateRoom = viewModel::createPrivateRoomForCustomCategory,
+            onJoinPrivateRoomByCode = viewModel::joinPrivateRoomByCode,
+            onBack = viewModel::backToStart,
+            onHome = viewModel::backToStart,
+            onRanking = viewModel::goToRanking,
+            onFriends = viewModel::goToFriends,
+            onProfile = viewModel::goToProfile
         )
 
         state.screen == GameScreen.MODE_SELECT -> ModeScreen(

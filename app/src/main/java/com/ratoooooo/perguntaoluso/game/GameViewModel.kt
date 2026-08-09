@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.max
 
-enum class GameScreen { START, LOGIN, REGISTER, RANKING, HISTORY, PROFILE, AVATAR, ACHIEVEMENTS, FRIENDS, FRIEND_SEARCH, FORMAT_SELECT, MULTI_MATCH, CATEGORY_SELECT, MODE_SELECT, QUESTION, PODIUM }
+enum class GameScreen { START, LOGIN, REGISTER, RANKING, HISTORY, PROFILE, AVATAR, ACHIEVEMENTS, FRIENDS, FRIEND_SEARCH, FORMAT_SELECT, MULTI_MATCH, CATEGORY_SELECT, CUSTOM_CATEGORIES, MODE_SELECT, QUESTION, PODIUM }
 
 /** Correct answers needed (out of total) for a Clássico/Caótico "win". */
 private const val WIN_ACCURACY = 0.7
@@ -81,6 +81,7 @@ data class GameUiState(
     val wonLastGame: Boolean = false,
     val multiFormat: com.ratoooooo.perguntaoluso.game.multi.MatchFormat = com.ratoooooo.perguntaoluso.game.multi.MatchFormat.GRUPO,
     val pendingMultiFormat: com.ratoooooo.perguntaoluso.game.multi.MatchFormat? = null,
+    val customCategoryQuestions: List<Question>? = null,
     val multiCategory: String = "",
     val multiMode: String = "classico",
     val topScores: List<ScoreEntry> = emptyList(),
@@ -658,6 +659,23 @@ class GameViewModel(
         _uiState.value = _uiState.value.sessionOnly().copy(screen = GameScreen.START)
     }
 
+    fun reloadProfile() {
+        val uid = authRepository.currentUserInfo()?.uid ?: return
+        viewModelScope.launch {
+            val p = profileRepository.loadProfile(uid)
+            _uiState.value = _uiState.value.copy(profile = p)
+        }
+    }
+
+    fun goToCustomCategories() {
+        stopTimer()
+        val s = _uiState.value
+        _uiState.value = s.sessionOnly().copy(
+            screen = GameScreen.CUSTOM_CATEGORIES,
+            pendingMultiFormat = s.pendingMultiFormat
+        )
+    }
+
     fun goToCategorySelect() {
         stopTimer()
         val s = _uiState.value
@@ -683,11 +701,68 @@ class GameViewModel(
     fun selectCategory(categoria: String) {
         stopTimer()
         val s = _uiState.value
+        if (categoria == "COMUNIDADE") {
+            _uiState.value = s.sessionOnly().copy(
+                screen = GameScreen.CUSTOM_CATEGORIES,
+                pendingMultiFormat = s.pendingMultiFormat
+            )
+            return
+        }
         _uiState.value = s.sessionOnly().copy(
             screen = GameScreen.MODE_SELECT,
             pendingMultiFormat = s.pendingMultiFormat,
             selectedCategory = categoria
         )
+    }
+
+    fun playCustomCategory(cat: com.ratoooooo.perguntaoluso.data.CustomCategory) {
+        val s = _uiState.value
+        val questions = cat.perguntas
+        if (questions.isEmpty()) return
+        _uiState.value = s.sessionOnly().copy(
+            screen = GameScreen.MODE_SELECT,
+            selectedCategory = cat.titulo,
+            customCategoryQuestions = questions,
+            pendingMultiFormat = s.pendingMultiFormat
+        )
+    }
+
+    fun createPrivateRoomForCustomCategory(cat: com.ratoooooo.perguntaoluso.data.CustomCategory, format: com.ratoooooo.perguntaoluso.game.multi.MatchFormat) {
+        val uid = authRepository.currentUserInfo()?.uid ?: return
+        val nome = _uiState.value.profile?.nomeVisivel ?: "Jogador"
+        viewModelScope.launch {
+            try {
+                val (salaId, code) = matchRepository.createPrivateRoomWithCode(
+                    format = format,
+                    hostUid = uid,
+                    hostNome = nome,
+                    categoria = cat.titulo,
+                    modo = "classico",
+                    questions = cat.perguntas
+                )
+                goToMultiMatch(format, cat.titulo, "classico", salaId)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Erro a criar sala privada: ${e.message}")
+            }
+        }
+    }
+
+    fun joinPrivateRoomByCode(code: String) {
+        val uid = authRepository.currentUserInfo()?.uid ?: return
+        val nome = _uiState.value.profile?.nomeVisivel ?: "Jogador"
+        viewModelScope.launch {
+            try {
+                val result = matchRepository.joinPrivateRoomWithCode(code.trim(), uid, nome)
+                if (result != null) {
+                    val (formatId, salaId) = result
+                    goToMultiMatch(com.ratoooooo.perguntaoluso.game.multi.MatchFormat.fromId(formatId), "Comunidade", "classico", salaId)
+                } else {
+                    _uiState.value = _uiState.value.copy(error = "Código de sala inválido ou expirado!")
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Erro ao entrar com código: ${e.message}")
+            }
+        }
     }
 
     /** Mode chosen — routes to a solo game or to multiplayer matchmaking based on pending format. */
@@ -708,11 +783,13 @@ class GameViewModel(
     }
 
     fun selectMode(mode: GameMode) {
-        val categoria = _uiState.value.selectedCategory
-        _uiState.value = _uiState.value.copy(mode = mode, isLoading = true, error = null)
+        val s = _uiState.value
+        val categoria = s.selectedCategory
+        val customQs = s.customCategoryQuestions
+        _uiState.value = s.copy(mode = mode, isLoading = true, error = null)
         viewModelScope.launch {
             try {
-                val questions = questionRepository.loadGameQuestions(categoria, mode.questionCount)
+                val questions = if (customQs != null && customQs.isNotEmpty()) customQs.take(mode.questionCount) else questionRepository.loadGameQuestions(categoria, mode.questionCount)
                 if (questions.isEmpty()) {
                     _uiState.value = _uiState.value.copy(isLoading = false, error = "Sem perguntas nesta categoria")
                     return@launch
@@ -850,6 +927,7 @@ class GameViewModel(
         val state = _uiState.value
         val mode = state.mode ?: return
         val won = didWin(mode, state.correctCount, faced, eliminated)
+        val isCustom = state.customCategoryQuestions != null
         _uiState.value = state.copy(
             screen = GameScreen.PODIUM,
             eliminated = eliminated,
@@ -858,7 +936,7 @@ class GameViewModel(
         )
         viewModelScope.launch {
             val uid = authRepository.currentUserInfo()?.uid
-            if (uid != null) {
+            if (uid != null && !isCustom) {
                 runCatching {
                     scoreRepository.saveScore(
                         modo = mode.id,
@@ -881,6 +959,11 @@ class GameViewModel(
                             categoria = state.selectedCategory
                         )
                     )
+                }
+            } else if (uid != null && isCustom) {
+                runCatching {
+                    val reducedXp = state.correctCount * 5
+                    profileRepository.addXp(uid, reducedXp)
                 }
             }
             val topScores = runCatching { scoreRepository.loadTopScores() }.getOrDefault(emptyList())
