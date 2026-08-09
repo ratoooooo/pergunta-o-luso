@@ -105,6 +105,8 @@ data class GameUiState(
     val desafioAviso: String? = null,
     /** Room id when this match came from a direct challenge (null = random matchmaking). */
     val multiSalaId: String? = null,
+    /** `false` durante a carência inicial da pergunta — ver [INPUT_GRACE_MS]. */
+    val aceitaToques: Boolean = true,
     val delete: DeleteAccountUi = DeleteAccountUi(),
     val isLoading: Boolean = false,
     val error: String? = null
@@ -118,6 +120,16 @@ data class GameUiState(
 
 private const val BASE_QUESTION_MILLIS = 15_000L
 private const val FEEDBACK_DELAY_MS = 1_000L
+
+/**
+ * Carência a seguir a cada pergunta abrir, durante a qual toques em respostas são ignorados.
+ *
+ * Sem isto, tocar duas vezes no mesmo sítio fazia o segundo toque cair já depois de a pergunta
+ * seguinte ter carregado e respondê-la de imediato — o jogador via uma pergunta ser saltada sem
+ * ter escolhido nada. 350 ms é maior do que um duplo-toque acidental (~150-250 ms) e curto o
+ * suficiente para não estorvar quem responde depressa de propósito.
+ */
+private const val INPUT_GRACE_MS = 350L
 private const val TICK_MS = 100L
 
 class GameViewModel(
@@ -215,6 +227,8 @@ class GameViewModel(
                 profileRepository.setNome(user.uid, nome.trim())
                 _uiState.value = _uiState.value.copy(authLoading = false, screen = GameScreen.START)
                 refreshProfile()
+                observeFriends(user.uid)
+                observeConvites(user.uid)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(authLoading = false, authError = friendlyAuthError(e))
             }
@@ -229,9 +243,11 @@ class GameViewModel(
         _uiState.value = _uiState.value.copy(authLoading = true, authError = null)
         viewModelScope.launch {
             try {
-                authRepository.loginWithEmail(email.trim(), password)
+                val user = authRepository.loginWithEmail(email.trim(), password)
                 _uiState.value = _uiState.value.copy(authLoading = false, screen = GameScreen.START)
                 refreshProfile()
+                observeFriends(user.uid)
+                observeConvites(user.uid)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(authLoading = false, authError = friendlyAuthError(e))
             }
@@ -408,7 +424,7 @@ class GameViewModel(
 
     fun goToFriends() {
         _uiState.value = _uiState.value.copy(screen = GameScreen.FRIENDS)
-        authRepository.currentUserInfo()?.uid?.let { if (friendsJob == null) observeFriends(it) }
+        authRepository.currentUserInfo()?.uid?.let { observeFriends(it) }
     }
 
     fun goToFriendSearch() {
@@ -505,8 +521,20 @@ class GameViewModel(
         }
     }
 
+    private val lastChallengeTimes = mutableMapOf<String, Long>()
+
     /** Step 1 of challenging a friend: pick categoria + modo through the existing screens. */
     fun startChallenge(friend: FriendRef) {
+        val last = lastChallengeTimes[friend.uid] ?: 0L
+        val elapsed = System.currentTimeMillis() - last
+        if (elapsed < 30_000) {
+            val remainSecs = ((30_000 - elapsed) / 1000).toInt()
+            _uiState.value = _uiState.value.copy(
+                desafioAviso = "Aguarda ${remainSecs}s para enviar outro desafio a este amigo."
+            )
+            return
+        }
+        lastChallengeTimes[friend.uid] = System.currentTimeMillis()
         stopTimer()
         _uiState.value = _uiState.value.sessionOnly().copy(
             screen = GameScreen.CATEGORY_SELECT,
@@ -831,9 +859,19 @@ class GameViewModel(
             isAnswered = false,
             wasTimeout = false,
             remainingMillis = duration,
-            questionDurationMillis = duration
+            questionDurationMillis = duration,
+            // Fecha a porta a toques herdados da pergunta anterior; reabre em INPUT_GRACE_MS.
+            aceitaToques = false
         )
         startTimer(duration)
+        viewModelScope.launch {
+            delay(INPUT_GRACE_MS)
+            // Só reabre se ainda estamos nesta pergunta e sem resposta dada.
+            val s = _uiState.value
+            if (s.currentIndex == index && !s.isAnswered) {
+                _uiState.value = s.copy(aceitaToques = true)
+            }
+        }
     }
 
     private fun startTimer(duration: Long) {
@@ -857,7 +895,7 @@ class GameViewModel(
     fun selectAnswer(option: String) {
         val state = _uiState.value
         val question = state.currentQuestion ?: return
-        if (state.isAnswered) return
+        if (state.isAnswered || !state.aceitaToques) return
         stopTimer()
         resolveAnswer(isCorrect = option == question.respostaCorreta, selectedOption = option, wasTimeout = false)
     }
