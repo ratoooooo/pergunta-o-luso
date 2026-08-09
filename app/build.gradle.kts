@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.starforge.app"
+    namespace = "com.ratoooooo.perguntaoluso"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.starforge.app"
+        applicationId = "com.ratoooooo.perguntaoluso"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
