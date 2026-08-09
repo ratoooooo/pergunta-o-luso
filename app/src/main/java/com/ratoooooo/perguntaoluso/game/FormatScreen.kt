@@ -1,6 +1,11 @@
 package com.ratoooooo.perguntaoluso.game
 
+import com.ratoooooo.perguntaoluso.ui.theme.rememberPressScale
+import com.ratoooooo.perguntaoluso.ui.theme.pressScale
+import com.ratoooooo.perguntaoluso.ui.theme.cascadeIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,18 +49,21 @@ fun FormatScreen(
     onBack: () -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().background(Cream).padding(24.dp)
+        modifier = Modifier.fillMaxSize().background(Cream)
+            .verticalScroll(rememberScrollState()).padding(24.dp)
     ) {
         ScreenHeader(title = "Sozinho ou à batalha?", subtitle = "Escolhe o formato de jogo", onBack = onBack)
         Spacer(Modifier.size(24.dp))
 
-        FormatOption("Solo", "Tu contra as perguntas", Icons.Rounded.Person, Purple, onSolo)
+        FormatOption("Solo", "Tu contra as perguntas", Icons.Rounded.Person, Purple, 0, onSolo)
         Spacer(Modifier.size(16.dp))
-        FormatOption("1x1", "Duelo a dois — só um vence", Icons.Rounded.SportsKabaddi, Gold, { onMulti(MatchFormat.ONE_V_ONE) })
+        FormatOption("1x1", "Duelo a dois — só um vence", Icons.Rounded.SportsKabaddi, Gold, 1) { onMulti(MatchFormat.ONE_V_ONE) }
         Spacer(Modifier.size(16.dp))
-        FormatOption("2x2", "Duas equipas, dois contra dois", Icons.Rounded.SportsMma, Coral, { onMulti(MatchFormat.TWO_V_TWO) })
+        FormatOption("2x2", "Duas equipas, dois contra dois", Icons.Rounded.SportsMma, Coral, 2) { onMulti(MatchFormat.TWO_V_TWO) }
         Spacer(Modifier.size(16.dp))
-        FormatOption("Grupo", "Quatro jogadores, todos contra todos", Icons.Rounded.Groups, Teal, { onMulti(MatchFormat.GRUPO) })
+        // "Quatro jogadores" estava errado desde que o Grupo passou a 10 lugares (ver Fase 30);
+        // o texto vem agora do próprio formato, para não voltar a divergir do código.
+        FormatOption("Grupo", "${MatchFormat.GRUPO.sizeLabel}, todos contra todos", Icons.Rounded.Groups, Teal, 3) { onMulti(MatchFormat.GRUPO) }
     }
 }
 
@@ -66,12 +74,15 @@ fun FormatScreen(
  * passou para o emblema; a superfície fica neutra.
  */
 @Composable
-private fun FormatOption(title: String, subtitle: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
+private fun FormatOption(title: String, subtitle: String, icon: ImageVector, color: Color, index: Int, onClick: () -> Unit) {
+    val (interacao, escala) = rememberPressScale()
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .cascadeIn(index)
+            .pressScale(escala)
             .stickerBlock(fillColor = Lavender, cornerRadius = 26.dp, shadowOffset = 6.dp)
-            .clickable(onClick = onClick)
+            .clickable(interactionSource = interacao, indication = null, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
