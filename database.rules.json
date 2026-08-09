@@ -2,34 +2,54 @@
   /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
   "rules": {
     "categorias": {
-      ".read": true,
+      /* Fase 22: era `true`. Leitura pública deixava descarregar o banco inteiro de perguntas
+         COM `respostaCorreta` sem sessão nenhuma, só com o URL da base de dados. Fechado a
+         autenticados — anónimo conta, e todo o jogador passa pelo AuthGate antes de ver
+         categorias. `CategoryRepository.loadCategories` faz REST direto e passou a enviar o
+         ID token em `auth=`. */
+      ".read": "auth != null",
       ".write": false
     },
     "scores": {
       ".read": "auth != null",
       ".indexOn": "score",
       "$scoreId": {
-        ".write": "auth != null",
+        /* Fase 24: era `auth != null` — qualquer autenticado apagava o registo de qualquer
+           outro jogador (o `.validate` não corre em apagamentos, por isso não travava nada).
+           Agora só duas escritas passam:
+             - CRIAR um registo novo que traga o próprio uid (`!data.exists()`);
+             - alterar ou APAGAR um registo que já é meu (`data.child('uid')` === auth.uid).
+           A eliminação de conta (Fase 23) continua a funcionar: só apaga os próprios registos.
+           Os 12 registos legados sem `uid` deixam de ser apagáveis por ninguém — não são
+           atribuíveis a nenhuma conta, por isso ficam só de leitura. */
+        ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid) || (data.exists() && data.child('uid').val() === auth.uid))",
         ".validate": "newData.hasChildren(['uid', 'modo', 'categoria', 'score', 'correctCount', 'total', 'timestamp'])",
         "uid": { ".validate": "auth != null && newData.val() === auth.uid" },
         "modo": { ".validate": "newData.isString()" },
         "categoria": { ".validate": "newData.isString()" },
-        "score": { ".validate": "newData.isNumber()" },
-        "correctCount": { ".validate": "newData.isNumber()" },
-        "total": { ".validate": "newData.isNumber()" },
+        "formato": { ".validate": "newData.isString()" },
+        "score": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 6000" },
+        "correctCount": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" },
+        "total": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 20" },
         "timestamp": { ".validate": "newData.isNumber()" },
         "$other": { ".validate": false }
       }
     },
     "jogadores": {
-      ".read": true,
+      /* Fase 22: era `true`. Qualquer pessoa com o URL da RTDB despejava a tabela inteira de
+         jogadores — nomes, stats, uids — sem sessão. Fechado a autenticados. Ranking e pesquisa
+         de amigos continuam a funcionar: ninguém chega a esses ecrãs sem passar pelo AuthGate. */
+      ".read": "auth != null",
       /* Player search (friends) does a prefix query on the lower-cased name. */
       ".indexOn": "nomeBusca",
       "$uid": {
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "newData.hasChildren(['nome']) || newData.hasChildren(['jogos'])",
-        "nome": { ".validate": "newData.isString()" },
-        "nomeBusca": { ".validate": "newData.isString()" },
+        /* Fase 22: limite de comprimento. O nome é exibido publicamente no ranking e na
+           pesquisa; sem isto passava um nome de 10 000 caracteres. Espelhado no cliente por
+           `NOME_MAX_LEN` em ProfileRepository. */
+        "nome": { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "nomeBusca": { ".validate": "newData.isString() && newData.val().length <= 40" },
         "atualizadoEm": { ".validate": "newData.isNumber()" },
         "jogos": { ".validate": "newData.isNumber()" },
         "pontos": { ".validate": "newData.isNumber()" },
@@ -155,50 +175,11 @@
         ".validate": "newData.isBoolean()"
       }
     },
-    "matchmaking": {
-      "waiting": {
-        ".read": "auth != null",
-        ".write": "auth != null"
-      },
-      "notify": {
-        "$uid": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null",
-          ".validate": "newData.isString()"
-        }
-      }
-    },
-    "salas1x1": {
-      "$salaId": {
-        ".read": "auth != null",
-        /* Immutable host-authored data (questions + player ids): create once, then locked. */
-        "meta": {
-          ".write": "auth != null && !data.exists()",
-          ".validate": "newData.hasChildren(['hostUid', 'perguntas'])"
-        },
-        /* Each player may write only their own player node. Scores are capped at the
-           mathematical maximum (10 questions x 400 pts) as a serverless anti-cheat floor. */
-        "jogadores": {
-          "$uid": {
-            ".write": "auth != null && auth.uid === $uid",
-            "pontuacao": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4000" },
-            "respostasCertas": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10" }
-          }
-        },
-        "pontuacoes": {
-          "$uid": {
-            ".write": "auth != null && auth.uid === $uid",
-            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4000"
-          }
-        },
-        "perguntaInicios": {
-          "$index": {
-            ".write": "auth != null",
-            ".validate": "newData.isNumber()"
-          }
-        }
-      }
-    },
+    /* Fase 22: `/matchmaking` (fila 1x1 antiga) e `/salas1x1` foram REMOVIDOS destas regras.
+       Nenhum código da app lhes toca — o 1x1 passou há muito para `/matchmakingN/duelo` +
+       `/multisalas`. Sem regra, o RTDB nega por omissão, o que fecha duas superfícies de
+       escrita completamente abertas (`matchmaking/waiting` aceitava qualquer escrita de
+       qualquer autenticado) sem custo nenhum para o jogo. */
     "matchmakingN": {
       "$format": {
         "pending": {
@@ -208,20 +189,108 @@
         "notify": {
           "$uid": {
             ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null",
+            /* Fase 22: era `auth != null` — qualquer autenticado escrevia na caixa de
+               notificação de qualquer outro jogador e atirava-o para uma sala arbitrária.
+               Agora só duas escritas passam: o próprio dono a limpar a sua caixa, ou o
+               anfitrião REAL de uma sala onde $uid é mesmo membro. O anfitrião cria a sala
+               antes de notificar, por isso `root` já a vê no momento da escrita. */
+            ".write": "auth != null && ((auth.uid === $uid && !newData.exists()) || (newData.isString() && root.child('multisalas').child(newData.val()).child('meta').child('hostUid').val() === auth.uid && root.child('multisalas').child(newData.val()).child('meta').child('membrosNomes').child($uid).exists()))",
             ".validate": "newData.isString()"
           }
         }
       }
     },
+    "lobbies": {
+      ".read": "auth != null",
+      "$format": {
+        /* `findOrCreateLobby` corre uma transação sobre ESTE nó (lê todas as salas do formato
+           e escreve na escolhida), por isso a escrita tem de ser concedida aqui e não só por
+           sala. `newData.exists()` impede que alguém apague o nó de formato inteiro de uma vez.
+           O controlo de dono é feito pelos `.validate` abaixo — que, ao contrário do `.write`,
+           correm em TODOS os descendentes mesmo quando a escrita entra por um ascendente. */
+        ".write": "auth != null && newData.exists()",
+        "$lobbyId": {
+          ".validate": "newData.hasChildren(['hostUid', 'format', 'estado'])",
+          /* Fase 25: `id` e `codigo` faltavam ao schema e o `$other: false` rejeitava-os, o que
+             fazia falhar a criação de salas privadas logo no primeiro write. */
+          "id": { ".validate": "newData.isString() && newData.val().length <= 64" },
+          "codigo": { ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}$/)" },
+          /* O anfitrião tem de ser um dos membros presentes nos dados resultantes — não dá
+             para nomear anfitrião alguém que não está na sala. */
+          /* Fase 27: a versão anterior abria duas fugas — `!membros.exists()` e
+             `estado === 'cancelled'` — que deixavam QUALQUER autenticado criar um lobby
+             nomeando outra pessoa como anfitrião. Confirmado com tokens reais.
+
+             Impacto real (não teórico): o jogo só arranca quando `lobby.hostUid == myUid`
+             (MultiMatchViewModel). Um lobby forjado com um anfitrião que nunca lá está enche-se
+             de jogadores reais e **nunca começa** — `findOrCreateLobby` encaminha-os para lá por
+             corresponderem à categoria/modo. Bastava semear alguns lobbies fantasma para
+             bloquear o matchmaking aleatório.
+
+             Agora: ou o anfitrião és tu, ou é alguém que consta mesmo dos membros. As duas vias
+             legítimas continuam a passar — criar uma sala (hostUid = próprio) e a reatribuição
+             de anfitrião no `leaveLobby` (o novo anfitrião está em `membros`). A fuga do
+             `cancelled` foi substituída por `data.val() === newData.val()` — "o valor não
+             mudou". Isto é necessário porque o `findOrCreateLobby` corre uma transação sobre
+             `lobbies/$formato` INTEIRO: todos os lobbies do formato são reescritos, e os seus
+             `hostUid` revalidados. Lobbies órfãos antigos (sem membros, `estado: cancelled`,
+             anfitrião numa conta já desativada) falhavam a validação e faziam a transação
+             inteira ser negada — "Permission denied" ao escolher o modo, para toda a gente.
+             Carregar um valor inalterado é sempre seguro; forjar exige criá-lo ou alterá-lo,
+             e nesse caso `data.val()` difere e as duas primeiras condições travam. */
+          "hostUid": { ".validate": "newData.isString() && (newData.val() === auth.uid || newData.parent().child('membros').child(newData.val()).exists() || data.val() === newData.val())" },
+          "hostNome": { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "format": { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "categoria": { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "modo": { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "estado": { ".validate": "newData.isString() && newData.val().matches(/^(waiting|started|cancelled)$/)" },
+          "criadoEm": { ".validate": "newData.isNumber()" },
+          "salaId": { ".validate": "newData.isString() && newData.val().length <= 64" },
+          "membros": {
+            "$uid": {
+              /* Dono por nó: só te podes INSCREVER a ti próprio. Entradas que já existiam
+                 passam intactas (é isso que permite a transação reescrever o nó todo), mas
+                 ninguém consegue criar um membro que não seja ele mesmo. */
+              ".validate": "auth.uid === $uid || data.exists()",
+              "nome": { ".validate": "newData.isString() && newData.val().length <= 40" },
+              "ts": { ".validate": "newData.isNumber()" },
+              "$other": { ".validate": false }
+            }
+          },
+          "$other": { ".validate": false }
+        }
+      }
+    },
     "multisalas": {
       "$salaId": {
-        ".read": "auth != null",
+        /* Fase 22: era `auth != null` — qualquer autenticado lia QUALQUER sala, incluindo
+           `meta.perguntas` com o campo `respostaCorreta`. Agora só os membros da própria sala
+           leem. Ver a nota sobre validação server-side no fim deste ficheiro. */
+        ".read": "auth != null && data.child('meta').child('membrosNomes').child(auth.uid).exists()",
         /* Same discipline as 1x1: immutable host data create-once, per-player score nodes
            locked to owner and capped at the mathematical maximum. */
         "meta": {
           ".write": "auth != null && !data.exists()",
-          ".validate": "newData.hasChildren(['hostUid', 'perguntas'])"
+          /* `membrosNomes` passou a obrigatório: é a lista sobre a qual o `.read` acima decide,
+             e sem ela uma sala ficaria ilegível. `hostUid` tem de ser quem está a criar. */
+          ".validate": "newData.hasChildren(['hostUid', 'perguntas', 'membrosNomes'])",
+          "hostUid": { ".validate": "newData.isString() && newData.val() === auth.uid" },
+          "membrosNomes": {
+            "$uid": {
+              /* Fase 25: numa sala privada, `meta` é criada com o anfitrião sozinho e quem
+                 entra pelo código chega depois — mas `meta` é create-once, por isso o novo
+                 jogador nunca entrava em `membrosNomes` e, pela regra de leitura acima, ficava
+                 sem conseguir LER a sala em que acabou de entrar.
+
+                 Cada jogador pode agora inscrever-se a si próprio, uma única vez, e só se já
+                 constar dos `membros` do lobby com o mesmo id (numa sala privada o id da
+                 multisala É o id do lobby). Sem esta condição qualquer autenticado se
+                 acrescentava a qualquer sala e passava a ler as `respostaCorreta` alheias —
+                 exactamente o que a Fase 22 fechou. */
+              ".write": "auth != null && auth.uid === $uid && !data.exists() && root.child('lobbies').child(root.child('multisalas').child($salaId).child('meta').child('format').val()).child($salaId).child('membros').child(auth.uid).exists()",
+              ".validate": "newData.isString() && newData.val().length <= 40"
+            }
+          }
         },
         "jogadores": {
           "$uid": {
@@ -242,6 +311,123 @@
             ".validate": "newData.isNumber()"
           }
         }
+      }
+    },
+    /* Fase 25: `/salas_privadas` não tinha regra nenhuma — o RTDB negava por omissão e criar
+       sala privada por código falhava sempre, em produção. É uma tabela de consulta
+       `codigo -> {lobbyId, format}`.
+
+       Não há `.read` ao nível da colecção, só em `$codigo`: dá para consultar um código que se
+       conheça, nunca para listar os códigos existentes. `!data.exists()` torna cada código
+       create-once, para ninguém repontar um código já em uso para outra sala. E quem regista o
+       código tem de ser o anfitrião real do lobby referido — o lobby é escrito antes, por isso
+       `root` já o vê. */
+    /* Fase 25: denúncias de quizzes da comunidade. Exigido pela Play Store por haver conteúdo
+       gerado por utilizadores visível publicamente.
+
+       Não há `.read` na colecção nem em `$quizId` — só cada pessoa lê a SUA denúncia, o que
+       serve para a app saber se deve mostrar "Denunciar" ou "Já denunciaste". Ninguém consegue
+       ver quem denunciou o quê. `!data.exists()` torna a denúncia irreversível e única por
+       pessoa: não dá para denunciar duas vezes nem para retirar e repetir.
+
+       A revisão é manual, na consola do Firebase (o SDK admin ignora estas regras). */
+    "denuncias": {
+      "$quizId": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && !data.exists()",
+          ".validate": "newData.hasChildren(['motivo', 'ts'])",
+          "motivo": { ".validate": "newData.isString() && newData.val().length <= 200" },
+          "ts": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      }
+    },
+    "salas_privadas": {
+      "$codigo": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.hasChildren(['lobbyId', 'format']) && root.child('lobbies').child(newData.child('format').val()).child(newData.child('lobbyId').val()).child('hostUid').val() === auth.uid",
+        "lobbyId": { ".validate": "newData.isString() && newData.val().length <= 64" },
+        "format": { ".validate": "newData.isString() && newData.val().length <= 20" },
+        "$other": { ".validate": false }
+      }
+    },
+    "categorias_comunitarias": {
+      ".read": "auth != null",
+      "$catId": {
+        /* Só o dono cria ou reescreve o quiz inteiro (título, perguntas, etc). A condição
+           antiga permitia a QUALQUER autenticado substituir o nó inteiro — incluindo
+           título/perguntas/criadorUid de outra pessoa — desde que o payload tivesse uma
+           chave "votos" lá dentro (`newData.child('votos').exists()` não estava restrita
+           ao sub-caminho votos, avaliava para o nó completo). Um dono podia ser
+           impersonado e o quiz de outro jogador reescrito por completo. Votar e atualizar
+           a média/contagem passam a ter regras próprias e escritas nos caminhos exatos
+           que tocam — não abrem mais a porta ao nó inteiro.
+        */
+        ".write": "auth != null && (!data.exists() || data.child('criadorUid').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['titulo', 'criadorUid', 'criadorNome', 'criadoEm'])",
+        "id": { ".validate": "newData.isString()" },
+        "titulo": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+        "descricao": { ".validate": "newData.isString() && newData.val().length <= 300" },
+        "criadorUid": { ".validate": "newData.isString() && newData.val() === auth.uid" },
+        "criadorNome": { ".validate": "newData.isString()" },
+        /* Fase 25: além do dono (que herda o `.write` do `$catId`), quem já denunciou este quiz
+           pode despublicá-lo — e SÓ despublicar (`newData.val() === false`), nunca voltar a
+           publicá-lo, e só depois de o contador ter atingido o limiar. Repor a público continua
+           a ser exclusivo do autor. */
+        "publica": {
+          ".write": "auth != null && newData.val() === false && root.child('denuncias').child($catId).child(auth.uid).exists() && root.child('categorias_comunitarias').child($catId).child('totalDenuncias').val() >= 3",
+          ".validate": "newData.isBoolean()"
+        },
+        /* Só incrementa quem tem uma denúncia registada, e só de um em um: sem o passo `+1` um
+           único denunciante punha o contador em 999 e ocultava o quiz sozinho. Como as rules da
+           RTDB não têm `numChildren()`, não é possível validar que o contador bate certo com o
+           número real de denúncias — daí o incremento limitado. */
+        "totalDenuncias": {
+          ".write": "auth != null && root.child('denuncias').child($catId).child(auth.uid).exists()",
+          ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() + 1 : newData.val() === 1)"
+        },
+        "criadoEm": { ".validate": "newData.isNumber()" },
+        "perguntas": {
+          "$idx": {
+            "pergunta": { ".validate": "newData.isString()" },
+            "opcoes": { "$i": { ".validate": "newData.isString()" } },
+            "respostaCorreta": { ".validate": "newData.isString()" },
+            "dificuldade": { ".validate": "newData.isString()" },
+            "$other": { ".validate": false }
+          }
+        },
+        /* Qualquer autenticado pode escrever o seu próprio voto e atualizar os agregados —
+           mas só estes três campos exatos, nunca o resto do quiz (a regra do $catId acima
+           continua a exigir dono para tudo o resto: um "set" à raiz com um payload
+           fabricado já não encontra nenhuma regra que o autorize).
+        */
+        "votos": {
+          /* Fase 22: escrita concedida também neste nó pai, para o `runTransaction` sobre
+             `votos` em `CustomCategoryRepository.rateCategory` poder inserir o voto e ler o
+             conjunto no mesmo commit. O dono-por-nó continua garantido pelo `.validate` do
+             filho, que corre na mesma quando a escrita entra por aqui. */
+          ".write": "auth != null",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5 && (auth.uid === $uid || data.exists())"
+          }
+        },
+        /* Fase 22: era `.write: auth != null` — qualquer autenticado punha a média de qualquer
+           quiz a 5.0 (ou a 0) sem sequer votar. Agora só escreve quem tem um voto seu
+           registado neste quiz, e o valor tem de bater certo com a média/contagem dos votos
+           reais. A app escreve os dois campos num `updateChildren` (multi-caminho), por isso
+           são validados folha a folha e não exigem escrita no nó do quiz — que continua
+           reservado ao dono. */
+        "mediaClassificacao": {
+          ".write": "auth != null && root.child('categorias_comunitarias').child($catId).child('votos').child(auth.uid).exists()",
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5"
+        },
+        "totalVotos": {
+          ".write": "auth != null && root.child('categorias_comunitarias').child($catId).child('votos').child(auth.uid).exists()",
+          ".validate": "newData.isNumber() && newData.val() >= 1"
+        },
+        "$other": { ".validate": false }
       }
     }
   }
