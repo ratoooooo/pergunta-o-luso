@@ -1,6 +1,7 @@
 package com.ratoooooo.perguntaoluso.game
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,10 +31,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.ratoooooo.perguntaoluso.ui.theme.Coral
 import com.ratoooooo.perguntaoluso.ui.theme.Cream
+import com.ratoooooo.perguntaoluso.ui.theme.Gold
 import com.ratoooooo.perguntaoluso.ui.theme.Ink
+import com.ratoooooo.perguntaoluso.ui.theme.Lavender
 import com.ratoooooo.perguntaoluso.ui.theme.StickerButton
 import com.ratoooooo.perguntaoluso.ui.theme.StickerTextField
 import com.ratoooooo.perguntaoluso.ui.theme.Teal
+import com.ratoooooo.perguntaoluso.ui.theme.stickerBlock
 
 @Composable
 fun RegisterScreen(
@@ -101,20 +105,23 @@ fun RegisterScreen(
         )
 
         Spacer(Modifier.size(14.dp))
-        val ok = password.length >= 8
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Rounded.CheckCircle,
-                contentDescription = null,
-                tint = if (ok) Teal else Ink.copy(alpha = 0.35f),
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.size(8.dp))
+        // Cartão de requisitos como no mockup (ecrã 17), mas só com as regras que a app
+        // valida mesmo: 8 caracteres e as duas palavras-passe iguais. O mockup pedia ainda
+        // maiúscula e número — pô-las aqui seria prometer uma validação que não existe.
+        Column(
+            Modifier.fillMaxWidth()
+                .stickerBlock(fillColor = Lavender, cornerRadius = 18.dp, shadowOffset = 4.dp, borderWidth = 2.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
+        ) {
             Text(
-                text = "Pelo menos 8 caracteres",
-                style = MaterialTheme.typography.bodyLarge,
+                text = "A tua palavra-passe deve ter:",
+                style = MaterialTheme.typography.labelLarge,
                 color = Ink
             )
+            Spacer(Modifier.size(8.dp))
+            RequisitoRow("Pelo menos 8 caracteres", password.length >= 8)
+            Spacer(Modifier.size(6.dp))
+            RequisitoRow("As duas iguais", confirm.isNotEmpty() && confirm == password)
         }
 
         if (authError != null) {
@@ -124,12 +131,33 @@ fun RegisterScreen(
 
         Spacer(Modifier.size(28.dp))
 
+        // Dourado, como o ENTRAR do Login: é a única ação do ecrã e os dois passos do mesmo
+        // fluxo de conta devem ter o mesmo peso visual. Era roxo, que na app é navegação.
         StickerButton(
-            text = if (authLoading) "A REGISTAR..." else "REGISTAR",
+            text = if (authLoading) "A REGISTAR..." else "CRIAR CONTA",
             icon = Icons.Rounded.PersonAdd,
             onClick = { if (!authLoading) onRegister(nome, email, password, confirm) },
+            fillColor = Gold,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.size(24.dp))
+    }
+}
+
+@Composable
+private fun RequisitoRow(texto: String, cumprido: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = Icons.Rounded.CheckCircle,
+            contentDescription = null,
+            tint = if (cumprido) Teal else Ink.copy(alpha = 0.3f),
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.size(8.dp))
+        Text(
+            text = texto,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (cumprido) Ink else Ink.copy(alpha = 0.6f)
+        )
     }
 }

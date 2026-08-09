@@ -11,6 +11,7 @@ data class ScoreEntry(
     val uid: String = "",
     val modo: String = "",
     val categoria: String = "",
+    val formato: String = "solo",
     val score: Int = 0,
     val correctCount: Int = 0,
     val total: Int = 0,
@@ -21,13 +22,14 @@ private const val TOP_SCORES_LIMIT = 5
 
 class ScoreRepository {
 
-    suspend fun saveScore(modo: String, categoria: String, score: Int, correctCount: Int, total: Int) {
+    suspend fun saveScore(modo: String, categoria: String, score: Int, correctCount: Int, total: Int, formato: String = "solo") {
         val uid = FirebaseAuth.getInstance().currentUser?.uid
             ?: error("saveScore called without a signed-in user")
         val entry = mapOf(
             "uid" to uid,
             "modo" to modo,
             "categoria" to categoria,
+            "formato" to formato,
             "score" to score,
             "correctCount" to correctCount,
             "total" to total,
@@ -73,12 +75,14 @@ class ScoreRepository {
         val correctCount = child("correctCount").getValue(Int::class.java) ?: 0
         val categoria = child("categoria").getValue(String::class.java) ?: ""
         val modo = child("modo").getValue(String::class.java) ?: ""
+        val formato = child("formato").getValue(String::class.java) ?: "solo"
         val timestamp = child("timestamp").getValue(Long::class.java) ?: 0L
         val uid = child("uid").getValue(String::class.java) ?: ""
         return ScoreEntry(
             uid = uid,
             modo = modo,
             categoria = categoria,
+            formato = formato,
             score = score,
             correctCount = correctCount,
             total = total,

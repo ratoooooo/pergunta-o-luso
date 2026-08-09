@@ -1,6 +1,24 @@
 package com.ratoooooo.perguntaoluso.game
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
+import com.ratoooooo.perguntaoluso.ui.theme.Motion
+import com.ratoooooo.perguntaoluso.ui.theme.cascadeIn
+import com.ratoooooo.perguntaoluso.ui.theme.pressScale
+import com.ratoooooo.perguntaoluso.ui.theme.rememberPressScale
+import com.ratoooooo.perguntaoluso.ui.theme.rememberPulse
+import com.ratoooooo.perguntaoluso.ui.theme.stickerSpring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +37,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,7 +72,9 @@ fun QuestionScreen(
     points: Int,
     selectedOption: String?,
     isAnswered: Boolean,
+    aceitaToques: Boolean,
     lastDelta: Int,
+    streak: Int,
     currentEvent: ChaoticEvent?,
     remainingMillis: Long,
     durationMillis: Long,
@@ -63,6 +84,10 @@ fun QuestionScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Cream)
+            // Fase 29: sem scroll, ecrãs mais baixos (ou letra grande do sistema) cortavam o
+            // conteúdo sem forma de lá chegar. `fillMaxSize` garante que continua centrado
+            // quando sobra espaço; o scroll só entra em ação quando falta.
+            .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
         // Header: step indicator (Manrope) on the left, points (Fredoka) on the right.
@@ -103,6 +128,29 @@ fun QuestionScreen(
                     style = MaterialTheme.typography.labelLarge,
                     color = Ink
                 )
+                // Sequência: só aparece a partir de 2 acertos seguidos e vai ganhando
+                // presença — 2 é discreto (dourado), 5+ é coral e pulsa. Cresce com o
+                // mérito em vez de estar sempre visível a ocupar espaço.
+                if (streak >= 2) {
+                    val forte = streak >= 5
+                    val pulso = rememberPulse(ativo = forte, min = 1f, max = 1.10f, periodoMs = 800)
+                    val corStreak = if (forte) Coral else Gold
+                    Spacer(Modifier.size(6.dp))
+                    Row(
+                        modifier = Modifier
+                            .scale(pulso)
+                            .stickerBlock(fillColor = corStreak, cornerRadius = 12.dp, shadowOffset = 3.dp, borderWidth = 2.dp)
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        androidx.compose.material3.Icon(
+                            Icons.Rounded.Whatshot, contentDescription = null,
+                            tint = textColorFor(corStreak), modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.size(4.dp))
+                        Text("$streak", style = MaterialTheme.typography.labelLarge, color = textColorFor(corStreak))
+                    }
+                }
             }
         }
 
@@ -112,7 +160,7 @@ fun QuestionScreen(
 
         if (currentEvent != null) {
             Spacer(Modifier.size(12.dp))
-            EventBanner(currentEvent)
+            EventBannerRow(currentEvent.displayName, currentEvent.description)
         }
 
         Spacer(Modifier.size(16.dp))
@@ -135,70 +183,79 @@ fun QuestionScreen(
         val userWasWrong = isAnswered && selectedOption != question.respostaCorreta
         val vf = question.isVerdadeiroFalso
 
-        // Uniform, moderately sized option cards with centred text. True/False gets two taller,
-        // icon-labelled cards so the two-option layout reads as deliberate instead of a
-        // four-option list missing half its items.
+        // Cartões neutros com emblema A/B/C/D — a cor só entra na revelação (ver AnswerOption).
+        // Verdadeiro/Falso mantém dois cartões mais altos, com ✓/✗ no emblema, para o layout
+        // de duas opções se ler como deliberado e não como uma lista a que faltam itens.
+        val context = androidx.compose.ui.platform.LocalContext.current
+
+        // O som segue o **estado**, não o toque. Antes era disparado dentro do `onClick` de cada
+        // opção, o que deixava o **tempo esgotado** sem retorno nenhum — precisamente o momento
+        // em que o jogador não olhou para o ecrã e mais precisa de o ouvir. Aqui apanha os dois
+        // caminhos, porque `isAnswered` também fica `true` no timeout.
+        androidx.compose.runtime.LaunchedEffect(isAnswered, questionNumber) {
+            if (!isAnswered) return@LaunchedEffect
+            com.ratoooooo.perguntaoluso.audio.SoundEffects.tocar(
+                context,
+                if (userWasWrong) com.ratoooooo.perguntaoluso.audio.SoundEffects.Efeito.ERRADO
+                else com.ratoooooo.perguntaoluso.audio.SoundEffects.Efeito.CERTO
+            )
+        }
+
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(if (vf) 18.dp else 14.dp)
         ) {
             question.opcoes.forEachIndexed { index, opcao ->
-                val baseColor = if (vf) (if (index == 0) Teal else Coral) else AnswerPalette[index % AnswerPalette.size]
-                val isCorrectOption = opcao == question.respostaCorreta
-                val isSelected = opcao == selectedOption
-                val color = when {
-                    !isAnswered -> baseColor
-                    isCorrectOption && isSelected -> Teal
-                    isCorrectOption && userWasWrong -> Gold
-                    isSelected -> Coral
-                    else -> Neutral
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(if (vf) VF_CARD_HEIGHT else OPTION_CARD_HEIGHT)
-                        .stickerBlock(fillColor = color, cornerRadius = 22.dp, shadowOffset = 5.dp)
-                        .clickable(enabled = !isAnswered) { onOptionSelected(opcao) }
-                        .padding(horizontal = 18.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (vf) {
-                        androidx.compose.material3.Icon(
-                            imageVector = if (index == 0) Icons.Rounded.Check else Icons.Rounded.Close,
-                            contentDescription = null,
-                            tint = textColorFor(color),
-                            modifier = Modifier.size(30.dp)
-                        )
-                        Spacer(Modifier.size(12.dp))
-                    }
-                    Text(
-                        text = opcao,
-                        style = if (vf) MaterialTheme.typography.titleLarge
-                        else MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                        color = textColorFor(color),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                }
+                AnswerOption(
+                    text = opcao,
+                    index = index,
+                    isVerdadeiroFalso = vf,
+                    isAnswered = isAnswered,
+                    aceitaToques = aceitaToques,
+                    isCorrectOption = opcao == question.respostaCorreta,
+                    isSelected = opcao == selectedOption,
+                    userWasWrong = userWasWrong,
+                    height = if (vf) VF_CARD_HEIGHT else OPTION_CARD_HEIGHT,
+                    animationKey = question.pergunta,
+                    onClick = { onOptionSelected(opcao) }
+                )
             }
         }
 
         Spacer(Modifier.weight(1f))
 
+        // Os pontos ganhos "sobem": entram de baixo, sobem ~26 dp e desvanecem enquanto o
+        // total no cabeçalho já mostra o valor novo.
         if (isAnswered && lastDelta != 0) {
             Spacer(Modifier.size(12.dp))
+            val subida = remember(lastDelta, questionNumber) { Animatable(0f) }
+            LaunchedEffect(lastDelta, questionNumber) {
+                subida.snapTo(0f)
+                subida.animateTo(1f, tween(900, easing = FastOutSlowInEasing))
+            }
+            val p = subida.value
             val deltaText = if (lastDelta > 0) "+$lastDelta pontos" else "$lastDelta pontos"
             Text(
                 text = deltaText,
                 style = MaterialTheme.typography.titleLarge,
                 color = if (lastDelta > 0) Teal else Coral,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        translationY = (1f - p) * 20.dp.toPx() - p * 26.dp.toPx()
+                        alpha = if (p < 0.25f) p / 0.25f else (1f - (p - 0.25f) / 0.75f).coerceAtLeast(0.25f)
+                    },
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }
 }
 
+/**
+ * Barra de tempo com urgência crescente: a cor já mudava por patamares, agora abaixo de 25%
+ * a barra inteira pulsa — quanto menos tempo resta, mais rápido o pulso (1000 ms → 260 ms).
+ * O pulso é só escala vertical, não mexe no resto do ecrã nem atrasa a resposta.
+ */
 @Composable
 private fun TimerBar(remainingMillis: Long, durationMillis: Long) {
     val fraction = if (durationMillis > 0) (remainingMillis.toFloat() / durationMillis.toFloat()).coerceIn(0f, 1f) else 0f
@@ -207,10 +264,14 @@ private fun TimerBar(remainingMillis: Long, durationMillis: Long) {
         fraction > 0.25f -> Gold
         else -> Coral
     }
+    val urgente = fraction <= 0.25f && fraction > 0f
+    val periodo = (260 + (fraction / 0.25f) * 740).toInt().coerceAtLeast(220)
+    val pulso = rememberPulse(ativo = urgente, min = 1f, max = 1.22f, periodoMs = periodo)
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(20.dp)
+            .scale(scaleX = 1f, scaleY = if (urgente) pulso else 1f)
             .clip(RoundedCornerShape(10.dp))
             .background(Lavender)
             .border(3.dp, Ink, RoundedCornerShape(10.dp))
@@ -225,33 +286,3 @@ private fun TimerBar(remainingMillis: Long, durationMillis: Long) {
     }
 }
 
-@Composable
-private fun EventBanner(event: ChaoticEvent) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .stickerBlock(fillColor = Gold, cornerRadius = 18.dp, shadowOffset = 4.dp)
-            .padding(horizontal = 18.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        androidx.compose.material3.Icon(
-            imageVector = Icons.Rounded.Bolt,
-            contentDescription = null,
-            tint = Ink,
-            modifier = Modifier.size(28.dp)
-        )
-        Spacer(Modifier.size(10.dp))
-        Column {
-            Text(
-                text = event.displayName,
-                style = MaterialTheme.typography.labelLarge,
-                color = Ink
-            )
-            Text(
-                text = event.description,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Ink
-            )
-        }
-    }
-}

@@ -1,6 +1,8 @@
 package com.ratoooooo.perguntaoluso.game
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -23,12 +25,25 @@ fun MainScaffold(
     onRanking: () -> Unit,
     onFriends: () -> Unit,
     onProfile: () -> Unit,
+    /**
+     * Fase 29: torna a área de conteúdo deslizável. **Opt-in**, e não o comportamento por
+     * omissão, porque os ecrãs que já usam `LazyColumn` (Ranking, Histórico, Amigos,
+     * Conquistas, Quizzes) rebentam se forem medidos dentro de um scroll — altura máxima
+     * infinita. Só os ecrãs de conteúdo fixo é que devem ligar isto.
+     */
+    scrollable: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize().background(Cream).padding(horizontal = 24.dp).padding(top = 24.dp)
     ) {
-        Column(modifier = Modifier.weight(1f).fillMaxWidth(), content = content)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier),
+            content = content
+        )
         Spacer(Modifier.size(8.dp))
         BottomNav(
             active = active,

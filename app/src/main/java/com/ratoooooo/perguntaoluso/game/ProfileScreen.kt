@@ -125,7 +125,12 @@ fun ProfileScreen(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             LevelBadge(nivel = p.nivel, size = 48.dp)
             Spacer(Modifier.size(14.dp))
-            XpBar(estado = p.progressao, modifier = Modifier.weight(1f), levelLabel = false)
+            XpBar(
+                estado = p.progressao,
+                modifier = Modifier.weight(1f),
+                levelLabel = false,
+                patente = p.patente.titulo
+            )
         }
 
         Spacer(Modifier.size(16.dp))

@@ -62,6 +62,8 @@ data class GameUiState(
     val authError: String? = null,
     // game
     val categories: List<String> = emptyList(),
+    /** categoria -> nº de perguntas, para o cartão do picker. Ausente = ainda não contada. */
+    val categoryCounts: Map<String, Int> = emptyMap(),
     val selectedCategory: String = "",
     val mode: GameMode? = null,
     val questions: List<Question> = emptyList(),
@@ -79,6 +81,13 @@ data class GameUiState(
     val questionDurationMillis: Long = 1L,
     val eliminated: Boolean = false,
     val wonLastGame: Boolean = false,
+    /**
+     * Subiu de nível nesta partida — comparado entre o perfil antes e depois da agregação.
+     * Só serve para celebrar no pódio (som + háptico); nada disto é persistido.
+     */
+    val subiuDeNivel: Boolean = false,
+    /** Conquistas que passaram de bloqueadas a desbloqueadas nesta partida. */
+    val novasConquistas: List<String> = emptyList(),
     val multiFormat: com.ratoooooo.perguntaoluso.game.multi.MatchFormat = com.ratoooooo.perguntaoluso.game.multi.MatchFormat.GRUPO,
     val pendingMultiFormat: com.ratoooooo.perguntaoluso.game.multi.MatchFormat? = null,
     val customCategoryQuestions: List<Question>? = null,
@@ -672,6 +681,10 @@ class GameViewModel(
     private fun GameUiState.sessionOnly() = GameUiState(
         userInfo = userInfo,
         profile = profile,
+        // As contagens de perguntas sobrevivem à limpeza de estado de propósito: são conteúdo
+        // estático (`/categorias` tem `.write: false`) e `loadCategories` corre a cada ida ao
+        // picker, por isso deitá-las fora significaria cinco pedidos de rede repetidos por visita.
+        categoryCounts = categoryCounts,
         playingNow = playingNow,
         friends = friends,
         friendProfiles = friendProfiles,
@@ -720,9 +733,31 @@ class GameViewModel(
             try {
                 val categories = categoryRepository.loadCategories()
                 _uiState.value = _uiState.value.copy(categories = categories, isLoading = false)
+                loadCategoryCounts(categories)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = e.message ?: "Erro a carregar categorias")
             }
+        }
+    }
+
+    /**
+     * Contagens do picker, numa corrotina à parte e **depois** de as categorias já estarem no
+     * estado: o ecrã abre com os cartões e o número entra quando chegar. Se ficasse dentro do
+     * mesmo `try`, cinco pedidos de rede a mais atrasariam a lista inteira — e uma falha a contar
+     * passaria a `error`, deixando o jogador sem categorias por causa de um rótulo.
+     *
+     * Guardado por categoria já carregada, para uma resposta atrasada não pintar contagens por
+     * cima de uma lista entretanto trocada.
+     */
+    private fun loadCategoryCounts(categories: List<String>) {
+        // Já contadas nesta sessão (sobrevivem ao `sessionOnly`) — não vale a pena repetir.
+        if (_uiState.value.categoryCounts.keys.containsAll(categories)) return
+        viewModelScope.launch {
+            val counts = runCatching { categoryRepository.loadQuestionCounts(categories) }
+                .getOrDefault(emptyMap())
+            if (counts.isEmpty()) return@launch
+            if (_uiState.value.categories != categories) return@launch
+            _uiState.value = _uiState.value.copy(categoryCounts = counts)
         }
     }
 
@@ -966,10 +1001,14 @@ class GameViewModel(
         val mode = state.mode ?: return
         val won = didWin(mode, state.correctCount, faced, eliminated)
         val isCustom = state.customCategoryQuestions != null
+        // Fotografia do perfil ANTES de agregar, para saber o que mudou por causa desta partida.
+        val perfilAntes = state.profile
         _uiState.value = state.copy(
             screen = GameScreen.PODIUM,
             eliminated = eliminated,
             wonLastGame = won,
+            subiuDeNivel = false,
+            novasConquistas = emptyList(),
             isLoading = true
         )
         viewModelScope.launch {
@@ -1006,8 +1045,36 @@ class GameViewModel(
             }
             val topScores = runCatching { scoreRepository.loadTopScores() }.getOrDefault(emptyList())
             _uiState.value = _uiState.value.copy(topScores = topScores, isLoading = false)
-            refreshProfile()
+
+            // O perfil é recarregado aqui (em vez de `refreshProfile()`, que não devolve nada)
+            // para se poder comparar com [perfilAntes]. Nível e conquistas são ambos **derivados**
+            // dos campos agregados, por isso não há nada de novo a guardar: basta ver o antes e o
+            // depois. Um perfil que falhe a carregar deixa tudo a falso — não se inventa festa.
+            val perfilDepois = uid?.let { runCatching { profileRepository.loadProfile(it) }.getOrNull() }
+            if (perfilDepois != null) {
+                _uiState.value = _uiState.value.copy(
+                    profile = perfilDepois,
+                    subiuDeNivel = perfilAntes != null && perfilDepois.nivel > perfilAntes.nivel,
+                    novasConquistas = conquistasNovas(perfilAntes, perfilDepois)
+                )
+            } else {
+                refreshProfile()
+            }
         }
+    }
+
+    /**
+     * Conquistas que estavam bloqueadas em [antes] e passaram a desbloqueadas em [depois].
+     *
+     * Sem `antes` (primeira partida da sessão, perfil ainda por carregar) devolve lista vazia em
+     * vez de tudo o que está desbloqueado — senão um jogador veterano a abrir a app ouviria a
+     * fanfarra de todas as conquistas que já tinha há semanas.
+     */
+    private fun conquistasNovas(antes: Profile?, depois: Profile): List<String> {
+        if (antes == null) return emptyList()
+        return ACHIEVEMENTS
+            .filter { !it.unlocked(antes) && it.unlocked(depois) }
+            .map { it.title }
     }
 
     fun playAgain() {

@@ -44,6 +44,10 @@ data class Profile(
     val nivel: Int
         get() = progressao.nivel
 
+    /** Patente do nível actual — derivada, nunca guardada (ver [Patente]). */
+    val patente: Patente
+        get() = Patente.paraNivel(nivel)
+
     val temNome: Boolean
         get() = nome.isNotBlank()
 

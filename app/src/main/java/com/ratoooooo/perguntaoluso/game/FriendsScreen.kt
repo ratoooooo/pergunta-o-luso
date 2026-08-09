@@ -44,6 +44,7 @@ import com.ratoooooo.perguntaoluso.ui.theme.Ink
 import com.ratoooooo.perguntaoluso.ui.theme.Lavender
 import com.ratoooooo.perguntaoluso.ui.theme.NavTab
 import com.ratoooooo.perguntaoluso.ui.theme.Purple
+import com.ratoooooo.perguntaoluso.ui.theme.SegmentedTabs
 import com.ratoooooo.perguntaoluso.ui.theme.StickerButton
 import com.ratoooooo.perguntaoluso.ui.theme.Teal
 import com.ratoooooo.perguntaoluso.ui.theme.stickerBlock
@@ -105,11 +106,19 @@ fun FriendsScreen(
         // As três zonas passaram a separadores: só uma lista visível de cada vez. Empilhá-las
         // enchia o ecrã de títulos e de "vazios" mesmo quando não havia nada pendente.
         var aba by rememberSaveable { mutableIntStateOf(0) }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FriendTab("Amigos", friends.lista.size, aba == 0, Modifier.weight(1f)) { aba = 0 }
-            FriendTab("Recebidos", friends.recebidos.size, aba == 1, Modifier.weight(1f), destaque = friends.recebidos.isNotEmpty()) { aba = 1 }
-            FriendTab("Enviados", friends.enviados.size, aba == 2, Modifier.weight(1f)) { aba = 2 }
-        }
+        // Passa a usar o mesmo separador do Ranking, do Histórico, do Perfil e das
+        // Conquistas — era o único ecrã com um desenho de separador só dele.
+        SegmentedTabs(
+            labels = listOf(
+                "Amigos ${friends.lista.size}",
+                "Recebidos ${friends.recebidos.size}",
+                "Enviados ${friends.enviados.size}"
+            ),
+            selectedIndex = aba,
+            onSelect = { aba = it },
+            compact = true,
+            alerts = listOf(false, friends.recebidos.isNotEmpty(), false)
+        )
         Spacer(Modifier.size(16.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -120,12 +129,10 @@ fun FriendsScreen(
                     val online = f.uid in onlineUids
                     FriendRow(
                         f, profiles[f.uid], fill = Lavender,
-                        subtitleOverride = if (online) null else "Offline"
+                        subtitleOverride = if (online) "Online" else "Offline"
                     ) {
-                        // Desafiar exige o amigo com a app aberta — o convite só é entregue
-                        // enquanto ele está à escuta.
-                        if (online && desafioPara == null) {
-                            ActionCircle(Icons.Rounded.SportsKabaddi, "Desafiar", Gold) { onChallenge(f) }
+                        if (desafioPara == null) {
+                            ActionCircle(Icons.Rounded.SportsKabaddi, "Desafiar 1x1", if (online) Gold else Purple) { onChallenge(f) }
                         }
                     }
                 }
@@ -150,48 +157,6 @@ fun FriendsScreen(
             }
             item { Spacer(Modifier.size(12.dp)) }
         }
-    }
-}
-
-/** Separador das três zonas de Amigos, com contador e ponto de aviso quando há pendentes. */
-@Composable
-private fun FriendTab(
-    label: String,
-    count: Int,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    destaque: Boolean = false,
-    onClick: () -> Unit
-) {
-    // Rótulo em cima, contador por baixo: com os três nomes numa só linha o contador
-    // era cortado nos separadores mais estreitos.
-    Column(
-        modifier
-            .stickerBlock(
-                fillColor = if (selected) Purple else Lavender,
-                cornerRadius = 16.dp, shadowOffset = 4.dp, borderWidth = 2.dp
-            )
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (destaque && !selected) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(Coral))
-                Spacer(Modifier.size(5.dp))
-            }
-            Text(
-                label,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (selected) Cream else Ink,
-                maxLines = 1
-            )
-        }
-        Text(
-            "$count",
-            style = MaterialTheme.typography.labelLarge,
-            color = if (selected) Cream else Ink
-        )
     }
 }
 

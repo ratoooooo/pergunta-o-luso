@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!--
+        Retorno háptico dos efeitos de jogo (ver audio/SoundEffects.kt). Permissão de nível
+        "normal": é concedida na instalação, não há pedido em runtime e não dá acesso a dados
+        nenhuns. Sem a declarar, Vibrator.vibrate() lança SecurityException e a vibração nunca
+        funcionaria.
+    -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

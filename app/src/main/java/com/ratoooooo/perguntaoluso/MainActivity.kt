@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        com.ratoooooo.perguntaoluso.audio.SoundEffects.init(this)
         enableEdgeToEdge()
         setContent {
             PerguntaOLusoTheme {
@@ -32,5 +33,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * O `SoundPool` guarda o PCM descodificado em memória; sem libertar, uma rotação ou um
+     * recomeço da Activity deixava-o pendurado. `isFinishing` distingue o fim real da Activity
+     * de uma recriação de configuração, em que vale a pena manter as amostras carregadas.
+     */
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) com.ratoooooo.perguntaoluso.audio.SoundEffects.libertar()
     }
 }

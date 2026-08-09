@@ -1,6 +1,7 @@
 package com.ratoooooo.perguntaoluso.game
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,13 +15,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ratoooooo.perguntaoluso.data.ScoreEntry
-import com.ratoooooo.perguntaoluso.ui.theme.Cream
 import com.ratoooooo.perguntaoluso.ui.theme.Ink
+import com.ratoooooo.perguntaoluso.ui.theme.SegmentedTabs
 import com.ratoooooo.perguntaoluso.ui.theme.colorForCategory
 import com.ratoooooo.perguntaoluso.ui.theme.stickerBlock
 import com.ratoooooo.perguntaoluso.ui.theme.textColorFor
@@ -45,11 +50,28 @@ fun HistoryScreen(
         ScreenHeader(title = "Histórico", subtitle = "As tuas últimas partidas", onBack = onBack)
         Spacer(Modifier.size(18.dp))
 
+        var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
+        val filters = listOf(
+            "Todos" to null,
+            "Solo" to "solo",
+            "1x1" to "1x1",
+            "2x2" to "2x2",
+            "Grupo" to "grupo"
+        )
+        SegmentedTabs(
+            labels = filters.map { it.first },
+            selectedIndex = selectedFilter,
+            onSelect = { selectedFilter = it }
+        )
+        Spacer(Modifier.size(16.dp))
+
+        val activeFormat = filters[selectedFilter.coerceIn(filters.indices)].second
+        val visibleScores = if (activeFormat == null) scores else scores.filter { (it.formato.ifBlank { "solo" }) == activeFormat }
         when {
             isLoading -> Text("A carregar...", style = MaterialTheme.typography.bodyLarge, color = Ink)
-            scores.isEmpty() -> Text("Ainda não jogaste nenhuma partida.", style = MaterialTheme.typography.bodyLarge, color = Ink)
+            visibleScores.isEmpty() -> Text("Ainda não há partidas neste filtro.", style = MaterialTheme.typography.bodyLarge, color = Ink)
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(scores) { HistoryRow(it) }
+                items(visibleScores) { HistoryRow(it) }
             }
         }
     }
@@ -60,6 +82,12 @@ private val dateFmt = SimpleDateFormat("d MMM, HH:mm", Locale("pt", "PT"))
 @Composable
 private fun HistoryRow(e: ScoreEntry) {
     val color = colorForCategory(e.categoria)
+    val fmtLabel = when (e.formato.lowercase()) {
+        "1x1" -> "1x1"
+        "2x2" -> "2x2"
+        "grupo" -> "GRUPO"
+        else -> "SOLO"
+    }
     Row(
         Modifier.fillMaxWidth().stickerBlock(fillColor = color, cornerRadius = 18.dp, shadowOffset = 4.dp)
             .padding(horizontal = 18.dp, vertical = 14.dp),
@@ -68,7 +96,7 @@ private fun HistoryRow(e: ScoreEntry) {
     ) {
         Column(Modifier.weight(1f)) {
             Text(
-                "${e.categoria.ifBlank { "—" }} · ${GameMode.displayNameForId(e.modo)}",
+                "[$fmtLabel] ${e.categoria.ifBlank { "—" }} · ${GameMode.displayNameForId(e.modo)}",
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                 color = textColorFor(color), maxLines = 1
             )

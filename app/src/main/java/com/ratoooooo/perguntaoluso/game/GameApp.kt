@@ -147,6 +147,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
         state.screen == GameScreen.RANKING -> RankingScreen(
             profiles = state.allProfiles,
             isLoading = state.isLoading,
+            meuUid = state.userInfo?.uid,
             onBack = viewModel::backToStart,
             onHome = viewModel::backToStart,
             onFriends = viewModel::goToFriends,
@@ -155,6 +156,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
 
         state.screen == GameScreen.CATEGORY_SELECT -> CategoryScreen(
             categories = state.categories,
+            questionCounts = state.categoryCounts,
             formato = state.pendingMultiFormat,
             onCategorySelected = viewModel::selectCategory,
             onBack = viewModel::backToStart
@@ -190,7 +192,9 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
                 points = state.points,
                 selectedOption = state.selectedOption,
                 isAnswered = state.isAnswered,
+                aceitaToques = state.aceitaToques,
                 lastDelta = state.lastDelta,
+                streak = state.streak,
                 currentEvent = state.currentEvent,
                 remainingMillis = state.remainingMillis,
                 durationMillis = state.questionDurationMillis,
@@ -205,6 +209,8 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
             total = state.questions.size.let { if (state.eliminated) state.currentIndex + 1 else it },
             eliminated = state.eliminated,
             won = state.wonLastGame,
+            subiuDeNivel = state.subiuDeNivel,
+            novasConquistas = state.novasConquistas,
             topScores = state.topScores,
             onPlayAgain = viewModel::playAgain,
             onHome = viewModel::backToStart

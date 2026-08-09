@@ -32,14 +32,14 @@ fun StickerButton(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Ink,
+            tint = textColorFor(fillColor),
             modifier = Modifier.size(24.dp)
         )
         androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.titleLarge,
-            color = Ink
+            color = textColorFor(fillColor)
         )
     }
 }

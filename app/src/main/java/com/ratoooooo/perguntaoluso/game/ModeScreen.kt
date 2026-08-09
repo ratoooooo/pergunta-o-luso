@@ -1,6 +1,11 @@
 package com.ratoooooo.perguntaoluso.game
 
+import com.ratoooooo.perguntaoluso.ui.theme.rememberPressScale
+import com.ratoooooo.perguntaoluso.ui.theme.pressScale
+import com.ratoooooo.perguntaoluso.ui.theme.cascadeIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,6 +66,10 @@ fun ModeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Cream)
+            // Fase 29: sem scroll, ecrãs mais baixos (ou letra grande do sistema) cortavam o
+            // conteúdo sem forma de lá chegar. `fillMaxSize` garante que continua centrado
+            // quando sobra espaço; o scroll só entra em ação quando falta.
+            .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
         ScreenHeader(title = "Como queres jogar?", onBack = onBack)
@@ -68,14 +77,17 @@ fun ModeScreen(
         CategoryChip(categoria)
         Spacer(Modifier.size(22.dp))
 
-        modes.forEach { mode ->
+        modes.forEachIndexed { index, mode ->
             val color = ModeColors.getValue(mode)
+            val (interacao, escala) = rememberPressScale()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(MODE_CARD_HEIGHT)
+                    .cascadeIn(index)
+                    .pressScale(escala)
                     .stickerBlock(fillColor = Lavender, cornerRadius = 26.dp, shadowOffset = 6.dp)
-                    .clickable { onModeSelected(mode) }
+                    .clickable(interactionSource = interacao, indication = null) { onModeSelected(mode) }
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {

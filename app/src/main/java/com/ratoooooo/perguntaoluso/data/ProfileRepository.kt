@@ -25,6 +25,9 @@ data class GameResult(
 
 val MODE_IDS = listOf("classico", "caotico", "eliminatorias")
 
+/** Hard cap on a display name. Mirrored by `jogadores/$uid/nome` `.validate` in the rules. */
+const val NOME_MAX_LEN = 40
+
 /** Search key for a display name: trimmed + lower-cased (stored at /jogadores/{uid}/nomeBusca). */
 fun buscaKey(nome: String): String = nome.trim().lowercase()
 
@@ -40,13 +43,33 @@ class ProfileRepository {
 
     private fun ref(uid: String) = FirebaseDatabase.getInstance().getReference("jogadores").child(uid)
 
+    suspend fun addXp(uid: String, xp: Int) {
+        if (xp <= 0) return
+        suspendCancellableCoroutine<Unit> { cont ->
+            ref(uid).child("xpTotal").runTransaction(object : Transaction.Handler {
+                override fun doTransaction(data: MutableData): Transaction.Result {
+                    val current = (data.value as? Number)?.toInt() ?: 0
+                    data.value = current + xp
+                    return Transaction.success(data)
+                }
+                override fun onComplete(error: com.google.firebase.database.DatabaseError?, committed: Boolean, snapshot: DataSnapshot?) {
+                    if (error != null) cont.resumeWithException(error.toException())
+                    else cont.resume(Unit)
+                }
+            })
+        }
+    }
+
     /**
      * Writes the player's chosen name, creating the profile node if needed.
      * Also writes [nomeBusca] (lower-cased name) in the same update, so the search index can
      * never drift from the display name — every name write goes through here.
      */
     suspend fun setNome(uid: String, nome: String) {
-        val limpo = nome.trim()
+        // Truncated to match the `.validate` cap in database.rules.json — the name is shown
+        // publicly in the ranking, so an over-long one is rejected server-side anyway; cutting
+        // it here turns that rejection into a clean save instead of a thrown write.
+        val limpo = nome.trim().take(NOME_MAX_LEN)
         suspendCancellableCoroutine<Unit> { cont ->
             ref(uid).updateChildren(mapOf("nome" to limpo, "nomeBusca" to buscaKey(limpo)))
                 .addOnSuccessListener { cont.resume(Unit) }
