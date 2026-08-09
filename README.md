@@ -33,16 +33,31 @@ Verdadeiro/Falso, organizadas por categoria e por três níveis de dificuldade.
 - **Eliminatórias** — sobrevivência: um erro e acabou.
 
 ### Multiplayer em tempo real
-- **1x1**, **2x2** (por equipas) e **Grupo** (todos contra todos).
-- **Matchmaking aleatório** por fila atómica, agrupando jogadores por formato + categoria + modo.
+- **1x1**, **2x2** (por equipas) e **Grupo** — todos contra todos, joga-se com **4 a 10**
+  jogadores (10 é a capacidade máxima da sala; a partir de 4 já se pode arrancar à mão).
+- **Matchmaking por lobby**: entra-se numa sala em espera compatível (mesma categoria e modo)
+  ou cria-se uma nova; "ver outras salas abertas" permite trocar antes de a partida começar.
+- **Salas privadas por código**: cria-se uma sala fechada (formato + quiz da comunidade
+  escolhido) e convida-se por um código de 4 dígitos.
 - **Desafio direto a um amigo** (1x1): convite em tempo real com aceitar/recusar e expiração
   automática ao fim de 45 s.
 - **Sincronização lockstep**: o início de cada pergunta é carimbado pelo servidor, por isso
-  todos os dispositivos contam o mesmo tempo; deteção de desistência via `onDisconnect`.
-- Salas de espera dedicadas por formato, com lugares a preencherem-se à medida que entram jogadores.
+  todos os dispositivos contam o mesmo tempo; deteção de desistência via `onDisconnect`, com
+  vitória por *walkover* quando só resta um jogador activo.
+- Salas de espera dedicadas por formato, com lugares a preencherem-se à medida que entram
+  jogadores.
+
+### Quizzes da Comunidade
+- Qualquer jogador pode **criar um quiz** (título, categoria, dificuldade, perguntas de
+  escolha múltipla ou Verdadeiro/Falso), publicá-lo e jogá-lo a solo ou em sala privada.
+- Avaliação por estrelas e **denúncia** — um quiz oculta-se automaticamente ao fim de 3
+  denúncias, para revisão manual.
+- Filtro de linguagem imprópria aplicado no repositório (não só no ecrã), com lista pensada
+  para não bloquear falsos positivos comuns em português ("cabra-cega", "burro", "puto"…).
 
 ### Progressão e social
-- **XP e níveis** com barra de progresso no Início, no Perfil e no Ranking.
+- **XP, níveis e patentes**: seis patentes (Grumete → Descobridor) derivadas do nível, com
+  barra de progresso no Início, no Perfil e no Ranking.
 - **Conquistas** (15) ligadas a dados reais do perfil: primeira vitória, sequência, partida
   perfeita, mestre de cada categoria, marcos de jogos, vitórias em cada formato multijogador
   e marco de nível.
@@ -51,9 +66,16 @@ Verdadeiro/Falso, organizadas por categoria e por três níveis de dificuldade.
   calçada e coração de Viana (iniciais do nome como alternativa).
 - **Amigos**: pesquisa de jogadores por nome, pedidos de amizade (enviar / aceitar / recusar /
   cancelar) e lista bidirecional.
-- **Ranking** segmentado por modo (mais vitórias, mais pontos, melhor recorde).
-- **Histórico** das últimas partidas e **perfil** com estatísticas globais e por modo.
+- **Ranking** com duas dimensões — por modo (mais vitórias, mais pontos, melhor recorde) e por
+  formato multijogador (mais vitórias, mais jogos, % de vitórias).
+- **Histórico** das últimas partidas (filtrável por formato) e **perfil** com estatísticas
+  globais e por modo.
 - Contador de **jogadores online** em tempo real.
+- **Som e retorno háptico** nos momentos de jogo (resposta certa/errada, vitória/derrota,
+  conquista desbloqueada, subida de nível) — respeita o volume e o modo de silêncio do
+  telemóvel.
+- **Eliminação de conta** dentro da própria app (perfil, histórico, amigos e quizzes),
+  exigida pela Google Play para qualquer app que permita criar conta.
 
 ---
 
@@ -80,31 +102,41 @@ O sistema vive em `ui/theme/Sticker.kt` (`stickerBlock`, `stickerCircle`, `stick
 ## Estrutura do projeto
 
 ```
-app/src/main/java/com/starforge/app/
-├── MainActivity.kt          # entrada, aplica o tema
+app/src/main/java/com/ratoooooo/perguntaoluso/
+├── MainActivity.kt          # entrada, aplica o tema, inicializa o som
 ├── AuthGate.kt              # sign-in silencioso no arranque
+├── audio/                   # SoundEffects (SoundPool) — sons + retorno háptico
 ├── data/                    # repositórios + modelos (sem Compose)
-│   ├── AuthRepository.kt          ProfileRepository.kt   Profile.kt
-│   ├── QuestionRepository.kt      Question.kt            CategoryRepository.kt
-│   ├── ScoreRepository.kt         Progressao.kt          PresenceRepository.kt
+│   ├── AuthRepository.kt          ProfileRepository.kt     Profile.kt
+│   ├── AccountDeletionRepository  QuestionRepository.kt     Question.kt
+│   ├── CategoryRepository.kt      ScoreRepository.kt        Progressao.kt
+│   ├── Patente.kt                 PresenceRepository.kt
 │   ├── FriendsRepository.kt       ChallengeRepository.kt
-│   └── MultiMatchRepository.kt
+│   ├── CustomCategory.kt          CustomCategoryRepository  ProfanityFilter.kt
+│   └── MultiMatchRepository.kt    # matchmaking por lobby, salas, salas privadas por código
 ├── game/                    # ViewModel + ecrãs
 │   ├── GameViewModel.kt  GameApp.kt  MainScaffold.kt
 │   ├── GameMode.kt  Difficulty.kt  ChaoticEvent.kt  Scoring.kt
+│   ├── AnswerOption.kt  ResultStats.kt  # componentes partilhados solo + multijogador
 │   ├── (ecrãs) Start, Category, Mode, Question, Podium, Ranking,
 │   │           History, Profile, Login, Register, Format,
-│   │           Friends, FriendSearch, Achievements
+│   │           Friends, FriendSearch, Achievements, CustomCategories
 │   ├── avatar/            # símbolos portugueses em vetor + seletor
 │   └── multi/             # matchmaking, salas e jogo multijogador
-└── ui/theme/                # design system sticker, cores, tipografia, navegação
+└── ui/theme/                # design system sticker: cores, tipografia, separadores,
+                              # diálogos, animações, navegação
 ```
 
 Outros ficheiros relevantes:
 
 - `database.rules.json` — regras de segurança da Realtime Database (validação de tipos,
-  escrita restrita ao próprio `uid`, limites de pontuação).
-- `GAME_DESIGN.md` — registo de todas as decisões de design e das fases de desenvolvimento.
+  escrita restrita ao próprio `uid`, limites de pontuação, schemas fechados por nó).
+- `GAME_DESIGN.md` — registo exaustivo de todas as decisões de design e das fases de
+  desenvolvimento (30+ fases), incluindo o que foi tentado e não resultou.
+- `icon-build/`, `icon-fonte/`, `icon-referencia-brainbrawl/` — material de proveniência do
+  ícone da app; não são lidos pelo build.
+- `keystore.properties.example` — modelo para a assinatura de release (o ficheiro real e o
+  `.jks` nunca são commitados).
 
 ---
 
@@ -126,7 +158,7 @@ git clone https://github.com/ratoooooo/pergunta-o-luso.git
 id da app do projeto Firebase original). Cada programador gera o seu:
 
 1. Cria um projeto em [console.firebase.google.com](https://console.firebase.google.com).
-2. Adiciona uma app **Android** com o package name `com.starforge.app`.
+2. Adiciona uma app **Android** com o package name `com.ratoooooo.perguntaoluso`.
 3. Descarrega o `google-services.json` e coloca-o em `app/google-services.json`.
 4. No projeto Firebase, ativa:
    - **Authentication** → métodos *Anónimo* e *Email/Palavra-passe*;
@@ -162,11 +194,20 @@ Perguntas de Verdadeiro/Falso usam o mesmo formato, com `opcoes` a conter apenas
 
 ## Estado atual
 
-Em **desenvolvimento ativo**. O jogo está funcional de ponta a ponta (solo e multijogador,
-testado em emuladores múltiplos), mas **ainda não foi publicado na Google Play Store**.
+Em **desenvolvimento ativo**. O jogo está funcional de ponta a ponta (solo, multijogador e
+quizzes da comunidade, testado em emuladores múltiplos), com auditoria de segurança feita às
+rules, assinatura de release configurada (Play App Signing) e ícone próprio — mas **ainda não
+foi publicado na Google Play Store**.
 
-Por fazer, entre outros: ecrã de entrada em sala por código, sistema de convites para 2x2 e
-Grupo, e revisão final de conteúdo de algumas perguntas (ver `GAME_DESIGN.md`).
+Por fazer, entre outros (ver `GAME_DESIGN.md` para o detalhe de cada fase):
+- Gerar o `.aab` de submissão e o gráfico de destaque 1024×500 da ficha da loja.
+- A Play Store exige também uma página web de pedido de eliminação de conta (além do fluxo
+  já implementado na app) para o formulário Data Safety.
+- Desafio direto a amigos continua limitado a 1x1 (2x2/Grupo exigiriam um lobby com vários
+  convites em paralelo).
+- Limpeza periódica de salas/filas abandonadas na Realtime Database (sem TTL automático).
+- Revisão de algumas perguntas cuja resposta não foi possível confirmar (lista em
+  `GAME_DESIGN.md`, Fase 17).
 
 ---
 
