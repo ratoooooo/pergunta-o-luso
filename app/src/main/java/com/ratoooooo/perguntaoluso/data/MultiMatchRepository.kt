@@ -49,83 +49,135 @@ sealed class FormResult {
     data class Host(val membros: List<Pair<String, String>>) : FormResult()
 }
 
+data class OpenLobby(
+    val id: String = "",
+    val codigo: String? = null,
+    val hostUid: String = "",
+    val hostNome: String = "",
+    val format: String = "",
+    val categoria: String = "",
+    val modo: String = "",
+    val membrosCount: Int = 0,
+    val estado: String = "waiting"
+)
+
+data class LobbyData(
+    val lobbyId: String = "",
+    val hostUid: String = "",
+    val hostNome: String = "",
+    val format: MatchFormat = MatchFormat.GRUPO,
+    val categoria: String = "",
+    val modo: String = "classico",
+    val estado: String = "waiting",
+    val salaId: String? = null,
+    val membros: List<Pair<String, String>> = emptyList()
+)
+
+/** Tecto de perguntas numa sala privada, imposto pelos limites de pontuação nas rules. */
+const val MAX_PERGUNTAS_SALA = 10
+
 class MultiMatchRepository {
 
     private val db get() = FirebaseDatabase.getInstance()
     private fun room(salaId: String) = db.getReference("multisalas").child(salaId)
     private fun pending(queueKey: String) = db.getReference("matchmakingN").child(queueKey).child("pending")
     private fun notify(queueKey: String) = db.getReference("matchmakingN").child(queueKey).child("notify")
+    private fun lobbiesRef(formatId: String) = db.getReference("lobbies").child(formatId)
 
     suspend fun serverTimeOffset(): Long {
         val snap = db.getReference(".info/serverTimeOffset").get().await()
         return snap.getValue(Long::class.java) ?: 0L
     }
 
-    /**
-     * Generalized version of the 1x1 single-slot pairing: an atomic transaction on a
-     * `pending` list that accumulates waiting players and, once it reaches [format].players,
-     * atomically claims the first N as a match (this client becomes host).
-     */
-    suspend fun joinQueue(format: MatchFormat, queueKey: String, uid: String, nome: String): FormResult =
-        suspendCancellableCoroutine { cont ->
-            val now = System.currentTimeMillis()
-            var result: FormResult = FormResult.Waiting
-            pending(queueKey).runTransaction(object : Transaction.Handler {
-                override fun doTransaction(data: MutableData): Transaction.Result {
-                    val entries = data.children.map { c ->
-                        Triple(
-                            c.key ?: "",
-                            c.child("nome").getValue(String::class.java) ?: "",
-                            c.child("ts").getValue(Long::class.java) ?: 0L
-                        )
-                    }.toMutableList()
-                    entries.removeAll { it.first == uid }
-                    entries.add(Triple(uid, nome, now))
-                    entries.sortBy { it.third }
+    suspend fun findOrCreateLobby(
+        format: MatchFormat,
+        categoria: String,
+        modo: String,
+        uid: String,
+        nome: String
+    ): Pair<String, Boolean> = suspendCancellableCoroutine { cont ->
+        val ref = lobbiesRef(format.id)
+        ref.runTransaction(object : Transaction.Handler {
+            var assignedLobbyId: String = ""
+            var isHost: Boolean = false
 
-                    if (entries.size >= format.players) {
-                        val chosen = entries.take(format.players)
-                        val remaining = entries.drop(format.players)
-                        data.value = if (remaining.isEmpty()) null
-                        else remaining.associate { it.first to mapOf("nome" to it.second, "ts" to it.third) }
-                        result = if (chosen.any { it.first == uid }) {
-                            FormResult.Host(chosen.map { it.first to it.second })
-                        } else {
-                            FormResult.Waiting
-                        }
-                    } else {
-                        data.value = entries.associate { it.first to mapOf("nome" to it.second, "ts" to it.third) }
-                        result = FormResult.Waiting
+            override fun doTransaction(data: MutableData): Transaction.Result {
+                val now = System.currentTimeMillis()
+                var openLobbyChild: MutableData? = null
+                for (child in data.children) {
+                    val estado = child.child("estado").getValue(String::class.java) ?: "waiting"
+                    val cat = child.child("categoria").getValue(String::class.java) ?: ""
+                    val mode = child.child("modo").getValue(String::class.java) ?: "classico"
+                    val membrosCount = child.child("membros").childrenCount.toInt()
+                    if (estado == "waiting" && membrosCount < format.players && cat == categoria && mode == modo) {
+                        openLobbyChild = child
+                        break
                     }
-                    return Transaction.success(data)
                 }
 
-                override fun onComplete(error: DatabaseError?, committed: Boolean, snapshot: DataSnapshot?) {
-                    if (error != null) cont.resumeWithException(error.toException())
-                    else if (!committed) cont.resumeWithException(IllegalStateException("Matchmaking ocupado, tenta de novo"))
-                    else cont.resume(result)
+                if (openLobbyChild != null) {
+                    assignedLobbyId = openLobbyChild.key ?: ""
+                    isHost = openLobbyChild.child("hostUid").getValue(String::class.java) == uid
+                    openLobbyChild.child("membros").child(uid).child("nome").value = nome
+                    openLobbyChild.child("membros").child(uid).child("ts").value = now
+                } else {
+                    val newKey = ref.push().key ?: "lobby_${now}"
+                    assignedLobbyId = newKey
+                    isHost = true
+                    val newLobby = data.child(newKey)
+                    newLobby.child("hostUid").value = uid
+                    newLobby.child("hostNome").value = nome
+                    newLobby.child("format").value = format.id
+                    newLobby.child("categoria").value = categoria
+                    newLobby.child("modo").value = modo
+                    newLobby.child("estado").value = "waiting"
+                    newLobby.child("criadoEm").value = now
+                    newLobby.child("membros").child(uid).child("nome").value = nome
+                    newLobby.child("membros").child(uid).child("ts").value = now
                 }
-            })
-        }
+                return Transaction.success(data)
+            }
 
-    suspend fun cancelQueue(queueKey: String, uid: String) {
-        suspendCancellableCoroutine<Unit> { cont ->
-            pending(queueKey).runTransaction(object : Transaction.Handler {
-                override fun doTransaction(data: MutableData): Transaction.Result {
-                    data.child(uid).value = null
-                    return Transaction.success(data)
-                }
-                override fun onComplete(e: DatabaseError?, c: Boolean, s: DataSnapshot?) { cont.resume(Unit) }
-            })
-        }
-        notify(queueKey).child(uid).removeValue().await()
+            override fun onComplete(error: DatabaseError?, committed: Boolean, snapshot: DataSnapshot?) {
+                if (error != null) cont.resumeWithException(error.toException())
+                else cont.resume(assignedLobbyId to isHost)
+            }
+        })
     }
 
-    fun listenForMatch(queueKey: String, uid: String): Flow<String> = callbackFlow {
-        val ref = notify(queueKey).child(uid)
+    fun observeOpenLobbies(formatId: String): Flow<List<LobbyData>> = callbackFlow {
+        val ref = lobbiesRef(formatId)
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                snapshot.getValue(String::class.java)?.let { trySend(it) }
+                val list = snapshot.children.mapNotNull { child ->
+                    val estado = child.child("estado").getValue(String::class.java) ?: "waiting"
+                    if (estado != "waiting") return@mapNotNull null
+                    val lobbyId = child.key ?: return@mapNotNull null
+                    val hostUid = child.child("hostUid").getValue(String::class.java) ?: ""
+                    val hostNome = child.child("hostNome").getValue(String::class.java) ?: ""
+                    val cat = child.child("categoria").getValue(String::class.java) ?: ""
+                    val mode = child.child("modo").getValue(String::class.java) ?: "classico"
+                    val salaId = child.child("salaId").getValue(String::class.java)
+                    val membros = child.child("membros").children.mapNotNull { c ->
+                        val uid = c.key ?: return@mapNotNull null
+                        val name = c.child("nome").getValue(String::class.java) ?: "Jogador"
+                        val ts = c.child("ts").getValue(Long::class.java) ?: 0L
+                        Triple(uid, name, ts)
+                    }.sortedBy { it.third }.map { it.first to it.second }
+
+                    LobbyData(
+                        lobbyId = lobbyId,
+                        hostUid = hostUid,
+                        hostNome = hostNome,
+                        format = MatchFormat.fromId(formatId),
+                        categoria = cat,
+                        modo = mode,
+                        estado = estado,
+                        salaId = salaId,
+                        membros = membros
+                    )
+                }
+                trySend(list)
             }
             override fun onCancelled(error: DatabaseError) { close(error.toException()) }
         }
@@ -133,8 +185,117 @@ class MultiMatchRepository {
         awaitClose { ref.removeEventListener(listener) }
     }
 
-    suspend fun clearNotify(queueKey: String, uid: String) {
-        notify(queueKey).child(uid).removeValue().await()
+    suspend fun joinLobbyById(formatId: String, lobbyId: String, uid: String, nome: String): Boolean =
+        suspendCancellableCoroutine { cont ->
+            val ref = lobbiesRef(formatId).child(lobbyId)
+            ref.runTransaction(object : Transaction.Handler {
+                var success = false
+                override fun doTransaction(data: MutableData): Transaction.Result {
+                    val estado = data.child("estado").getValue(String::class.java) ?: "waiting"
+                    val fmtId = data.child("format").getValue(String::class.java) ?: formatId
+                    val format = MatchFormat.fromId(fmtId)
+                    val count = data.child("membros").childrenCount.toInt()
+                    if (estado == "waiting" && count < format.players) {
+                        val now = System.currentTimeMillis()
+                        data.child("membros").child(uid).child("nome").value = nome
+                        data.child("membros").child(uid).child("ts").value = now
+                        success = true
+                    }
+                    return Transaction.success(data)
+                }
+
+                override fun onComplete(error: DatabaseError?, committed: Boolean, snapshot: DataSnapshot?) {
+                    if (error != null) cont.resumeWithException(error.toException())
+                    else cont.resume(success)
+                }
+            })
+        }
+
+    fun observeLobby(formatId: String, lobbyId: String): Flow<LobbyData?> = callbackFlow {
+        val ref = lobbiesRef(formatId).child(lobbyId)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (!snapshot.exists()) {
+                    trySend(null)
+                    return
+                }
+                val hostUid = snapshot.child("hostUid").getValue(String::class.java) ?: ""
+                val hostNome = snapshot.child("hostNome").getValue(String::class.java) ?: ""
+                val cat = snapshot.child("categoria").getValue(String::class.java) ?: ""
+                val mode = snapshot.child("modo").getValue(String::class.java) ?: "classico"
+                val estado = snapshot.child("estado").getValue(String::class.java) ?: "waiting"
+                val salaId = snapshot.child("salaId").getValue(String::class.java)
+                val membros = snapshot.child("membros").children.mapNotNull { c ->
+                    val uid = c.key ?: return@mapNotNull null
+                    val name = c.child("nome").getValue(String::class.java) ?: "Jogador"
+                    val ts = c.child("ts").getValue(Long::class.java) ?: 0L
+                    Triple(uid, name, ts)
+                }.sortedBy { it.third }.map { it.first to it.second }
+
+                trySend(
+                    LobbyData(
+                        lobbyId = lobbyId,
+                        hostUid = hostUid,
+                        hostNome = hostNome,
+                        format = MatchFormat.fromId(formatId),
+                        categoria = cat,
+                        modo = mode,
+                        estado = estado,
+                        salaId = salaId,
+                        membros = membros
+                    )
+                )
+            }
+            override fun onCancelled(error: DatabaseError) { close(error.toException()) }
+        }
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    suspend fun leaveLobby(formatId: String, lobbyId: String, uid: String) {
+        val ref = lobbiesRef(formatId).child(lobbyId)
+        suspendCancellableCoroutine<Unit> { cont ->
+            ref.runTransaction(object : Transaction.Handler {
+                override fun doTransaction(data: MutableData): Transaction.Result {
+                    data.child("membros").child(uid).value = null
+                    val remaining = data.child("membros").children.mapNotNull { c ->
+                        val mUid = c.key ?: return@mapNotNull null
+                        val mNome = c.child("nome").getValue(String::class.java) ?: "Jogador"
+                        val mTs = c.child("ts").getValue(Long::class.java) ?: 0L
+                        Triple(mUid, mNome, mTs)
+                    }.sortedBy { it.third }
+
+                    if (remaining.isEmpty()) {
+                        data.value = null
+                    } else {
+                        val hostUid = data.child("hostUid").getValue(String::class.java)
+                        if (uid == hostUid) {
+                            val newHost = remaining.first()
+                            data.child("hostUid").value = newHost.first
+                            data.child("hostNome").value = newHost.second
+                        }
+                    }
+                    return Transaction.success(data)
+                }
+                override fun onComplete(e: DatabaseError?, c: Boolean, s: DataSnapshot?) { cont.resume(Unit) }
+            })
+        }
+    }
+
+    suspend fun startLobbyRoom(
+        formatId: String,
+        lobbyId: String,
+        hostUid: String,
+        membros: List<Pair<String, String>>,
+        questions: List<Question>,
+        categoria: String,
+        modo: String
+    ): String {
+        val salaId = createRoomDirect(MatchFormat.fromId(formatId), hostUid, membros, questions, categoria, modo)
+        val ref = lobbiesRef(formatId).child(lobbyId)
+        ref.child("salaId").setValue(salaId).await()
+        ref.child("estado").setValue("started").await()
+        return salaId
     }
 
     /**
@@ -310,5 +471,94 @@ class MultiMatchRepository {
             perguntaInicios = inicios,
             pontuacoes = pontuacoes
         )
+    }
+
+    suspend fun createPrivateRoomWithCode(
+        format: MatchFormat,
+        hostUid: String,
+        hostNome: String,
+        categoria: String,
+        modo: String,
+        questions: List<Question>
+    ): Pair<String, String> {
+        val lobbyRef = db.getReference("lobbies").child(format.id).push()
+        val lobbyId = lobbyRef.key!!
+        val now = System.currentTimeMillis()
+
+        // 1) O lobby primeiro. As rules de `/salas_privadas` exigem que quem regista o código
+        //    seja o anfitrião do lobby referido, por isso o lobby tem de já existir em `root`.
+        lobbyRef.setValue(
+            mapOf(
+                "id" to lobbyId,
+                "hostUid" to hostUid,
+                "hostNome" to hostNome,
+                "format" to format.id,
+                "categoria" to categoria,
+                "modo" to modo,
+                "estado" to "waiting",
+                "criadoEm" to now,
+                "membros" to mapOf(hostUid to mapOf("nome" to hostNome, "ts" to now))
+            )
+        ).await()
+
+        // 2) Reserva do código, com retentativa. A entrada é create-once nas rules, por isso uma
+        //    colisão (só há 9000 códigos de 4 dígitos) falha em vez de repontar silenciosamente
+        //    o código de outra sala — que era o que aconteceria sem a regra.
+        val code = reserveRoomCode(lobbyId, format.id)
+        lobbyRef.child("codigo").setValue(code).await()
+
+        // 3) A sala em si. `membrosNomes` começa só com o anfitrião; quem entrar pelo código
+        //    acrescenta-se a si próprio (ver `joinPrivateRoomWithCode`).
+        db.getReference("multisalas").child(lobbyId).child("meta").setValue(
+            mapOf(
+                "hostUid" to hostUid,
+                "format" to format.id,
+                "categoria" to categoria,
+                "modo" to modo,
+                "criadoEm" to now,
+                "membros" to listOf(hostUid),
+                "membrosNomes" to mapOf(hostUid to hostNome),
+                // Limitado a MAX_PERGUNTAS_SALA: as rules travam `respostasCertas <= 10` e
+                // `total <= 20` nas pontuações, por isso um quiz maior fazia a gravação do
+                // resultado ser recusada no fim da partida — depois de já se ter jogado.
+                "perguntas" to questions.take(MAX_PERGUNTAS_SALA).map { it.toMap() }
+            )
+        ).await()
+
+        return lobbyId to code
+    }
+
+    /** Tenta códigos de 4 dígitos até um vingar. Lança se não conseguir em [tentativas]. */
+    private suspend fun reserveRoomCode(lobbyId: String, formatId: String, tentativas: Int = 12): String {
+        val payload = mapOf("lobbyId" to lobbyId, "format" to formatId)
+        repeat(tentativas) {
+            val code = (1000..9999).random().toString()
+            val ok = runCatching {
+                db.getReference("salas_privadas").child(code).setValue(payload).await()
+            }.isSuccess
+            if (ok) return code
+        }
+        error("Não foi possível gerar um código de sala livre")
+    }
+
+    suspend fun joinPrivateRoomWithCode(code: String, uid: String, nome: String): Pair<String, String>? {
+        val snap = db.getReference("salas_privadas").child(code.trim()).get().await()
+        val lobbyId = snap.child("lobbyId").getValue(String::class.java) ?: return null
+        val formatId = snap.child("format").getValue(String::class.java) ?: "grupo"
+
+        val lobbyRef = db.getReference("lobbies").child(formatId).child(lobbyId)
+        if (!lobbyRef.get().await().exists()) return null
+
+        // Entrar no lobby primeiro: é a pertença ao lobby que as rules exigem para deixar
+        // alguém inscrever-se em `meta/membrosNomes`.
+        lobbyRef.child("membros").child(uid)
+            .setValue(mapOf("nome" to nome, "ts" to System.currentTimeMillis())).await()
+
+        // E só então na sala. Sem este passo o jogador entrava no lobby mas não conseguia LER a
+        // multisala (a regra de leitura exige constar de `membrosNomes`), e o jogo ficava preso.
+        db.getReference("multisalas").child(lobbyId)
+            .child("meta").child("membrosNomes").child(uid).setValue(nome).await()
+
+        return formatId to lobbyId
     }
 }
