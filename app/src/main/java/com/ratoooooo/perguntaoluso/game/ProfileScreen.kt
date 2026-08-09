@@ -40,7 +40,7 @@ import com.ratoooooo.perguntaoluso.ui.theme.Gold
 import com.ratoooooo.perguntaoluso.ui.theme.Ink
 import com.ratoooooo.perguntaoluso.ui.theme.Lavender
 import com.ratoooooo.perguntaoluso.ui.theme.LevelBadge
-import com.ratoooooo.perguntaoluso.ui.theme.Purple
+import com.ratoooooo.perguntaoluso.ui.theme.SegmentedTabs
 import com.ratoooooo.perguntaoluso.ui.theme.XpBar
 import com.ratoooooo.perguntaoluso.ui.theme.StickerTextField
 import com.ratoooooo.perguntaoluso.ui.theme.Teal
@@ -64,6 +64,7 @@ fun ProfileScreen(
     val p = profile ?: Profile()
     var editing by remember { mutableStateOf(false) }
     var nome by remember(p.nome) { mutableStateOf(p.nome) }
+    var selectedMode by remember { mutableStateOf("classico") }
 
     MainScaffold(
         active = com.ratoooooo.perguntaoluso.ui.theme.NavTab.PROFILE,
@@ -82,8 +83,11 @@ fun ProfileScreen(
             Spacer(Modifier.size(16.dp))
             Text(p.nomeVisivel, style = MaterialTheme.typography.headlineLarge, color = Ink, modifier = Modifier.weight(1f))
             Spacer(Modifier.size(12.dp))
+            // Editar nome é uma ação rara e passa a botão de contorno (como no mockup,
+            // ecrã 14). Era dourado, exactamente igual a CONQUISTAS logo abaixo — dois
+            // "primários" no mesmo ecrã, e o mais raro dos dois era o mais visível.
             Box(
-                Modifier.size(44.dp).stickerCircle(fillColor = Gold, shadowOffset = 3.dp).clickable { editing = !editing },
+                Modifier.size(44.dp).stickerCircle(fillColor = Lavender, shadowOffset = 3.dp, borderWidth = 2.dp).clickable { editing = !editing },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(if (editing) Icons.Rounded.Check else Icons.Rounded.Edit, contentDescription = "Editar nome", tint = Ink, modifier = Modifier.size(22.dp))
@@ -138,10 +142,15 @@ fun ProfileScreen(
         Spacer(Modifier.size(24.dp))
         Text("Por modo", style = MaterialTheme.typography.titleLarge, color = Ink)
         Spacer(Modifier.size(12.dp))
-        listOf("classico" to "Clássico", "caotico" to "Caótico", "eliminatorias" to "Eliminatórias").forEach { (id, label) ->
-            ModeStatsCard(label, p.modos[id] ?: ModeStats())
-            Spacer(Modifier.size(12.dp))
-        }
+        val modeTabs = listOf("classico" to "Clássico", "caotico" to "Caótico", "eliminatorias" to "Eliminatórias")
+        val modeIndex = modeTabs.indexOfFirst { it.first == selectedMode }.coerceAtLeast(0)
+        SegmentedTabs(
+            labels = modeTabs.map { it.second },
+            selectedIndex = modeIndex,
+            onSelect = { selectedMode = modeTabs[it].first }
+        )
+        Spacer(Modifier.size(12.dp))
+        ModeStatsCard(modeTabs[modeIndex].second, p.modos[selectedMode] ?: ModeStats())
 
         // Terminar sessão vive só aqui, no fim do Perfil: é raro e destrutivo, por isso
         // aparece pequeno, alinhado à direita e discreto — não compete com nenhuma ação.
