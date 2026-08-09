@@ -80,4 +80,34 @@ class AuthRepository {
         auth.signOut()
         return ensureSignedIn()
     }
+
+    /**
+     * Proves the password again for a session that is too old to perform a sensitive operation.
+     * Firebase refuses `delete()` with `FirebaseAuthRecentLoginRequiredException` when the sign-in
+     * is stale; this is the only way back.
+     */
+    suspend fun reauthenticateWithPassword(password: String) {
+        val user = auth.currentUser ?: error("reauthenticate sem sessão")
+        val email = user.email ?: error("reauthenticate numa conta sem e-mail")
+        val credential = EmailAuthProvider.getCredential(email, password)
+        suspendCancellableCoroutine { cont ->
+            user.reauthenticate(credential)
+                .addOnSuccessListener { cont.resume(Unit) }
+                .addOnFailureListener { cont.resumeWithException(it) }
+        }
+    }
+
+    /**
+     * Deletes the Firebase Auth account. Call **only** after the database purge has succeeded —
+     * once the account is gone the uid can no longer write anything, so any data left behind
+     * would be unreachable forever.
+     */
+    suspend fun deleteCurrentUser() {
+        val user = auth.currentUser ?: error("delete sem sessão")
+        suspendCancellableCoroutine { cont ->
+            user.delete()
+                .addOnSuccessListener { cont.resume(Unit) }
+                .addOnFailureListener { cont.resumeWithException(it) }
+        }
+    }
 }

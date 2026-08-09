@@ -58,7 +58,11 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
             onAvatarClick = viewModel::goToAvatar,
             onAchievementsClick = viewModel::goToAchievements,
             onSignOut = viewModel::signOut,
-            isRegistered = state.userInfo?.isAnonymous == false
+            isRegistered = state.userInfo?.isAnonymous == false,
+            delete = state.delete,
+            onOpenDelete = viewModel::openDeleteAccount,
+            onDismissDelete = viewModel::dismissDeleteAccount,
+            onConfirmDelete = viewModel::confirmDeleteAccount
         )
 
         state.screen == GameScreen.AVATAR -> com.ratoooooo.perguntaoluso.game.avatar.AvatarPickerScreen(

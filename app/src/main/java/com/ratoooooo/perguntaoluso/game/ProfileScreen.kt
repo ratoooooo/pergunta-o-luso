@@ -15,9 +15,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Logout
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,7 +44,9 @@ import com.ratoooooo.perguntaoluso.ui.theme.Gold
 import com.ratoooooo.perguntaoluso.ui.theme.Ink
 import com.ratoooooo.perguntaoluso.ui.theme.Lavender
 import com.ratoooooo.perguntaoluso.ui.theme.LevelBadge
+import com.ratoooooo.perguntaoluso.ui.theme.Neutral
 import com.ratoooooo.perguntaoluso.ui.theme.SegmentedTabs
+import com.ratoooooo.perguntaoluso.ui.theme.StickerDialog
 import com.ratoooooo.perguntaoluso.ui.theme.XpBar
 import com.ratoooooo.perguntaoluso.ui.theme.StickerTextField
 import com.ratoooooo.perguntaoluso.ui.theme.Teal
@@ -59,7 +65,11 @@ fun ProfileScreen(
     onAvatarClick: () -> Unit,
     onAchievementsClick: () -> Unit,
     onSignOut: () -> Unit,
-    isRegistered: Boolean
+    isRegistered: Boolean,
+    delete: DeleteAccountUi = DeleteAccountUi(),
+    onOpenDelete: () -> Unit = {},
+    onDismissDelete: () -> Unit = {},
+    onConfirmDelete: (String?) -> Unit = {}
 ) {
     val p = profile ?: Profile()
     var editing by remember { mutableStateOf(false) }
@@ -170,8 +180,138 @@ fun ProfileScreen(
                 }
             }
         }
+
+        // Eliminar conta: exigido pela Play Store para qualquer app que permita criar conta.
+        // Fica no fim, separado de "Terminar sessão" por uma linha e um espaço maior, e é o
+        // único elemento do ecrã pintado de Coral cheio — terminar sessão é recuperável, isto
+        // não é, e as duas não podem parecer a mesma classe de ação.
+        Spacer(Modifier.size(28.dp))
+        HorizontalDivider(color = Ink.copy(alpha = 0.12f), thickness = 2.dp)
+        Spacer(Modifier.size(20.dp))
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .stickerBlock(fillColor = Coral, cornerRadius = 18.dp, shadowOffset = 4.dp)
+                .clickable(onClick = onOpenDelete)
+                .padding(vertical = 14.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Rounded.DeleteForever,
+                contentDescription = null,
+                tint = textColorFor(Coral),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.size(10.dp))
+            Text(
+                "Eliminar conta",
+                style = MaterialTheme.typography.labelLarge,
+                color = textColorFor(Coral)
+            )
+        }
+        Spacer(Modifier.size(8.dp))
+        Text(
+            "Apaga permanentemente o teu perfil, histórico, amigos e quizzes.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Ink.copy(alpha = 0.6f)
+        )
         Spacer(Modifier.size(16.dp))
       }
+    }
+
+    if (delete.open) {
+        DeleteAccountDialog(
+            state = delete,
+            onDismiss = onDismissDelete,
+            onConfirm = onConfirmDelete
+        )
+    }
+}
+
+private const val PALAVRA_CONFIRMACAO = "ELIMINAR"
+
+/**
+ * Confirmação explícita antes de uma ação irreversível. Escrever a palavra é deliberado: um
+ * segundo botão "tem a certeza?" aceita-se por reflexo, escrever `ELIMINAR` obriga a ler.
+ */
+@Composable
+private fun DeleteAccountDialog(
+    state: DeleteAccountUi,
+    onDismiss: () -> Unit,
+    onConfirm: (String?) -> Unit
+) {
+    var confirmacao by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    val palavraOk = confirmacao.trim().equals(PALAVRA_CONFIRMACAO, ignoreCase = true)
+    val passwordOk = !state.needsPassword || password.isNotBlank()
+    val podeEliminar = palavraOk && passwordOk && !state.working
+
+    StickerDialog(onDismissRequest = { if (!state.working) onDismiss() }, fillColor = Cream) {
+        Text("Eliminar conta", style = MaterialTheme.typography.titleLarge, color = Coral)
+        Spacer(Modifier.size(12.dp))
+        Text(
+            "Esta ação é permanente e não pode ser anulada. Vamos apagar:",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Ink
+        )
+        Spacer(Modifier.size(10.dp))
+        listOf(
+            "o teu perfil, nível e conquistas",
+            "todo o teu histórico de jogos",
+            "os teus amigos e convites pendentes",
+            "os quizzes da comunidade que criaste"
+        ).forEach { linha ->
+            Text("•  $linha", style = MaterialTheme.typography.bodyLarge, color = Ink)
+        }
+        Spacer(Modifier.size(16.dp))
+        Text(
+            "Escreve $PALAVRA_CONFIRMACAO para confirmar:",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Ink
+        )
+        Spacer(Modifier.size(8.dp))
+        StickerTextField(
+            value = confirmacao,
+            onValueChange = { confirmacao = it },
+            placeholder = PALAVRA_CONFIRMACAO,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        if (state.needsPassword) {
+            Spacer(Modifier.size(12.dp))
+            StickerTextField(
+                value = password,
+                onValueChange = { password = it },
+                placeholder = "Palavra-passe",
+                icon = Icons.Rounded.Lock,
+                isPassword = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        if (state.error != null) {
+            Spacer(Modifier.size(10.dp))
+            Text(state.error, style = MaterialTheme.typography.bodyMedium, color = Coral)
+        }
+
+        Spacer(Modifier.size(18.dp))
+        StickerButton(
+            text = if (state.working) "A ELIMINAR…" else "ELIMINAR DEFINITIVAMENTE",
+            icon = Icons.Rounded.DeleteForever,
+            onClick = { if (podeEliminar) onConfirm(password.takeIf { state.needsPassword }) },
+            fillColor = if (podeEliminar) Coral else Neutral,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.size(10.dp))
+        StickerButton(
+            text = "CANCELAR",
+            icon = Icons.Rounded.Close,
+            onClick = { if (!state.working) onDismiss() },
+            fillColor = Lavender,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

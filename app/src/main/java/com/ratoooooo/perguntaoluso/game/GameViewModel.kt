@@ -2,6 +2,8 @@ package com.ratoooooo.perguntaoluso.game
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
+import com.ratoooooo.perguntaoluso.data.AccountDeletionRepository
 import com.ratoooooo.perguntaoluso.data.AuthRepository
 import com.ratoooooo.perguntaoluso.data.CategoryRepository
 import com.ratoooooo.perguntaoluso.data.CONVITE_ACEITE
@@ -37,6 +39,17 @@ enum class GameScreen { START, LOGIN, REGISTER, RANKING, HISTORY, PROFILE, AVATA
 
 /** Correct answers needed (out of total) for a Clássico/Caótico "win". */
 private const val WIN_ACCURACY = 0.7
+
+/**
+ * Estado do fluxo de eliminação de conta (Perfil). [needsPassword] só fica a `true` quando o
+ * Firebase recusa o `delete()` por a sessão ser antiga — aí o diálogo pede a palavra-passe.
+ */
+data class DeleteAccountUi(
+    val open: Boolean = false,
+    val working: Boolean = false,
+    val needsPassword: Boolean = false,
+    val error: String? = null
+)
 
 data class GameUiState(
     val screen: GameScreen = GameScreen.START,
@@ -91,6 +104,7 @@ data class GameUiState(
     val desafioAviso: String? = null,
     /** Room id when this match came from a direct challenge (null = random matchmaking). */
     val multiSalaId: String? = null,
+    val delete: DeleteAccountUi = DeleteAccountUi(),
     val isLoading: Boolean = false,
     val error: String? = null
 ) {
@@ -114,7 +128,8 @@ class GameViewModel(
     private val presenceRepository: PresenceRepository = PresenceRepository(),
     private val friendsRepository: FriendsRepository = FriendsRepository(),
     private val challengeRepository: ChallengeRepository = ChallengeRepository(),
-    private val matchRepository: MultiMatchRepository = MultiMatchRepository()
+    private val matchRepository: MultiMatchRepository = MultiMatchRepository(),
+    private val deletionRepository: AccountDeletionRepository = AccountDeletionRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GameUiState())
@@ -226,6 +241,66 @@ class GameViewModel(
         viewModelScope.launch {
             runCatching { authRepository.signOutToAnonymous() }
             _uiState.value = _uiState.value.copy(screen = GameScreen.START, profile = null)
+            refreshProfile()
+        }
+    }
+
+    // ---- Eliminação de conta (exigida pela Play Store) ----
+
+    fun openDeleteAccount() {
+        _uiState.value = _uiState.value.copy(delete = DeleteAccountUi(open = true))
+    }
+
+    fun dismissDeleteAccount() {
+        if (_uiState.value.delete.working) return
+        _uiState.value = _uiState.value.copy(delete = DeleteAccountUi())
+    }
+
+    /**
+     * Purga os dados e só então apaga a conta do Auth — por esta ordem, porque depois do
+     * `delete()` o uid deixa de poder escrever seja o que for e tudo o que ficasse para trás
+     * ficaria inalcançável para sempre.
+     *
+     * [password] só vem preenchida na segunda tentativa, depois de o Firebase pedir
+     * reautenticação. A purga é idempotente, por isso repeti-la nessa retentativa é inofensivo.
+     */
+    fun confirmDeleteAccount(password: String?) {
+        val uid = _uiState.value.userInfo?.uid ?: authRepository.currentUserInfo()?.uid ?: return
+        _uiState.value = _uiState.value.copy(
+            delete = _uiState.value.delete.copy(working = true, error = null)
+        )
+        viewModelScope.launch {
+            try {
+                if (!password.isNullOrBlank()) authRepository.reauthenticateWithPassword(password)
+                deletionRepository.purge(uid)
+                authRepository.deleteCurrentUser()
+            } catch (e: FirebaseAuthRecentLoginRequiredException) {
+                // Os dados já saíram; falta só a conta. O diálogo fica aberto a pedir a
+                // palavra-passe em vez de fechar e deixar o utilizador sem saber o que aconteceu.
+                _uiState.value = _uiState.value.copy(
+                    delete = DeleteAccountUi(
+                        open = true,
+                        needsPassword = true,
+                        error = "Por segurança, confirma a palavra-passe para concluir."
+                    )
+                )
+                return@launch
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    delete = _uiState.value.delete.copy(
+                        working = false,
+                        error = friendlyAuthError(e)
+                    )
+                )
+                return@launch
+            }
+
+            // Conta apagada. Volta a uma sessão anónima limpa para a app continuar jogável.
+            runCatching { authRepository.ensureSignedIn() }
+            _uiState.value = GameUiState(
+                screen = GameScreen.START,
+                userInfo = authRepository.currentUserInfo()
+            )
             refreshProfile()
         }
     }
