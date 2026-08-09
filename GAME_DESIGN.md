@@ -1,5 +1,18 @@
 # Pergunta ó Luso — Design & Game Rules
 
+> ## ⚠️ Isto é o ARQUIVO histórico, não o ponto de entrada
+>
+> **Para o estado atual do projeto, começa em
+> [`docs/vault/00-indice.md`](docs/vault/00-indice.md)** — um ecrã, com links para notas curtas
+> por tema. Este ficheiro tem ~3000 linhas e 33 fases em ordem cronológica; serve para perceber
+> *como se chegou* a uma decisão, não *como está* hoje.
+>
+> **As secções abaixo, até à "Phase 11", são o desenho ORIGINAL e foram superadas** pelas fases
+> seguintes sem serem reescritas — descrevem, entre outras coisas, um 1x1 autónomo que já não
+> existe, caminhos de RTDB já removidos, e um Grupo de 4 jogadores que hoje é de 4 a 10. Ver
+> [`docs/vault/historico-fases/README.md`](docs/vault/historico-fases/README.md) para a lista do
+> que está desatualizado aqui.
+
 Solo trivia game (Android, Kotlin, Jetpack Compose). Optional accounts (anonymous by
 default, email/password sign-up available), no multiplayer. Firebase Realtime Database
 + Firebase Auth. Sticker/comic visual style.
