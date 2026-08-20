@@ -67,6 +67,19 @@ object SoundEffects {
 
     private const val MAX_STREAMS = 4
 
+    /**
+     * Volume de cada stream. **Não é 1.0 de propósito.**
+     *
+     * As amostras têm pico a 72 % da escala. Duas a tocar ao mesmo tempo a volume 1.0 somam
+     * ~144 % e o mixer corta o que passa do limite — ouve-se como um estalo ou um zumbido sujo,
+     * e era isto a "interferência". A 0.7 duas somam ~101 % no pior caso (só se os picos
+     * coincidirem exactamente, que é raro) e três já são improváveis por causa de [ultimoStream].
+     *
+     * O jogador não perde volume real: isto é relativo ao volume de multimédia dele, que continua
+     * a mandar.
+     */
+    private const val VOLUME = 0.7f
+
     @Volatile
     private var pool: SoundPool? = null
 
@@ -75,6 +88,16 @@ object SoundEffects {
 
     /** sampleIds já descodificados e prontos a tocar. */
     private val prontos = ConcurrentHashMap.newKeySet<Int>()
+
+    /**
+     * Efeito -> streamId ainda a tocar, para o **mesmo** som não se sobrepor a si próprio.
+     *
+     * Retocar um efeito que ainda está a soar corta o anterior em vez de os somar. Dois exemplares
+     * da mesma amostra em fase quase igual duplicam a amplitude e distorcem; e ninguém quer ouvir
+     * o mesmo "subiu de nível" duas vezes em eco. Efeitos **diferentes** continuam a misturar-se
+     * normalmente — é isso que dá a camada de vitória + nível + conquista.
+     */
+    private val ultimoStream = ConcurrentHashMap<Efeito, Int>()
 
     /**
      * Carrega as amostras. Idempotente — chamar duas vezes não duplica nada.
@@ -115,8 +138,11 @@ object SoundEffects {
             init(context)
             if (podeTocarSom(context)) {
                 val id = amostras[efeito]
-                if (id != null && prontos.contains(id)) {
-                    pool?.play(id, 1f, 1f, 1, 0, 1f)
+                val p = pool
+                if (id != null && p != null && prontos.contains(id)) {
+                    ultimoStream.remove(efeito)?.let { runCatching { p.stop(it) } }
+                    val stream = p.play(id, VOLUME, VOLUME, 1, 0, 1f)
+                    if (stream != 0) ultimoStream[efeito] = stream
                 }
             }
             vibrar(context, efeito.haptico)
@@ -130,6 +156,7 @@ object SoundEffects {
             pool = null
             amostras.clear()
             prontos.clear()
+            ultimoStream.clear()
         }
     }
 

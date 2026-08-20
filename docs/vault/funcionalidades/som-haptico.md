@@ -47,6 +47,34 @@ mesmo ao contrário. 22,05 kHz mono, **184 KB** ao todo.
 
 ## Quando tocam
 
+## A interferência de 9 ago 2026
+
+Reportado um artefacto no som. **Não estava nos ficheiros.** Analisados os seis: todos mono,
+22 050 Hz, 16 bits — taxa consistente —, sem clipping, sem desvio DC, e com espectro limpo
+(1–2 % de energia acima de 8 kHz, picos em intervalos musicais e não aliasing). Duas hipóteses
+plausíveis eliminadas por medição, não por opinião.
+
+Estava na reprodução, em dois sítios:
+
+1. **Sem margem no mixer.** Cada amostra tem pico a 72 % da escala e tocava a volume `1.0`. Dois
+   sons ao mesmo tempo somavam ~144 % e o mixer cortava — ouve-se como estalo ou zumbido sujo.
+   Agora tocam a **0.7**, e duas em simultâneo cabem. O volume real continua a ser o de
+   multimédia do jogador.
+2. **O mesmo som a sobrepor-se a si próprio.** No pódio, `LaunchedEffect(subiuDeNivel,
+   novasConquistas)` tinha as chaves nos dados que chegam **tarde** (nível e conquistas vêm da
+   agregação). Cada chegada cancelava e reiniciava o bloco, e o "subiu de nível" recomeçava — dois
+   exemplares da mesma amostra quase em fase, ou seja o dobro da amplitude. Cada som passou a ter
+   a sua própria trava, e o `SoundEffects` guarda o `streamId` por efeito e **corta o anterior**
+   antes de retocar o mesmo som. Efeitos diferentes continuam a misturar-se.
+
+Confirmado com registo instrumentado (removido depois): numa partida ganha com subida de nível,
+`VITORIA` uma vez e `SUBIU_NIVEL` uma vez; numa sequência de respostas, cada `CERTO` a cortar o
+`CERTO` anterior e o `ERRADO` a ser gerido em paralelo.
+
+> **Por confirmar: nada disto foi ouvido.** Os emuladores desta máquina correm com `-no-audio`.
+> O que se verificou foi a *lógica* de reprodução e as propriedades dos ficheiros; que o
+> artefacto desapareceu aos ouvidos ainda precisa de um dispositivo real.
+
 O som segue o **estado**, não o toque (`LaunchedEffect(isAnswered, …)`) — por isso o **tempo
 esgotado também soa**, que é precisamente quando o jogador não está a olhar para o ecrã.
 
