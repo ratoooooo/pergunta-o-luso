@@ -39,11 +39,6 @@ Consolidado das listas "Por fazer" espalhadas pelas fases. Ordenado por o que bl
 
 ## Defeitos abertos
 
-**A. Título do pódio pára no 4.º lugar.** `MultiMatchViewModel.kt:559` —
-`else -> "4.º lugar"`. Num Grupo de 5 a 10, quem termina do 5.º para baixo lê *"4.º lugar"*
-enquanto a sua linha diz **#5**. Observado a 9 ago 2026 numa sala de 5. O `when` ficou com a
-forma de quando o Grupo eram 4 fixos.
-
 **B. `observeRoom` mata a app quando a RTDB cancela o listener.**
 `MultiMatchViewModel.observeRoom` (linha ~300) faz `collect` sem `runCatching`, e
 `MultiMatchRepository.kt:374` fecha o `callbackFlow` com a exceção — sai por `viewModelScope`

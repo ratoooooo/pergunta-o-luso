@@ -35,6 +35,18 @@ private const val BASE_QUESTION_MILLIS = 15_000L
 private const val TICK_MS = 100L
 private const val MATCHED_REVEAL_MS = 2_500L
 
+/**
+ * Título do pódio para um lugar em Grupo (1x1 tem a sua própria formulação de Vitória/Derrota).
+ *
+ * Era um `when (myRank) { 0 -> ...; 1 -> ...; 2 -> ...; else -> "4.º lugar" }` que prendia toda
+ * a gente do 4.º lugar para baixo no mesmo texto — inofensivo enquanto o Grupo era 4 fixos, mas
+ * o Grupo passou a ir até 10 (ver decisoes/grupo-4-a-10.md) e ninguém actualizou este `when`.
+ */
+internal fun posicaoLabel(rank: Int): String {
+    val posicao = rank + 1
+    return if (rank == 0) "$posicao.º lugar!" else "$posicao.º lugar"
+}
+
 data class PlayerLive(
     val uid: String,
     val nome: String,
@@ -555,9 +567,7 @@ class MultiMatchViewModel(
                 val mine = ranked.getOrNull(myRank)?.score ?: 0
                 val other = ranked.firstOrNull { !it.isMe }?.score ?: 0
                 when { mine == other -> "Empate!"; iWon -> "Vitória!"; else -> "Derrota" }
-            } else when (myRank) {
-                0 -> "1.º lugar!"; 1 -> "2.º lugar"; 2 -> "3.º lugar"; else -> "4.º lugar"
-            }
+            } else posicaoLabel(myRank)
             _uiState.value = _uiState.value.copy(phase = MultiPhase.PODIUM, ranking = ranked, iWon = iWon, resultTitle = title)
             // 1x1/Grupo: win = strictly top score (a tie for 1st is not a win).
             val wonStrict = ranked.firstOrNull()?.isMe == true && (ranked.size < 2 || ranked[0].score > ranked[1].score)
