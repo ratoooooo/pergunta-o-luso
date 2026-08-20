@@ -47,6 +47,17 @@ MVVM, but with an unusual split worth knowing up front:
 short whitelist (auth, profile, friends, presence, category counts). Anything new that must
 survive navigation has to be added there explicitly.
 
+**Anything `GameViewModel` needs to reflect live must be a listener (`Flow` + `callbackFlow`),
+not a one-shot read** — `_uiState` has no way to learn about writes from elsewhere unless something
+is actively watching. `observeFriends`/`friendsJob`, `PresenceRepository.observeCount`, and
+`ProfileRepository.observe` (own profile, since 10 Aug 2026) all follow this. The profile bug this
+fixed: `MultiMatchViewModel` is a *separate* ViewModel that aggregates the profile by writing
+straight to the RTDB — it has no way to tell `GameViewModel` anything changed, so Início showed
+stale data until the player happened to visit Perfil (which forces a reread). Same shape as the
+Phase 14 `friendsJob` bug. Whenever the uid changes (login, register, sign-out, account deletion),
+every one of these listeners has to be re-pointed at the new uid — that's the part that's easy to
+miss.
+
 ### Backend model — the constraint that shapes everything
 
 **Firebase Auth + Realtime Database only. No server, no Cloud Functions.** Consequences:

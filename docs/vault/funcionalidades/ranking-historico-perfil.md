@@ -55,6 +55,56 @@ Terminar sessão fica no fim, pequeno e discreto. **Eliminar conta** fica ainda 
 separado por uma linha, e é o único elemento do ecrã em Coral cheio — ver
 [eliminacao-conta](eliminacao-conta.md).
 
+## O Início e o Perfil ficam ao vivo (10 ago 2026)
+
+Reportado: a barra de XP e as estatísticas do Início não actualizavam sozinhas depois de uma
+partida — só se o jogador passasse pelo Perfil primeiro (isso força uma releitura). Mesmo padrão
+do bug do `friendsJob` da Fase 14: estado preso a um momento antigo em vez de reagir à mudança
+real.
+
+**Causa.** `GameViewModel` só tinha leitura pontual de `/jogadores/{uid}`
+(`ProfileRepository.loadProfile`), chamada em três pontos: `refreshProfile()`, `goToProfile()` e
+dentro de `finishGame()` a seguir a uma partida **solo**. Isso escondia o problema em solo — o
+perfil ficava mesmo actualizado antes de o jogador sair do pódio — mas expunha-o por completo em
+**multijogador**: `MultiMatchViewModel` é um ViewModel separado, com o seu próprio estado, e
+agrega o perfil (`aggregateProfile` → `profileRepository.updateAfterGame`) escrevendo
+directamente na RTDB. Nunca existiu qualquer forma de avisar o `GameViewModel` de que os dados
+tinham mudado — o Início ficava sempre com o valor de antes da partida.
+
+**Correcção — a mesma que `/amigos/{uid}` e `/presenca` já usam.** `ProfileRepository.observe(uid)`
+devolve um `Flow<Profile>` (`callbackFlow` + `ValueEventListener`, sem novidade nenhuma no
+padrão), e `GameViewModel` liga-o a `_uiState.profile` assim que o uid fica disponível —
+exactamente onde `observeFriends(uid)` já corria. Passa a ser a **fonte de verdade contínua**,
+qualquer que seja quem escreveu: solo, multijogador, ou o que vier a seguir. O Início deixou de
+depender de alguém se lembrar de avisar.
+
+A leitura pontual de `finishGame()` **manteve-se** — não é redundante, é o único sítio onde se
+compara "perfil antes" com "perfil depois" da mesma partida para detectar subida de nível e
+conquistas novas, e isso continua a exigir um valor determinístico logo a seguir à escrita.
+
+**Uid a mudar exige religar o listener**, tal como já valia para `friendsJob`: religado em
+`register()`, `login()`, `signOut()` e `confirmDeleteAccount()`, nos mesmos pontos onde
+`observeFriends()` já era religado.
+
+**Verificado no dispositivo, dois emuladores**, sem passar pelo Perfil em nenhum caso:
+
+| Cenário | Antes → depois |
+|---|---|
+| Solo, voltar direito ao Início | 72060 pts, 62→63 jogos, 660→740 XP |
+| Multijogador (1x1), voltar direito ao Início | 63→64 jogos, 830→1010 XP |
+| Escrita directa na BD com a app aberta no Início (sem jogar) | XP reflectido em ~2 s, sem qualquer acção do jogador |
+| Subida de nível numa partida solo | Nível 11→**12** no emblema, XP reiniciado para o novo nível (30/1950), imediato ao voltar |
+
+**Descoberta lateral, não corrigida — fora do âmbito deste bug.** Durante o teste de multijogador
+o script de automação bateu nas respostas mais depressa do que um jogador faria, inflacionando os
+pontos de uma conta de teste para `3 894 610`. Isso expôs um bug de **UI separado**: o `Text` do
+valor em `StatChip` (Início) não tem `overflow` definido, e corta o último dígito quando o número
+é demasiado largo para o chip — mostra `389461`, sem reticências, sem aviso. Confirmado com
+`uiautomator`, que lê o valor semântico completo (`3894610`) mesmo com o dígito cortado no
+ecrã — não é um bug de dados, é puramente de layout. Nunca visto em uso normal (a pontuação
+por jogo tem tecto de 4000 nas rules), mas um jogador de longo prazo pode legitimamente lá
+chegar. Ver [por-fazer](../por-fazer.md).
+
 ## Limitação conhecida
 
 `loadAllProfiles` e `loadMyScores` descarregam `/jogadores` e `/scores` **inteiros** para filtrar

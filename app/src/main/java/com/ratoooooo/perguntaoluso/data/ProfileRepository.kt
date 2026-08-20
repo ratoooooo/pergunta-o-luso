@@ -1,9 +1,14 @@
 package com.ratoooooo.perguntaoluso.data
 
 import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.MutableData
 import com.google.firebase.database.Transaction
+import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -223,6 +228,31 @@ class ProfileRepository {
     suspend fun loadProfile(uid: String): Profile {
         val snap = getSnapshot(ref(uid))
         return snap.toProfile(uid)
+    }
+
+    /**
+     * Live view of `/jogadores/{uid}` — o **próprio** perfil, não o de outro jogador.
+     *
+     * Existe porque uma leitura pontual (`loadProfile`) só reflecte quem estava a chamá-la: o
+     * Início lia-a uma vez ao arrancar e nunca mais, por isso pontos/XP/avatar só se
+     * actualizavam se o jogador passasse pelo Perfil (que força uma releitura). No multijogador
+     * o problema era pior — `MultiMatchViewModel` agrega o perfil escrevendo directamente na
+     * RTDB, sem qualquer forma de avisar o `GameViewModel` de que os dados mudaram, por isso o
+     * Início ficava sempre com o valor anterior à partida. Mesmo padrão do bug do `friendsJob`
+     * (Fase 14): estado preso a um momento antigo em vez de reagir à mudança real.
+     *
+     * A correcção é ligar aqui, tal como já se faz para `/amigos/{uid}` (`FriendsRepository.observe`)
+     * e `/presenca` (`PresenceRepository`): um listener vivo é a fonte de verdade contínua,
+     * qualquer que seja quem escreveu — solo, multijogador, ou o que vier a seguir.
+     */
+    fun observe(uid: String): Flow<Profile> = callbackFlow {
+        val reference = ref(uid)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) { trySend(snapshot.toProfile(uid)) }
+            override fun onCancelled(error: DatabaseError) { close(error.toException()) }
+        }
+        reference.addValueEventListener(listener)
+        awaitClose { reference.removeEventListener(listener) }
     }
 
     suspend fun loadAllProfiles(): List<Profile> {

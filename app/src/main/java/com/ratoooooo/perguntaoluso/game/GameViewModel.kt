@@ -159,6 +159,7 @@ class GameViewModel(
 
     private var timerJob: Job? = null
     private var presenceUid: String? = null
+    private var profileJob: Job? = null
 
     init {
         refreshProfile()
@@ -173,6 +174,7 @@ class GameViewModel(
             presenceUid = uid
             presenceRepository.goOnline(uid)
             if (_uiState.value.userInfo == null) refreshProfile()
+            observeOwnProfile(uid)
             observeFriends(uid)
             observeConvites(uid)
         }
@@ -215,6 +217,28 @@ class GameViewModel(
         }
     }
 
+    /**
+     * Liga o `/jogadores/{uid}` vivo do jogador. Chamado sempre que o uid muda (arranque,
+     * login, registo, sign-out, eliminação de conta) — o mesmo padrão do `friendsJob`, e pela
+     * mesma razão: um listener preso ao uid antigo é tão errado como nenhum listener nenhum.
+     *
+     * A leitura pontual que `finishGame()` faz a seguir a agregar uma partida solo continua a
+     * existir — precisa do valor exacto logo após a escrita para comparar antes/depois e
+     * detectar subida de nível. Este listener não a substitui; é a rede que apanha **tudo o
+     * resto**, sobretudo o multijogador, onde `MultiMatchViewModel` agrega o perfil escrevendo
+     * directamente na RTDB sem qualquer aviso a este ViewModel.
+     */
+    private fun observeOwnProfile(uid: String) {
+        profileJob?.cancel()
+        profileJob = viewModelScope.launch {
+            runCatching {
+                profileRepository.observe(uid).collect { profile ->
+                    _uiState.value = _uiState.value.copy(profile = profile)
+                }
+            }
+        }
+    }
+
     fun goToLogin() {
         _uiState.value = _uiState.value.copy(screen = GameScreen.LOGIN, authError = null)
     }
@@ -236,6 +260,7 @@ class GameViewModel(
                 profileRepository.setNome(user.uid, nome.trim())
                 _uiState.value = _uiState.value.copy(authLoading = false, screen = GameScreen.START)
                 refreshProfile()
+                observeOwnProfile(user.uid)
                 observeFriends(user.uid)
                 observeConvites(user.uid)
             } catch (e: Exception) {
@@ -255,6 +280,7 @@ class GameViewModel(
                 val user = authRepository.loginWithEmail(email.trim(), password)
                 _uiState.value = _uiState.value.copy(authLoading = false, screen = GameScreen.START)
                 refreshProfile()
+                observeOwnProfile(user.uid)
                 observeFriends(user.uid)
                 observeConvites(user.uid)
             } catch (e: Exception) {
@@ -265,9 +291,12 @@ class GameViewModel(
 
     fun signOut() {
         viewModelScope.launch {
-            runCatching { authRepository.signOutToAnonymous() }
+            val novo = runCatching { authRepository.signOutToAnonymous() }.getOrNull()
             _uiState.value = _uiState.value.copy(screen = GameScreen.START, profile = null)
             refreshProfile()
+            // Sem isto o listener continuava preso ao uid da conta que acabou de sair — o
+            // padrão exacto do friendsJob, aqui aplicado ao perfil.
+            novo?.uid?.let { observeOwnProfile(it) }
         }
     }
 
@@ -328,6 +357,7 @@ class GameViewModel(
                 userInfo = authRepository.currentUserInfo()
             )
             refreshProfile()
+            authRepository.currentUserInfo()?.uid?.let { observeOwnProfile(it) }
         }
     }
 
