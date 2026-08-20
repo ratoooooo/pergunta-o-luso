@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Login
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,7 +30,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.scale
 import com.ratoooooo.perguntaoluso.data.Profile
+import com.ratoooooo.perguntaoluso.data.StreakDiario
 import com.ratoooooo.perguntaoluso.data.UserInfo
 import com.ratoooooo.perguntaoluso.ui.theme.Coral
 import com.ratoooooo.perguntaoluso.ui.theme.Cream
@@ -41,6 +44,7 @@ import com.ratoooooo.perguntaoluso.ui.theme.NavTab
 import com.ratoooooo.perguntaoluso.ui.theme.Purple
 import com.ratoooooo.perguntaoluso.ui.theme.StickerButton
 import com.ratoooooo.perguntaoluso.ui.theme.Teal
+import com.ratoooooo.perguntaoluso.ui.theme.rememberPulse
 import com.ratoooooo.perguntaoluso.ui.theme.XpBar
 import com.ratoooooo.perguntaoluso.ui.theme.stickerBlock
 import com.ratoooooo.perguntaoluso.ui.theme.stickerCircle
@@ -77,6 +81,7 @@ fun StartScreen(
             ProfileCard(profile = profile, onClick = onProfileClick)
 
             Spacer(Modifier.size(12.dp))
+            StreakRow(profile = profile)
             PlayingNowChip(count = playingNow)
 
             Spacer(Modifier.size(14.dp))
@@ -186,5 +191,63 @@ private fun StatChip(
     ) {
         Text(text = value, style = MaterialTheme.typography.labelLarge, color = textColorFor(color))
         Text(text = label, style = MaterialTheme.typography.bodyLarge, color = textColorFor(color))
+    }
+}
+
+/**
+ * Sequência de **dias** seguidos, com a nota de protecção por baixo quando houve uma gasta.
+ *
+ * Vocabulário deliberadamente **igual** ao da sequência dentro da partida — chama a partir de 2,
+ * Coral a partir de 5 — porque é a mesma ideia ("não quebres isto") e o jogador não tem de
+ * aprender dois sinais. O que os separa é o rótulo: aqui diz sempre "dias seguidos", e a
+ * sequência de respostas só aparece durante uma pergunta, com um número solto ao lado dos pontos.
+ * Nunca partilham ecrã, por isso não há como confundir qual é qual.
+ *
+ * Abaixo de 2 dias não se mostra nada: um "1 dia seguido" não é uma sequência, é ter jogado hoje,
+ * e ocuparia espaço no ecrã mais cheio da app a dizer nada.
+ */
+@Composable
+private fun StreakRow(profile: Profile?) {
+    val estado = (profile ?: return).streak
+    val dias = estado.diasSeguidos
+    val protegido = StreakDiario.protecaoRecente(estado)
+    if (dias < 2 && !protegido) return
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (dias >= 2) {
+            val forte = dias >= 5
+            val cor = if (forte) Coral else Gold
+            val pulso = rememberPulse(ativo = forte, min = 1f, max = 1.06f, periodoMs = 900)
+            Row(
+                modifier = Modifier
+                    .scale(pulso)
+                    .stickerBlock(fillColor = cor, cornerRadius = 16.dp, shadowOffset = 4.dp, borderWidth = 2.dp)
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Rounded.Whatshot, contentDescription = null,
+                    tint = textColorFor(cor), modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.size(6.dp))
+                Text(
+                    "$dias DIAS SEGUIDOS",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = textColorFor(cor)
+                )
+            }
+        }
+        if (protegido) {
+            // Sem isto o jogador falta um dia, vê a sequência intacta e não percebe porquê — e
+            // uma rede de segurança que ninguém vê não tranquiliza ninguém.
+            Spacer(Modifier.size(6.dp))
+            Text(
+                "A tua sequência foi protegida pelo dia que falhaste.",
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 13.sp, lineHeight = 16.sp),
+                color = Ink,
+                textAlign = TextAlign.Center
+            )
+        }
+        Spacer(Modifier.size(12.dp))
     }
 }

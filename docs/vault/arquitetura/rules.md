@@ -9,12 +9,9 @@ protegido.
 
 ## Princípios em vigor
 
-1. **Nada é público.** `/categorias` e `/jogadores` exigem `auth != null` (anónimo conta). Antes
-   eram `.read: true` e qualquer pessoa com o URL despejava as perguntas **com a resposta certa**
-   ou a tabela inteira de jogadores.
+1. **Nada é público.** `/categorias` e `/jogadores` exigem `auth != null` (anónimo conta). Antes eram `.read: true` e qualquer pessoa com o URL despejava as perguntas **com a resposta certa** ou a tabela inteira de jogadores.
 2. **Cada um escreve só o seu.** Todo o nó por jogador valida `auth.uid === $uid`.
-3. **Schemas fechados.** `$other: { ".validate": false }` em quase todos os nós — um campo
-   desconhecido é rejeitado em vez de guardado.
+3. **Schemas fechados.** `$other: { ".validate": false }` em quase todos os nós — um campo desconhecido é rejeitado em vez de guardado.
 4. **Tectos numéricos** onde o cliente calcula o valor (pontuações), porque a pontuação é
    client-authoritative.
 5. **Create-once** onde o dado não deve mudar depois de escrito (`meta` das salas, códigos de
@@ -47,3 +44,22 @@ baterias de 8 a 43 verificações.
 
 Ver também: [rtdb-schema](rtdb-schema.md) ·
 [historico-vulnerabilidades](../seguranca/historico-vulnerabilidades.md)
+
+## Fase 33 — campos da sequência diária
+
+`/jogadores/$uid` ganhou `diasSeguidos`, `ultimoDiaJogado`, `maiorSequenciaDias`,
+`protecoesStreak` e `protecaoUsadaEm`. **Tiveram de ser declarados**: o nó tem
+`$other: {".validate": false}`, por isso um campo novo é rejeitado até constar do schema.
+
+Tectos: 0–3660 nos contadores de dias (dez anos — o ponto onde o valor deixa de poder ser
+verdade), 0–1 nas protecções, e `matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)` nas duas datas. É o
+mesmo chão de validação do resto do ficheiro: bloqueia o impossível, não o implausível, porque
+quem quiser bater a sequência muda a data do telemóvel e não há servidor que o impeça.
+
+**A armadilha aqui:** a validação das datas é sobre o nó inteiro, revalidado pela transação de
+agregação. Escrever `""` num destes campos não falharia só a sequência — rejeitava a transação
+toda, e o jogador perdia os pontos e o XP da partida. Por isso o cliente só escreve estas duas
+datas quando têm valor. Ver [streak-diario](../funcionalidades/streak-diario.md).
+
+Testadas por REST nos dois sentidos: 6 escritas legítimas aceites, 8 inválidas negadas, e escrita
+cruzada de outro uid negada.

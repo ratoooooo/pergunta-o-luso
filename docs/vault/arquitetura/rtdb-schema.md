@@ -74,3 +74,20 @@ o `.write` **cascateia para baixo**, por isso uma permissão ao nível da sala t
 proteção por jogador.
 
 Ver também: [rules](rules.md) · [multiplayer](../funcionalidades/multiplayer.md)
+
+## Sequência diária (Fase 33)
+
+`/jogadores/{uid}` ganhou cinco campos, todos declarados nas rules (o nó recusa campos não
+declarados):
+
+```
+diasSeguidos        número   dias civis seguidos com pelo menos uma partida
+ultimoDiaJogado     string   "AAAA-MM-DD", dia de Europe/Lisbon
+maiorSequenciaDias  número   recorde histórico, nunca desce
+protecoesStreak     número   0 ou 1
+protecaoUsadaEm     string   "AAAA-MM-DD" do dia que a protecção tapou
+```
+
+Data e não timestamp, de propósito, e num fuso fixo — o porquê está em
+[streak-diario](../funcionalidades/streak-diario.md). Escritos pela mesma transação que agrega a
+partida, por isso contam em solo e em multijogador sem código duplicado.

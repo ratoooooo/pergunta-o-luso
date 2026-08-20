@@ -20,7 +20,13 @@ data class GameResult(
     /** Multiplayer format id ("1x1"/"2x2"/"grupo"); null for solo. Drives per-format win counters. */
     val formato: String? = null,
     /** Category display name; drives per-category mastery counters. Blank = skip. */
-    val categoria: String = ""
+    val categoria: String = "",
+    /**
+     * Dia civil de Lisboa em que a partida acabou (`"AAAA-MM-DD"`), para a sequência de dias.
+     * Calculado **uma vez** por quem cria o resultado: a transação pode repetir, e recalcular a
+     * data lá dentro daria respostas diferentes numa retentativa que atravessasse a meia-noite.
+     */
+    val hoje: String = StreakDiario.hoje()
 )
 
 val MODE_IDS = listOf("classico", "caotico", "eliminatorias")
@@ -127,6 +133,10 @@ class ProfileRepository {
     }
 
     private fun accumulate(data: MutableData, r: GameResult) {
+        // Sequência de dias — corre aqui e não no ViewModel para apanhar **todas** as partidas,
+        // solo e multijogador, que passam as duas por esta transação.
+        aplicarStreak(data, r.hoje)
+
         // global
         bump(data.child("jogos"), 1)
         bump(data.child("pontos"), r.score)
@@ -161,6 +171,44 @@ class ProfileRepository {
             if (r.won) bump(data.child("categorias").child(slug).child("vitorias"), 1)
         }
     }
+
+    /**
+     * Avança (ou reinicia) a sequência de dias dentro da transação do perfil.
+     *
+     * [hoje] vem de fora, já calculado, e **não** de `LocalDate.now()` aqui: o handler de uma
+     * transação pode correr várias vezes, e recalcular a data a meio de uma retentativa que
+     * atravessasse a meia-noite dava dois resultados diferentes para a mesma partida.
+     */
+    private fun aplicarStreak(data: MutableData, hoje: String) {
+        val anterior = StreakDiario.Estado(
+            diasSeguidos = intAt(data, "diasSeguidos"),
+            ultimoDiaJogado = data.child("ultimoDiaJogado").value as? String ?: "",
+            maiorSequenciaDias = intAt(data, "maiorSequenciaDias"),
+            protecoes = if (data.child("protecoesStreak").value != null)
+                intAt(data, "protecoesStreak") else StreakDiario.MAX_PROTECOES,
+            protecaoUsadaEm = data.child("protecaoUsadaEm").value as? String ?: ""
+        )
+        val r = StreakDiario.avaliar(anterior, hoje)
+        data.child("diasSeguidos").value = r.estado.diasSeguidos
+        data.child("maiorSequenciaDias").value = r.estado.maiorSequenciaDias
+        // Só se escreve uma data se ela existir. As rules exigem `AAAA-MM-DD` nestes dois
+        // campos, e escrever "" faria a validação falhar — mas a validação é sobre o nó inteiro,
+        // por isso não perdia só a sequência: **rejeitava a transação toda** e o jogador perdia
+        // os pontos e o XP da partida. Um campo em falta é infinitamente melhor do que isso.
+        if (r.estado.ultimoDiaJogado.isNotBlank()) {
+            data.child("ultimoDiaJogado").value = r.estado.ultimoDiaJogado
+        }
+        data.child("protecoesStreak").value = r.estado.protecoes
+        if (r.estado.protecaoUsadaEm.isNotBlank()) {
+            data.child("protecaoUsadaEm").value = r.estado.protecaoUsadaEm
+        }
+        // XP fixo por dia novo de sequência, nunca escalado pelo tamanho dela — ver a Fase 20
+        // (Roda da Sorte) para o que acontece quando se mete XP sem tecto na curva.
+        if (r.xp > 0) bump(data.child("xpTotal"), r.xp)
+    }
+
+    private fun intAt(data: MutableData, path: String): Int =
+        (data.child(path).value as? Number)?.toInt() ?: 0
 
     private fun bump(node: MutableData, delta: Int) {
         val cur = (node.value as? Number)?.toLong() ?: 0L
@@ -232,7 +280,15 @@ class ProfileRepository {
             }.toMap(),
             categoriaJogos = child("categorias").children.mapNotNull { c ->
                 (c.key ?: return@mapNotNull null) to (c.child("jogos").getValue(Long::class.java)?.toInt() ?: 0)
-            }.toMap()
+            }.toMap(),
+            diasSeguidos = readInt("diasSeguidos"),
+            ultimoDiaJogado = child("ultimoDiaJogado").getValue(String::class.java) ?: "",
+            maiorSequenciaDias = readInt("maiorSequenciaDias"),
+            // Um perfil antigo não tem o campo. Ler 0 aí dava um jogador sem escudo nenhum logo
+            // à entrada; quem nunca gastou nenhum começa com o máximo.
+            protecoesStreak = if (hasChild("protecoesStreak")) readInt("protecoesStreak")
+                else StreakDiario.MAX_PROTECOES,
+            protecaoUsadaEm = child("protecaoUsadaEm").getValue(String::class.java) ?: ""
         )
     }
 }

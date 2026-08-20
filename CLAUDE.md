@@ -60,6 +60,12 @@ survive navigation has to be added there explicitly.
   per-game log and would list a player many times.
 - Level, patente and achievement state are all **derived** from stored fields, never persisted.
   Only `xpTotal` is stored. That's why they can't drift.
+- The **daily streak** (`diasSeguidos` + friends on `/jogadores/{uid}`) is the one place that
+  stores a date. It is the civil day in **Europe/Lisbon**, as `"YYYY-MM-DD"` — not a timestamp,
+  not the device timezone. It is computed once outside the profile transaction and passed in via
+  `GameResult.hoje`, because the transaction handler can retry across midnight. Don't confuse it
+  with `maxStreak`, which is correct answers inside one game. See
+  [`docs/vault/funcionalidades/streak-diario.md`](docs/vault/funcionalidades/streak-diario.md).
 
 ### RTDB rules gotchas
 
@@ -72,6 +78,10 @@ These caused real production breakage; see the security note for the full storie
 - Arithmetic on `null` invalidates the *entire* expression, even across `||`. Counters need a
   ternary: `data.exists() ? newData.val() === data.val() + 1 : newData.val() === 1`.
 - There is no `numChildren()`.
+- `/jogadores/$uid` has `$other: {".validate": false}` — **a new profile field is rejected until
+  it is declared in the rules**. And because the aggregation transaction rewrites the whole node,
+  one invalid leaf (e.g. an empty string in a date field with a regex) rejects the entire update,
+  losing the player's points and XP for that game — not just the new field.
 - **A rule revalidated by an ancestor transaction must be tested against pre-existing junk in the
   database, not a clean node.** A correct-in-isolation fix once passed 8/8 REST tests and still
   broke matchmaking for everyone, because 6 orphaned QA lobbies failed the new validation and one

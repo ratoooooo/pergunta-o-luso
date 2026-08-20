@@ -22,6 +22,7 @@ Jogo de trivia de cultura portuguesa para Android. Solo e multijogador em tempo 
 | Multijogador 1x1 / 2x2 / Grupo, salas privadas por código | feito |
 | Contas, perfil agregado, eliminação de conta | feito |
 | XP, níveis, patentes, conquistas, avatares | feito |
+| Sequência diária + protecção, "quase lá" no pódio | feito |
 | Amigos, desafio direto, presença online | feito |
 | Quizzes da Comunidade + moderação mínima | feito |
 | Ranking (por modo **e** por formato), histórico | feito |
@@ -41,6 +42,7 @@ Jogo de trivia de cultura portuguesa para Android. Solo e multijogador em tempo 
 - [Quizzes da Comunidade e moderação](funcionalidades/quizzes-comunidade.md)
 - [Ranking, histórico e perfil](funcionalidades/ranking-historico-perfil.md)
 - [Som e retorno háptico](funcionalidades/som-haptico.md)
+- [Sequência diária e protecção](funcionalidades/streak-diario.md)
 - [Eliminação de conta](funcionalidades/eliminacao-conta.md)
 - [Conteúdo das perguntas](funcionalidades/conteudo-perguntas.md)
 

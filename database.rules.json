@@ -61,6 +61,21 @@
         "xpTotal": { ".validate": "newData.isNumber() && newData.val() >= 0" },
         "avatar": { ".validate": "newData.isString()" },
         "partidasPerfeitas": { ".validate": "newData.isNumber()" },
+
+        /* Fase 33 — sequência de DIAS seguidos a jogar. Não confundir com `maxStreak`, que é a
+           melhor sequência de respostas certas dentro de uma partida.
+
+           Os tectos são o mesmo tipo de chão de validação do resto do ficheiro: bloqueiam
+           valores impossíveis, não implausíveis. A pontuação é validada no cliente (não há
+           servidor), por isso 3660 dias — dez anos — é apenas o ponto a partir do qual o valor
+           deixa de poder ser verdade. As datas são o dia civil de Lisboa em `AAAA-MM-DD`;
+           guardar data e não timestamp é o que torna a comparação "ontem" possível sem fuso. */
+        "diasSeguidos": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3660" },
+        "maiorSequenciaDias": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3660" },
+        "protecoesStreak": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1" },
+        "ultimoDiaJogado": { ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)" },
+        "protecaoUsadaEm": { ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)" },
+
         "multiVitorias": {
           "$fmt": { ".validate": "newData.isNumber()" }
         },

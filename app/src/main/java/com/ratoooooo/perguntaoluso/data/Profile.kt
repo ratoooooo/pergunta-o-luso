@@ -32,8 +32,25 @@ data class Profile(
     val multiJogos: Map<String, Int> = emptyMap(),
     /** category slug -> vitórias in that category. */
     val categoriaVitorias: Map<String, Int> = emptyMap(),
-    val categoriaJogos: Map<String, Int> = emptyMap()
+    val categoriaJogos: Map<String, Int> = emptyMap(),
+    // --- sequência de DIAS seguidos a jogar (≠ maxStreak, que é de respostas certas) ---
+    val diasSeguidos: Int = 0,
+    /** `"AAAA-MM-DD"` no fuso de Lisboa. Ver [StreakDiario]. */
+    val ultimoDiaJogado: String = "",
+    val maiorSequenciaDias: Int = 0,
+    val protecoesStreak: Int = StreakDiario.MAX_PROTECOES,
+    /** Dia que uma protecção tapou, para se poder dizer ao jogador que isso aconteceu. */
+    val protecaoUsadaEm: String = ""
 ) {
+    val streak: StreakDiario.Estado
+        get() = StreakDiario.Estado(
+            diasSeguidos = diasSeguidos,
+            ultimoDiaJogado = ultimoDiaJogado,
+            maiorSequenciaDias = maiorSequenciaDias,
+            protecoes = protecoesStreak,
+            protecaoUsadaEm = protecaoUsadaEm
+        )
+
     val taxaAcertos: Double
         get() = if (respostasTotais > 0) respostasCertas.toDouble() / respostasTotais else 0.0
 
