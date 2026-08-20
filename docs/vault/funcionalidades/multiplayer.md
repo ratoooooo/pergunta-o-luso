@@ -87,10 +87,36 @@ Reutiliza o `Scoring` do solo. No fim, cada dispositivo grava o **seu** resultad
 "Ganhou" por formato: 1x1 e Grupo = pontuação estritamente mais alta (empate não conta); 2x2 =
 total de equipa estritamente maior.
 
+## Grupo com mais do que o mínimo — observado
+
+Testado a 9 ago 2026 com **6 emuladores** e depois com **5** (`/lobbies` e `/multisalas` limpos
+antes). O que se viu, não o que se deduziu:
+
+- A sala aceitou entradas até **6/10** sem tocar em nenhum limiar: o rótulo passou por
+  `2/10 … 6/10`, sempre com `MÍNIMO 4`.
+- Abaixo de 4: *"Faltam N para poder começar (mínimo 4, máximo 10)"*. Ao chegar a 4 apareceu
+  *"Já podes começar. A sala continua a aceitar jogadores até 10."* e o botão **INICIAR JOGO
+  (N JOGADORES) · Auto: NNs**, com o N a acompanhar cada entrada.
+- **O temporizador reinicia mesmo a cada entrada** — lido logo a seguir a cada entrada nova
+  deu 54 s, 49 s e 52 s numa corrida, 55 s e 56 s na outra: nunca ia abaixo do valor anterior,
+  apesar de os segundos correrem entre leituras.
+- Arranque **manual acima do mínimo e abaixo da capacidade** (6 de 10, e noutra corrida 5 de 10):
+  funciona. A capacidade 10 nunca chegou a encher — não há emuladores para isso.
+- **Pódio com 5 jogadores:** os 5 dispositivos mostraram a mesma lista, mesma ordem e mesmas
+  pontuações (275 / 100 / 90 / 80 / 0), cada um com o seu *(tu)*. Sem discrepâncias.
+
+**Defeito encontrado por causa disto:** o título do pódio está limitado ao 4.º lugar —
+`MultiMatchViewModel.kt:559` faz `else -> "4.º lugar"`, por isso quem termina em 5.º a 10.º lê
+*"4.º lugar"* com a sua linha a dizer **#5**. Só aparece com 5+ jogadores, que é exactamente o
+cenário que nunca tinha sido corrido. Ver [por-fazer](../por-fazer.md).
+
 ## Limitações conhecidas
 
-- **Salas com 5 a 10 jogadores nunca foram observadas** — só há quatro emuladores. Que a sala
-  continua a aceitar depois dos 4 foi visto; 5+ em simultâneo é dedução.
+- **7 a 10 jogadores continua por observar** — a casa dá para 6 emuladores, e o sexto (a imagem
+  16 KB) encravou. Que a sala aceita além de 6 é dedução a partir de `membrosCount < players`.
+- Na corrida com 6, dois clientes apareceram como **"— saiu"** no pódio dos outros e uma
+  pontuação chegou tarde. A RTDB dizia `estado: "terminado"` para todos: foi o Mac a ficar sem
+  fôlego com 6 emuladores, não o código. Com 5 não voltou a acontecer.
 - O temporizador de auto-arranque vive na **composição** da sala de espera e só corre para o
   anfitrião: se ele puser a app em segundo plano, o relógio pára.
 - Salas e lobbies abandonados **não expiram** — a RTDB não tem TTL e não há limpeza. Estado velho

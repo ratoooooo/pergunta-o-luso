@@ -58,9 +58,18 @@ passou para 10 — durante fases, sem ninguém dar por isso. Agora vem de
 `MatchFormatTest` (6 testes) prende as invariantes: mínimo nunca acima da capacidade, mínimo ≥ 2,
 formatos por equipas com tamanho fixo e par, só o Grupo flexível, e o rótulo.
 
-## Por observar
+## Observado a 9 ago 2026
 
-Salas com **5 a 10 jogadores** nunca foram vistas a funcionar — só há quatro emuladores. Que a
-sala continua em `waiting` a aceitar mais depois dos 4 foi observado; 5+ em simultâneo é dedução.
+Salas de **5 e de 6 jogadores em simultâneo** correram de ponta a ponta: a sala continuou a
+aceitar entradas depois do mínimo (`4/10 → 5/10 → 6/10`), o temporizador reiniciou a cada
+entrada, e o arranque manual acima do mínimo e abaixo da capacidade funcionou nas duas corridas.
+Detalhes em [multiplayer](../funcionalidades/multiplayer.md).
+
+**7 a 10 continua por observar** — não há emuladores que cheguem.
+
+O teste apanhou um defeito que só existe acima de 4: o título do pódio pára no 4.º lugar
+(`MultiMatchViewModel.kt:559`), por isso um 5.º classificado lê *"4.º lugar"*. É consequência
+directa de o Grupo ter passado de 4 fixos para 4–10 — o `when` do título ficou com a forma
+antiga.
 
 Ver também: [multiplayer](../funcionalidades/multiplayer.md)
