@@ -19,8 +19,6 @@
  */
 'use strict';
 
-const admin = require('firebase-admin');
-
 /** As únicas contas que sobrevivem. Decidido com o dono do projeto a 9 ago 2026. */
 const KEEP_EMAILS = new Set([
   'teste_um_2026@starforge.test',
@@ -33,13 +31,45 @@ const KEEP_EMAILS = new Set([
 
 const dryRun = process.argv.includes('--dry-run');
 
-admin.initializeApp({ credential: admin.credential.applicationDefault() });
+function abortar(mensagem) {
+  console.error(`ABORTADO: ${mensagem}`);
+  process.exit(1);
+}
 
-async function listAll() {
+/**
+ * `firebase-admin` é carregado só aqui, e não no topo, para o `require` deste ficheiro não
+ * depender de uma credencial nem do pacote estar instalado.
+ *
+ * API modular (`firebase-admin/app`, `firebase-admin/auth`). A antiga, com namespace —
+ * `admin.credential.applicationDefault()`, `admin.auth()` — foi **removida** no firebase-admin
+ * v13/v14 e rebenta com `Cannot read properties of undefined`.
+ */
+function auth() {
+  let App;
+  let Auth;
+  try {
+    App = require('firebase-admin/app');
+    Auth = require('firebase-admin/auth');
+  } catch (e) {
+    abortar('`firebase-admin` não está instalado. Corre: npm install (a partir de qa/)');
+  }
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    abortar(
+      'GOOGLE_APPLICATION_CREDENTIALS não está definida — sem chave de conta de serviço não há\n' +
+        '  acesso de admin. Ver as instruções no cabeçalho deste ficheiro.'
+    );
+  }
+  const app = App.getApps().length
+    ? App.getApps()[0]
+    : App.initializeApp({ credential: App.applicationDefault() });
+  return Auth.getAuth(app);
+}
+
+async function listAll(a) {
   const out = [];
   let pageToken;
   do {
-    const page = await admin.auth().listUsers(1000, pageToken);
+    const page = await a.listUsers(1000, pageToken);
     out.push(...page.users);
     pageToken = page.pageToken;
   } while (pageToken);
@@ -47,7 +77,8 @@ async function listAll() {
 }
 
 (async () => {
-  const users = await listAll();
+  const a = auth();
+  const users = await listAll(a);
   const keep = users.filter((u) => u.email && KEEP_EMAILS.has(u.email));
   const doomed = users.filter((u) => !(u.email && KEEP_EMAILS.has(u.email)));
 
@@ -79,7 +110,7 @@ async function listAll() {
   const falhas = [];
   for (let i = 0; i < doomed.length; i += 1000) {
     const lote = doomed.slice(i, i + 1000).map((u) => u.uid);
-    const r = await admin.auth().deleteUsers(lote);
+    const r = await a.deleteUsers(lote);
     apagadas += r.successCount;
     r.errors.forEach((e) => falhas.push(`${lote[e.index]}: ${e.error.message}`));
   }
