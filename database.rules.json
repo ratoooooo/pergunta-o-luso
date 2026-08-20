@@ -10,6 +10,18 @@
       ".read": "auth != null",
       ".write": false
     },
+    "perguntas_arquivadas": {
+      /* Perguntas retiradas de `/categorias` pela manutenção do banco. Arquivar em vez de
+         apagar: uma pergunta problemática (facto errado, enunciado ambíguo, duplicada) tem de
+         poder ser revista — e reposta — depois, e as rules não têm lixeira nem histórico.
+
+         Mesmo fecho de `categorias`, e pela mesma razão: o nó guarda `respostaCorreta`, por
+         isso leitura pública deixava descarregar as respostas sem sessão nenhuma. `.write` a
+         `false` não estorva a manutenção — a escrita de admin (service account em
+         `qa/perguntas-admin.js`, ou `firebase database:set`) ignora as rules por completo. */
+      ".read": "auth != null",
+      ".write": false
+    },
     "scores": {
       ".read": "auth != null",
       ".indexOn": "score",
