@@ -102,6 +102,15 @@ app/google-services.json
 google-services.json
 */src/*/google-services.json
 
+# Chave de conta de serviço do Firebase Admin (qa/apagar-contas-teste.js,
+# qa/perguntas-admin.js). É uma credencial de ADMIN: ignora as security rules por completo.
+# `*firebase-adminsdk*.json` é o nome que a consola gera; os outros dois são para quem lhe
+# chamar outra coisa. Nenhum destes padrões apanha `google-services.json` (esse é config de
+# cliente, e já está ignorado acima).
+*firebase-adminsdk*.json
+service-account*.json
+qa/*.key.json
+
 # Build output
 *.apk
 *.aab
