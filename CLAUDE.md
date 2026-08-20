@@ -153,6 +153,9 @@ colouring them earlier implied the answer.
   rules do not apply to it** — seed with the rules locked the whole time rather than unlocking
   them (the older documented procedure). Still back up first, and still confirm afterwards with
   an unauthenticated PUT that returns `Permission denied`.
+- **The Firebase CLI cannot delete Auth accounts** — only `auth:export` / `auth:import`. Deleting
+  accounts needs the Admin SDK with a service account key; `qa/apagar-contas-teste.js` is ready
+  for that. Do not try to extract the CLI's refresh token.
 - Stale `/lobbies` and `/multisalas` state from earlier QA causes ghost matchmaking. Clear them
   before testing multiplayer.
 - The Portuguese/UI text of this project is in **European Portuguese**; commit messages and docs

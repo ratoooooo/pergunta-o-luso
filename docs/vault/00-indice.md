@@ -54,6 +54,9 @@ categorias escondidas. Escolha múltipla e Verdadeiro/Falso.
 - [Autenticação](arquitetura/autenticacao.md)
 - [Sistema visual e componentes](arquitetura/sistema-visual.md)
 
+**Manutenção**
+- [Limpeza de contas e dados de teste](manutencao/limpeza-dados-teste.md) — 9 ago 2026
+
 **Segurança — ler antes de mexer em rules ou dados**
 - [Histórico de vulnerabilidades](seguranca/historico-vulnerabilidades.md) ← os erros já cometidos
 - [Limitações conhecidas do modelo](seguranca/limitacoes-conhecidas.md)
