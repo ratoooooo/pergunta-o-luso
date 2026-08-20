@@ -8,7 +8,13 @@
 |---|---|---|
 | Clássico | ≥ 70 % certas (≥ 7 de 10) | ambos correm sempre 10 perguntas, por isso "terminar a ronda" é trivial e não distinguiria mérito nenhum; 70 % de precisão distingue |
 | Caótico | ≥ 70 % certas | idem |
-| Eliminatórias | sobreviver às 20 | já tem uma condição natural e significativa de vitória/derrota, usada diretamente |
+| Eliminatórias | chegar às **20 perguntas respondidas** | ver abaixo |
+
+**Eliminatórias mudou a 9 ago 2026.** Era "sobreviver às 20". Com três vidas e sem limite de
+perguntas a corrida acaba **sempre** em eliminação, por isso "não ser eliminado" tornava o bónus
+de XP inalcançável. O critério passou a ser o mesmo número, lido como marco em vez de fim:
+`total >= ELIMINATORIAS_MARCO_VITORIA`. Ver
+[modos-de-jogo](../funcionalidades/modos-de-jogo.md).
 
 `GameViewModel.didWin` implementa exactamente isto. A vitória incrementa `vitorias` (global e por
 modo) no agregado, e liberta o bónus de XP.

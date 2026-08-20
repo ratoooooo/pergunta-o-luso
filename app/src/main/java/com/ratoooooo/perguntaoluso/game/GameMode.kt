@@ -8,8 +8,18 @@ enum class GameMode(
     val id: String,
     val displayName: String,
     val tagline: String,
+    /**
+     * Quantas perguntas se carregam de uma vez. No Clássico e no Caótico é o jogo inteiro; nas
+     * Eliminatórias é só o **lote inicial** — o modo não tem fim, ver [semLimiteDePerguntas].
+     */
     val questionCount: Int,
-    val endsOnFirstWrong: Boolean,
+    /**
+     * Vidas antes de ser eliminado. `0` = o modo não elimina, corre as [questionCount] até ao fim.
+     *
+     * Era um `endsOnFirstWrong: Boolean`. Três vidas em vez de uma porque um erro logo na
+     * primeira pergunta acabava a partida em vinte segundos, e o modo vive de sequências longas.
+     */
+    val vidas: Int,
     val hasChaoticEvents: Boolean
 ) {
     CLASSICO(
@@ -17,7 +27,7 @@ enum class GameMode(
         displayName = "Clássico",
         tagline = "10 perguntas, pontos por rapidez e sequência",
         questionCount = 10,
-        endsOnFirstWrong = false,
+        vidas = 0,
         hasChaoticEvents = false
     ),
     CAOTICO(
@@ -25,17 +35,20 @@ enum class GameMode(
         displayName = "Caótico",
         tagline = "10 perguntas com eventos surpresa a cada ronda",
         questionCount = 10,
-        endsOnFirstWrong = false,
+        vidas = 0,
         hasChaoticEvents = true
     ),
     ELIMINATORIAS(
         id = "eliminatorias",
         displayName = "Eliminatórias",
-        tagline = "Erras uma e acabou. Até onde aguentas?",
+        tagline = "Três vidas. Até onde aguentas?",
         questionCount = 20,
-        endsOnFirstWrong = true,
+        vidas = 3,
         hasChaoticEvents = false
     );
+
+    /** `true` quando o modo elimina por vidas em vez de acabar num número fixo de perguntas. */
+    val semLimiteDePerguntas: Boolean get() = vidas > 0
 
     companion object {
         fun displayNameForId(id: String): String =

@@ -189,6 +189,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
                 mode = state.mode!!,
                 questionNumber = state.currentIndex + 1,
                 totalQuestions = state.questions.size,
+                vidasRestantes = state.vidasRestantes,
                 points = state.points,
                 selectedOption = state.selectedOption,
                 isAnswered = state.isAnswered,

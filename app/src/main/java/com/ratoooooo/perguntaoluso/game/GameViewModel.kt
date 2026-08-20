@@ -80,6 +80,8 @@ data class GameUiState(
     val remainingMillis: Long = 0L,
     val questionDurationMillis: Long = 1L,
     val eliminated: Boolean = false,
+    /** Vidas que restam nas Eliminatórias. `0` nos modos que não eliminam. */
+    val vidasRestantes: Int = 0,
     val wonLastGame: Boolean = false,
     /**
      * Subiu de nível nesta partida — comparado entre o perfil antes e depois da agregação.
@@ -141,6 +143,21 @@ private const val FEEDBACK_DELAY_MS = 1_000L
 private const val INPUT_GRACE_MS = 350L
 private const val TICK_MS = 100L
 
+/**
+ * Perguntas respondidas que dão "vitória" nas Eliminatórias — o mesmo número que antes era
+ * preciso sobreviver, agora que a corrida não tem fim. Ver `didWin`.
+ */
+const val ELIMINATORIAS_MARCO_VITORIA = 20
+
+/**
+ * A quantas perguntas do fim do lote se começa a carregar o lote seguinte.
+ *
+ * Cinco e não uma: carregar `/categorias/{cat}` inteiro leva bem mais do que os 15 s de uma
+ * pergunta num emulador lento, e o jogador não pode chegar ao fim do lote com o pedido ainda
+ * a voar.
+ */
+private const val PREFETCH_MARGEM = 5
+
 class GameViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
     private val profileRepository: ProfileRepository = ProfileRepository(),
@@ -158,6 +175,7 @@ class GameViewModel(
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     private var timerJob: Job? = null
+    private var prefetchJob: Job? = null
     private var presenceUid: String? = null
     private var profileJob: Job? = null
 
@@ -749,6 +767,7 @@ class GameViewModel(
 
     fun goToCategorySelect() {
         stopTimer()
+        cancelPrefetch()
         val s = _uiState.value
         _uiState.value = s.sessionOnly().copy(
             screen = GameScreen.CATEGORY_SELECT,
@@ -876,6 +895,7 @@ class GameViewModel(
     }
 
     fun selectMode(mode: GameMode) {
+        cancelPrefetch()
         val s = _uiState.value
         val categoria = s.selectedCategory
         val customQs = s.customCategoryQuestions
@@ -901,6 +921,7 @@ class GameViewModel(
                     wasTimeout = false,
                     lastDelta = 0,
                     eliminated = false,
+                    vidasRestantes = mode.vidas,
                     isLoading = false
                 )
                 beginQuestion(0)
@@ -929,6 +950,7 @@ class GameViewModel(
             aceitaToques = false
         )
         startTimer(duration)
+        prefetchSePerto(index)
         viewModelScope.launch {
             delay(INPUT_GRACE_MS)
             // Só reabre se ainda estamos nesta pergunta e sem resposta dada.
@@ -937,6 +959,65 @@ class GameViewModel(
                 _uiState.value = s.copy(aceitaToques = true)
             }
         }
+    }
+
+    /**
+     * Carrega mais perguntas em fundo quando o lote das Eliminatórias está a acabar.
+     *
+     * Só corre num modo sem limite, só uma vez de cada vez ([prefetchJob]) e só quando faltam
+     * [PREFETCH_MARGEM] perguntas. As que já saíram nesta corrida são excluídas do lote novo,
+     * para não repetir enquanto houver banco por usar.
+     */
+    private fun prefetchSePerto(index: Int) {
+        val state = _uiState.value
+        val mode = state.mode ?: return
+        if (!mode.semLimiteDePerguntas) return
+        if (state.customCategoryQuestions != null) return
+        if (index < state.questions.size - PREFETCH_MARGEM) return
+        if (prefetchJob?.isActive == true) return
+
+        val categoria = state.selectedCategory
+        val perguntasAntes = state.questions.size
+        prefetchJob = viewModelScope.launch {
+            val jaVistas = _uiState.value.questions.map { it.pergunta }.toSet()
+            val novas = runCatching {
+                questionRepository.loadGameQuestions(categoria, mode.questionCount)
+            }.getOrNull().orEmpty().filter { it.pergunta !in jaVistas }
+            if (novas.isEmpty()) return@launch
+            // O pedido pode demorar mais do que a partida. Sem esta guarda, um lote a chegar
+            // atrasado escrevia `questions` por cima de um ecrã que já não é o do jogo — ou de
+            // uma partida nova, noutra categoria.
+            val agora = _uiState.value
+            if (agora.screen != GameScreen.QUESTION) return@launch
+            if (agora.selectedCategory != categoria || agora.mode != mode) return@launch
+            if (agora.questions.size < perguntasAntes) return@launch
+            _uiState.value = agora.copy(questions = agora.questions + novas)
+        }
+    }
+
+    /** Corta um lote a caminho. Chamado quando a partida acaba ou o jogador sai do jogo. */
+    private fun cancelPrefetch() {
+        prefetchJob?.cancel()
+        prefetchJob = null
+    }
+
+    /**
+     * Chegou-se ao fim do lote sem o prefetch ter trazido nada — ou porque falhou, ou porque a
+     * categoria já não tem perguntas por usar. Em vez de acabar a corrida de alguém que está a
+     * ir bem, **reaproveitam-se as já respondidas, baralhadas de novo**.
+     *
+     * Repetir uma pergunta é menos mau do que cortar uma sequência boa por falta de banco: é um
+     * modo de sobrevivência e a esta altura o jogador já passou de todas pelo menos uma vez.
+     */
+    private fun reporLoteEContinuar(nextIndex: Int) {
+        val state = _uiState.value
+        val recicladas = state.questions.shuffled()
+        if (recicladas.isEmpty()) {
+            finishGame(faced = state.questions.size, eliminated = false)
+            return
+        }
+        _uiState.value = state.copy(questions = state.questions + recicladas)
+        beginQuestion(nextIndex)
     }
 
     private fun startTimer(duration: Long) {
@@ -1007,26 +1088,45 @@ class GameViewModel(
         val mode = state.mode ?: return
         val faced = state.currentIndex + 1
 
-        if (mode.endsOnFirstWrong && !wasCorrect) {
-            finishGame(faced = faced, eliminated = true)
-            return
+        if (mode.vidas > 0 && !wasCorrect) {
+            val vidas = state.vidasRestantes - 1
+            _uiState.value = state.copy(vidasRestantes = vidas)
+            if (vidas <= 0) {
+                finishGame(faced = faced, eliminated = true)
+                return
+            }
         }
 
         val nextIndex = state.currentIndex + 1
-        if (nextIndex < state.questions.size) {
+        if (nextIndex < _uiState.value.questions.size) {
             beginQuestion(nextIndex)
+            return
+        }
+        // Fim do lote carregado. Num modo sem limite isto não é o fim do jogo: repõe-se o lote e
+        // continua-se. Só o Clássico e o Caótico acabam por esgotar as perguntas.
+        if (mode.semLimiteDePerguntas) {
+            reporLoteEContinuar(nextIndex)
         } else {
-            finishGame(faced = state.questions.size, eliminated = false)
+            finishGame(faced = _uiState.value.questions.size, eliminated = false)
         }
     }
 
+    /**
+     * Vitória nas Eliminatórias.
+     *
+     * Era "sobreviver às 20". Sem limite de perguntas isso deixou de existir — a corrida acaba
+     * **sempre** em eliminação, e o critério antigo tornaria o bónus de XP inalcançável. Passa a
+     * ser um marco: chegar às [ELIMINATORIAS_MARCO_VITORIA] perguntas respondidas, o mesmo número
+     * que antes era preciso sobreviver.
+     */
     private fun didWin(mode: GameMode, correctCount: Int, total: Int, eliminated: Boolean): Boolean = when (mode) {
-        GameMode.ELIMINATORIAS -> !eliminated
+        GameMode.ELIMINATORIAS -> !eliminated || total >= ELIMINATORIAS_MARCO_VITORIA
         else -> total > 0 && correctCount.toDouble() / total >= WIN_ACCURACY
     }
 
     private fun finishGame(faced: Int, eliminated: Boolean) {
         stopTimer()
+        cancelPrefetch()
         val state = _uiState.value
         val mode = state.mode ?: return
         val won = didWin(mode, state.correctCount, faced, eliminated)

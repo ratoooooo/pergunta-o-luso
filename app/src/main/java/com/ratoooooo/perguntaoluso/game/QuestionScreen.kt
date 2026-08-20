@@ -37,6 +37,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -69,6 +71,8 @@ fun QuestionScreen(
     mode: GameMode,
     questionNumber: Int,
     totalQuestions: Int,
+    /** Vidas que restam nas Eliminatórias; ignorado nos modos que não eliminam. */
+    vidasRestantes: Int,
     points: Int,
     selectedOption: String?,
     isAnswered: Boolean,
@@ -106,7 +110,10 @@ fun QuestionScreen(
                 Spacer(Modifier.size(10.dp))
                 Column {
                     Text(
-                        text = "Pergunta $questionNumber de $totalQuestions",
+                        // Nas Eliminatórias não há total: a corrida não tem fim, e "de 20"
+                        // prometia um fim que já não existe.
+                        text = if (mode.semLimiteDePerguntas) "Pergunta $questionNumber"
+                        else "Pergunta $questionNumber de $totalQuestions",
                         style = MaterialTheme.typography.labelLarge,
                         color = Ink
                     )
@@ -152,6 +159,11 @@ fun QuestionScreen(
                     }
                 }
             }
+        }
+
+        if (mode.vidas > 0) {
+            Spacer(Modifier.size(12.dp))
+            VidasRow(total = mode.vidas, restantes = vidasRestantes)
         }
 
         Spacer(Modifier.size(14.dp))
@@ -286,3 +298,48 @@ private fun TimerBar(remainingMillis: Long, durationMillis: Long) {
     }
 }
 
+
+/**
+ * Vidas das Eliminatórias: um coração por vida, os gastos ficam vazios em vez de desaparecerem
+ * — a fila não encolhe, por isso vê-se de relance quantas já se perderam e não só quantas
+ * restam. O último coração pulsa, que é o momento em que a informação passa a ser urgente.
+ */
+@Composable
+private fun VidasRow(total: Int, restantes: Int) {
+    val ultimaVida = restantes == 1
+    val pulso = rememberPulse(ativo = ultimaVida, min = 1f, max = 1.14f, periodoMs = 700)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(total) { i ->
+            val viva = i < restantes
+            if (i > 0) Spacer(Modifier.size(8.dp))
+            // O coração que acabou de morrer dá um pinote antes de ficar vazio. Sem isto a
+            // troca de ícone passava despercebida — perder uma vida é o momento mais caro
+            // deste modo e era a única coisa no ecrã que mudava sem se fazer notar.
+            val perdaEscala = remember { Animatable(1f) }
+            LaunchedEffect(viva) {
+                if (!viva) {
+                    perdaEscala.animateTo(1.35f, tween(110, easing = FastOutSlowInEasing))
+                    perdaEscala.animateTo(1f, stickerSpring())
+                }
+            }
+            androidx.compose.material3.Icon(
+                imageVector = if (viva) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                contentDescription = null,
+                tint = if (viva) Coral else Ink.copy(alpha = 0.28f),
+                modifier = Modifier
+                    .size(26.dp)
+                    .scale(if (viva && ultimaVida) pulso else perdaEscala.value)
+            )
+        }
+        Spacer(Modifier.size(10.dp))
+        Text(
+            text = if (restantes == 1) "última vida" else "$restantes vidas",
+            style = MaterialTheme.typography.labelLarge,
+            color = if (ultimaVida) Coral else Ink
+        )
+    }
+}

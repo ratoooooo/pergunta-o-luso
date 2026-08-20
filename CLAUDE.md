@@ -101,6 +101,13 @@ These caused real production breakage; see the security note for the full storie
 Test rules by REST with real tokens from two accounts, **both directions**: the attack must be
 denied *and* the legitimate path must still pass.
 
+### Solo modes
+
+`GameMode` carries `vidas: Int` (0 = the mode doesn't eliminate). Eliminatórias has 3 lives and
+**no question limit** — `questionCount = 20` is only the initial batch, refilled in the
+background near the end and recycled reshuffled if the refill fails. Its "win" is a milestone
+(`ELIMINATORIAS_MARCO_VITORIA`), not survival, because the run always ends in elimination.
+
 ### Multiplayer
 
 One generalized N-player system serves 1x1, 2x2 and Grupo, parametrized by `MatchFormat`.
