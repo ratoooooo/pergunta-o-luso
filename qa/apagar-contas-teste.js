@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /**
- * Apaga do Firebase Auth as contas de teste que a limpeza de 9 ago 2026 deixou para trás.
+ * Apaga do Firebase Auth todas as contas que não estejam em [KEEP_EMAILS].
  *
- * A CLI do Firebase não tem `auth:delete` — só `auth:export` / `auth:import`. Os dados da RTDB
- * dessas contas já foram purgados (perfis, scores, arestas de amigos, presença); falta só
- * extinguir as contas do Auth, e isso exige credencial de administrador.
+ * A CLI do Firebase não tem `auth:delete` — só `auth:export` / `auth:import` —, por isso extinguir
+ * contas exige credencial de administrador. Foi escrito para as 67 que a limpeza de 9 ago 2026
+ * deixou para trás; **essas já não existem** (o dono apagou-as na consola a 20 ago 2026, ver
+ * `docs/vault/manutencao/limpeza-dados-teste.md`). O que sobra são as sessões anónimas que a QA
+ * vai deixando ficar, e é para essas que o script serve daqui para a frente.
  *
  * COMO CORRER
  *   1. Consola do Firebase → Definições do projeto → Contas de serviço → Gerar nova chave
@@ -14,19 +16,24 @@
  *   4. node qa/apagar-contas-teste.js --dry-run     # lista o que ia apagar
  *      node qa/apagar-contas-teste.js               # apaga mesmo
  *
- * O script recusa-se a tocar nas seis contas de KEEP_EMAILS, e recusa-se a correr se alguma
+ * O script recusa-se a tocar nas quatro contas de KEEP_EMAILS, e recusa-se a correr se alguma
  * delas aparecer na lista de alvos.
  */
 'use strict';
 
-/** As únicas contas que sobrevivem. Decidido com o dono do projeto a 9 ago 2026. */
+/**
+ * As únicas contas que sobrevivem: as 4 dos emuladores, ainda em uso para QA de multijogador.
+ *
+ * Eram seis (9 ago 2026) — `rato@gmail.com` e `inis.teste@example.com` também cá estavam. A 20
+ * ago 2026 o dono apagou-as na consola, de propósito e fora deste script. Ficam fora da lista
+ * porque a guarda abaixo exige que **todas** as contas de KEEP_EMAILS existam: com duas que já
+ * não existem, o script abortava sempre e nunca chegava a correr.
+ */
 const KEEP_EMAILS = new Set([
   'teste_um_2026@starforge.test',
   'teste_dois_2026@starforge.test',
   'teste_tres_2026@starforge.test',
   'teste_quatro_2026@starforge.test',
-  'rato@gmail.com',
-  'inis.teste@example.com',
 ]);
 
 const dryRun = process.argv.includes('--dry-run');

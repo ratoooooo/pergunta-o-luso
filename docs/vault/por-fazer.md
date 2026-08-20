@@ -12,16 +12,13 @@ Consolidado das listas "Por fazer" espalhadas pelas fases. Ordenado por o que bl
    fluxo já implementado na app.
 4. **Publicar a `gh-pages`**: o commit `0a14609` (declarar `VIBRATE` na política de privacidade)
    **está só local**. `git push origin gh-pages`.
-5. **Apagar 67 contas de teste do Firebase Auth.** A limpeza de 9 ago 2026 purgou-lhes **todos**
-   os dados da RTDB, mas as contas do Auth continuam de pé: a CLI do Firebase só tem
-   `auth:export` / `auth:import`, e não há service account nem `gcloud` nesta máquina. Está
-   pronto o script [`qa/apagar-contas-teste.js`](../../qa/apagar-contas-teste.js) — só precisa de
-   uma chave de conta de serviço e `npm install firebase-admin`; corre primeiro com `--dry-run`.
-   Sobrevivem seis contas, decididas contigo: as 4 dos emuladores
-   (`teste_{um,dois,tres,quatro}_2026@starforge.test`), `rato@gmail.com` e
-   `inis.teste@example.com`.
-   *Nota:* as 4 `teste*@starforge.test` estavam documentadas como "desativadas" — o export mostra
-   `disabled: false` nas quatro. Ou foram reactivadas, ou nunca chegaram a ser desactivadas.
+5. ~~**Apagar 67 contas de teste do Firebase Auth.**~~ Feito a 20 ago 2026, mas **não por este
+   script** — o dono apagou-as na consola, e de caminho apagou também `rato@gmail.com` e
+   `inis.teste@example.com`, que a decisão de 9 ago tinha marcado para sobreviver. Restam 8
+   contas: as 4 dos emuladores e 4 anónimas. Ver
+   [limpeza-dados-teste](manutencao/limpeza-dados-teste.md).
+   `KEEP_EMAILS` em [`qa/apagar-contas-teste.js`](../../qa/apagar-contas-teste.js) passou a ter só
+   as 4 dos emuladores; o script continua útil para as anónimas que a QA vai deixando ficar.
 
 ## Higiene técnica
 

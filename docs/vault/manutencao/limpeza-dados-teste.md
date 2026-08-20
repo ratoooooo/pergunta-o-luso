@@ -75,6 +75,33 @@ node qa/apagar-contas-teste.js --dry-run
 Até lá as 67 contas existem mas não têm dado nenhum associado. As anónimas são inalcançáveis —
 ninguém volta a entrar numa sessão anónima de outro dispositivo.
 
+## Actualização de 20 ago 2026 — as contas do Auth foram mesmo apagadas
+
+A secção acima ficou por cumprir tal como estava escrita: **não foi o script que as apagou.** O
+dono extinguiu-as directamente na consola do Firebase.
+
+E não foram só as 67. `rato@gmail.com` e `inis.teste@example.com` — as duas que a tabela de
+sobreviventes acima marcava para ficar — **também foram apagadas, de propósito**. A decisão de
+9 ago 2026 deixou de valer; a tabela fica como está por ser o registo do que se decidiu na altura.
+
+Estado verificado nesse dia, com uma chave de conta de serviço nova:
+
+| | |
+|---|---|
+| contas no Auth | **8** |
+| com e-mail | 4 — `teste_{um,dois,tres,quatro}_2026@starforge.test` |
+| anónimas | 4 |
+
+`KEEP_EMAILS` em [`qa/apagar-contas-teste.js`](../../qa/apagar-contas-teste.js) passou a listar só
+as 4 dos emuladores. Enquanto lá estiveram as seis, a guarda do script abortava sempre — exigia
+encontrar todas as de KEEP_EMAILS, e duas já não existiam. O script continua a servir: os alvos
+que sobram são as 4 sessões anónimas, e a QA vai deixando ficar mais.
+
+Na mesma altura o script foi migrado para a API modular do `firebase-admin` (v13/v14 removeu
+`admin.credential` e `admin.auth()`), e `qa/` ganhou `package.json` próprio — o
+`npm install firebase-admin` do bloco acima corria a partir de `qa/` mas ia instalar à pasta
+pessoal, por não haver lá `package.json` nenhum. Agora é `npm install`, a partir de `qa/`.
+
 ## Backups
 
 Snapshots pré-limpeza de `/jogadores`, `/scores`, `/amigos`, `/convites`, `/presenca`,
