@@ -17,8 +17,13 @@ exigiu inventar telemetria nova.
 | Duelista / Companheiro / Rei do Grupo | `multiVitorias.{1x1,2x2,grupo} ≥ 1` |
 | Nível 5 | `nivel ≥ 5` (derivado) |
 
-Cada uma tem um símbolo português distinto. Bloqueada = silhueta cinzenta + cadeado + progresso
-`x / y`; desbloqueada = símbolo a cores + anel dourado com halo pulsante. O ecrã tem separadores
+Cada uma tem um símbolo português distinto. Bloqueada = silhueta cinzenta + cadeado + **barra de
+progresso** com "x de y jogos"; desbloqueada = símbolo a cores + anel dourado com halo pulsante.
+
+O texto `x / y` já lá estava desde o início; a **barra** e a unidade por extenso ("36 de 50
+jogos" em vez de "36 / 50") entraram na Fase 33 — o número sozinho obrigava a fazer contas para
+saber se se estava perto, que é precisamente a informação que faz o jogador voltar. A barra só
+aparece nas bloqueadas: numa feita seria sempre 100 % e o cartão já diz "Desbloqueada". O ecrã tem separadores
 Todas / Feitas / Por fazer — 15 conquistas empilhadas eram densas de mais.
 
 **Ressalva honesta:** "Em Chamas" está ligada a `maxStreak`, que é a melhor sequência de

@@ -13,6 +13,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.sp
+import com.ratoooooo.perguntaoluso.ui.theme.Purple
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -150,9 +159,46 @@ private fun AchievementCard(a: Achievement, p: Profile, index: Int) {
         Box(Modifier.height(40.dp), contentAlignment = Alignment.Center) {
             Text(a.title, style = MaterialTheme.typography.labelLarge, color = Ink, textAlign = TextAlign.Center, maxLines = 2)
         }
-        Text(
-            if (done) "Desbloqueada" else a.progressText(p),
-            style = MaterialTheme.typography.bodyLarge, color = if (done) Ink else LockedTint, textAlign = TextAlign.Center
-        )
+        if (done) {
+            Text(
+                "Desbloqueada",
+                style = MaterialTheme.typography.bodyLarge, color = Ink, textAlign = TextAlign.Center
+            )
+        } else {
+            // Barra por baixo do "x de y". O texto sozinho obriga a fazer contas para saber se
+            // se está perto; a barra responde a isso de relance, que é o ponto de mostrar
+            // progresso em vez de um cadeado. Só nas bloqueadas — numa feita seria sempre 100 %
+            // e o cartão já diz "Desbloqueada".
+            Column(
+                Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    a.progressText(p),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 13.sp, lineHeight = 16.sp),
+                    color = LockedTint,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
+                )
+                Spacer(Modifier.size(5.dp))
+                val fracao by animateFloatAsState(
+                    targetValue = a.fracao(p),
+                    animationSpec = tween(600, easing = FastOutSlowInEasing),
+                    label = "progressoConquista"
+                )
+                Box(
+                    Modifier.fillMaxWidth().height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Neutral)
+                        .border(2.dp, Ink, RoundedCornerShape(4.dp))
+                ) {
+                    Box(
+                        Modifier.fillMaxHeight().fillMaxWidth(fracao)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Purple)
+                    )
+                }
+            }
+        }
     }
 }
