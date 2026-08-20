@@ -43,15 +43,19 @@ fun LevelBadge(nivel: Int, modifier: Modifier = Modifier, size: Dp = 44.dp, fill
 }
 
 /**
- * Gradiente frio da barra de XP: Teal → Azul → Roxo.
+ * Cor da barra de XP: **Roxo liso, em toda a app**.
  *
- * Antes a barra era roxa lisa, igual a tudo o resto que é roxo na app. Um gradiente
- * distingue-a de imediato e — mais importante — é a única barra da app que **não** usa
- * as cores de estado: a barra do tempo, na pergunta, é lisa e vai de Teal a Dourado a
- * Coral. Assim nunca se confunde "quanto tempo falta" com "quanto XP falta". O Azul só
- * era usado pela categoria História, e essa nunca aparece nos ecrãs com barra de XP.
+ * Já foi um gradiente Teal → Azul → Roxo. O gradiente resolvia um problema que afinal não
+ * existe — distinguir a barra de XP da barra do tempo — porque as duas nunca partilham ecrã:
+ * a do tempo só vive na pergunta, a de XP só no Início, no Perfil e no fim de jogo. O que o
+ * gradiente trazia a sério era três cores a mudar de sítio conforme a largura da barra, e ler-se
+ * diferente em cada ecrã.
+ *
+ * Roxo e não outra: Dourado é a ação primária no Início, mesmo por cima desta barra; Coral é
+ * destrutivo; Teal é "resposta certa". Sobra o Roxo, que já é a cor da progressão noutro sítio
+ * (`LevelPill`) e não é cor de estado nenhum.
  */
-val XpGradient = Brush.horizontalGradient(listOf(Teal, Azul, Purple))
+val XpFill = Purple
 
 /**
  * XP progress bar for the current level. When [showLabel] is set it prints
@@ -65,7 +69,7 @@ fun XpBar(
     levelLabel: Boolean = true,
     patente: String? = null,
     trackColor: Color = Lavender,
-    fillBrush: Brush = XpGradient
+    fillColor: Color = XpFill
 ) {
     androidx.compose.foundation.layout.Column(modifier) {
         if (showLabel) {
@@ -109,7 +113,10 @@ fun XpBar(
             Spacer(Modifier.size(6.dp))
         }
         // A barra enche com animação em vez de aparecer já cheia; perto do próximo nível
-        // (>= 85%) ganha um brilho dourado pulsante, para o salto de nível se antecipar.
+        // (>= 85%) ganha um brilho pulsante, para o salto de nível se antecipar. O brilho é
+        // Cream e não Dourado: em Dourado a barra passava a ler-se como duas cores mesmo depois
+        // de o gradiente ter saído, e no Início competia com o botão JOGAR, que é a ação
+        // primária. Um clarão da mesma barra continua a chamar a atenção sem inventar cor.
         val fracaoAnimada by animateFloatAsState(
             targetValue = estado.fracao,
             animationSpec = tween(700, easing = FastOutSlowInEasing),
@@ -123,13 +130,13 @@ fun XpBar(
         ) {
             Box(
                 Modifier.fillMaxHeight().fillMaxWidth(fracaoAnimada)
-                    .clip(RoundedCornerShape(8.dp)).background(fillBrush)
+                    .clip(RoundedCornerShape(8.dp)).background(fillColor)
             )
             if (quaseNivel) {
                 Box(
                     Modifier.fillMaxHeight().fillMaxWidth(fracaoAnimada)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Gold.copy(alpha = brilho))
+                        .background(Cream.copy(alpha = brilho * 0.5f))
                 )
             }
         }

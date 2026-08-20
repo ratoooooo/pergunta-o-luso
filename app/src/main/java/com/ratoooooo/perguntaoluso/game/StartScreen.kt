@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.scale
 import com.ratoooooo.perguntaoluso.data.Profile
 import com.ratoooooo.perguntaoluso.data.StreakDiario
 import com.ratoooooo.perguntaoluso.data.UserInfo
+import com.ratoooooo.perguntaoluso.ui.FeatureFlags
 import com.ratoooooo.perguntaoluso.ui.theme.Coral
 import com.ratoooooo.perguntaoluso.ui.theme.Cream
 import com.ratoooooo.perguntaoluso.ui.theme.Gold
@@ -94,8 +95,14 @@ fun StartScreen(
 
             StickerButton("JOGAR", Icons.Rounded.PlayArrow, onPlayClick, fillColor = Gold, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.size(10.dp))
-            StickerButton("QUIZZES DA COMUNIDADE", Icons.Rounded.Groups, onCommunityClick, fillColor = Teal, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.size(10.dp))
+            // Escondido por `FeatureFlags.QUIZZES_COMUNIDADE_VISIVEIS` — este é o único ponto de
+            // entrada na navegação normal, por isso apagá-lo torna todo o ramo inalcançável sem
+            // deixar botão sem destino em lado nenhum. Nada foi removido: pôr a flag a `true`
+            // devolve tudo.
+            if (FeatureFlags.QUIZZES_COMUNIDADE_VISIVEIS) {
+                StickerButton("QUIZZES DA COMUNIDADE", Icons.Rounded.Groups, onCommunityClick, fillColor = Teal, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.size(10.dp))
+            }
             StickerButton("HISTÓRICO", Icons.Rounded.History, onHistoryClick, fillColor = Purple, modifier = Modifier.fillMaxWidth())
             if (!isRegistered) {
                 Spacer(Modifier.size(14.dp))
@@ -186,11 +193,25 @@ private fun StatChip(
     Column(
         modifier = modifier
             .stickerBlock(fillColor = color, cornerRadius = 14.dp, shadowOffset = 3.dp, borderWidth = 2.dp)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = value, style = MaterialTheme.typography.labelLarge, color = textColorFor(color))
-        Text(text = label, style = MaterialTheme.typography.bodyLarge, color = textColorFor(color))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelLarge,
+            color = textColorFor(color),
+            maxLines = 1
+        )
+        // A legenda é rótulo de chip, não texto corrido: a bodyLarge (16 sp) "pontos" e
+        // "acertos" não cabiam na largura de um terço do cartão e partiam em duas linhas,
+        // desalinhando o chip do meio em relação a "jogos". 13 sp cabe com folga e mantém a
+        // hierarquia — o número continua a ser o que salta à vista.
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge.copy(fontSize = 13.sp, lineHeight = 16.sp),
+            color = textColorFor(color),
+            maxLines = 1
+        )
     }
 }
 

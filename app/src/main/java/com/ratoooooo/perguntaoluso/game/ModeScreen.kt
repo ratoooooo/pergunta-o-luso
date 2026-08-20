@@ -26,6 +26,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +66,31 @@ fun ModeScreen(
     onModeSelected: (GameMode) -> Unit,
     onBack: () -> Unit
 ) {
+    var ajudaAberta by remember { mutableStateOf(false) }
+
+    if (ajudaAberta) {
+        InfoDialog(
+            titulo = "O que distingue os modos",
+            linhas = listOf(
+                "Pontos são por rapidez, não por acertar" to
+                    "Acertar vale 10 pontos por cada segundo que sobrou no relógio, a multiplicar " +
+                    "pela dificuldade da pergunta. Responder à pressa vale muito mais do que " +
+                    "responder no fim — acertar ao último segundo dá quase nada.",
+                "Sequência acumula por cima disso" to
+                    "2 seguidas +50, 3 seguidas +75, 4 ou mais +100 por resposta. Errar põe a " +
+                    "sequência a zero, e é aí que se perde mais pontuação do que na pergunta em si.",
+                "Caótico pode tirar pontos" to
+                    "Os eventos não são só bónus: em Tudo ou Nada acertar dá +100 mas errar tira " +
+                    "50, Pergunta Dupla vale a dobrar e Velocidade Máxima corta o tempo a metade.",
+                "Eliminatórias não acaba" to
+                    "Não há número de perguntas: joga-se até gastar as três vidas. Chegar às " +
+                    "$ELIMINATORIAS_MARCO_VITORIA perguntas conta como vitória no perfil."
+            ),
+            rodape = "Clássico e Caótico contam como vitória com 70 % de acertos ou mais.",
+            onDismiss = { ajudaAberta = false }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -72,7 +101,11 @@ fun ModeScreen(
             .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
-        ScreenHeader(title = "Como queres jogar?", onBack = onBack)
+        ScreenHeader(
+            title = "Como queres jogar?",
+            onBack = onBack,
+            onInfo = { ajudaAberta = true }
+        )
         Spacer(Modifier.size(14.dp))
         CategoryChip(categoria)
         Spacer(Modifier.size(22.dp))

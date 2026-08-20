@@ -132,6 +132,10 @@ Sticker style (`ui/theme/Sticker.kt`). The load-bearing rule:
 > gold is merit and the primary action becomes purple. Everywhere else gold is the primary
 > action. Tabs are never gold.
 
+The XP bar is **solid Purple everywhere** (`XpFill`) — it used to be a gradient; don't
+reintroduce one. Community Quizzes are hidden behind `FeatureFlags.QUIZZES_COMUNIDADE_VISIVEIS`
+(the code is all still there and working — flip the flag to restore it).
+
 `SegmentedTabs` = primary filter level (purple pill), `UnderlineTabs` = secondary. "This is me" is
 always a purple outline, never a teal fill — "me" and "won" must not be the same signal.
 Answer options are neutral with A/B/C/D badges at rest; colour only appears on reveal, because

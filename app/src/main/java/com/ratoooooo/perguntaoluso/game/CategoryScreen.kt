@@ -23,6 +23,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -45,6 +49,29 @@ fun CategoryScreen(
     onCategorySelected: (String) -> Unit,
     onBack: () -> Unit
 ) {
+    var ajudaAberta by remember { mutableStateOf(false) }
+
+    if (ajudaAberta) {
+        InfoDialog(
+            titulo = "Como funcionam as categorias",
+            linhas = listOf(
+                "O número é o banco todo, não a partida" to
+                    "\"326 perguntas\" é o que existe na categoria. Cada partida tira 10 à sorte " +
+                    "desse conjunto, por isso duas partidas seguidas quase nunca se repetem.",
+                "A dificuldade vem misturada" to
+                    "As perguntas de cada partida são sorteadas entre fáceis, médias e difíceis. " +
+                    "A categoria não é mais fácil ou mais difícil do que outra — só muda o tema.",
+                "Contam todas para o mesmo perfil" to
+                    "Os pontos e o XP vão para o mesmo sítio venha a pergunta de onde vier. O que " +
+                    "o Perfil guarda por categoria é só quantos jogos fizeste em cada uma.",
+                "No multijogador tem de coincidir" to
+                    "Só entras em sala com quem escolheu a mesma categoria. Uma categoria menos " +
+                    "escolhida pode demorar mais a encontrar gente."
+            ),
+            onDismiss = { ajudaAberta = false }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -54,7 +81,8 @@ fun CategoryScreen(
         ScreenHeader(
             title = "Que tema te apetece?",
             subtitle = "Escolhe uma categoria para jogar",
-            onBack = onBack
+            onBack = onBack,
+            onInfo = { ajudaAberta = true }
         )
 
         // Pastilha de contexto (mockup, ecrã 4): a escolha da categoria vem depois do

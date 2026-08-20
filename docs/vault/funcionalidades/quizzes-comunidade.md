@@ -2,6 +2,11 @@
 
 ← [índice](../00-indice.md)
 
+> **Escondido da UI desde 9 ago 2026.** `FeatureFlags.QUIZZES_COMUNIDADE_VISIVEIS = false` tira o
+> botão do Início, que era o único ponto de entrada. Tudo o que está descrito abaixo continua a
+> existir e a funcionar — ecrã, repositório, salas privadas por código, moderação e rules. Pôr a
+> flag a `true` devolve o acesso; não é preciso mexer em mais nada.
+
 Perguntas criadas pelos próprios jogadores. Alcançável por "COMUNIDADE" no picker de categoria
 ou por atalho no Início.
 

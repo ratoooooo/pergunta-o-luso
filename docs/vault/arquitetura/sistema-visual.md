@@ -52,3 +52,35 @@ arte exacta das conquistas, secção "ACESSO RÁPIDO" no Início, imagens nas pe
 Oficial/Personalizadas no Histórico, ícone `castle` para História, e o ecrã de jogo com fundo
 escuro (recusado — um único ecrã escuro leria como outra app). Lista completa e estado de cada
 uma na Fase 11 do [arquivo](../historico-fases/README.md).
+
+## Fase 30 — polish (9 ago 2026)
+
+**Chips do cartão de perfil.** "pontos" e "acertos" partiam em duas linhas dentro do chip e
+desalinhavam-nos de "jogos". A legenda é rótulo, não texto corrido: desceu para 13 sp com
+`maxLines = 1` e o padding horizontal de 12 para 8 dp. O número mantém-se em `labelLarge` — a
+hierarquia dentro do chip não mudou. Fica de pé o [reflow adaptativo](../por-fazer.md) para
+letra de sistema muito grande; isto resolve o caso normal, não substitui aquilo.
+
+**Barra de XP: roxo liso.** Era um gradiente Teal → Azul → Roxo. Ver
+[Progression.kt](../../../app/src/main/java/com/ratoooooo/perguntaoluso/ui/theme/Progression.kt)
+para o porquê da cor; em resumo, o gradiente resolvia um conflito com a barra do tempo que não
+existe (as duas nunca partilham ecrã) e em troca lia-se diferente conforme a largura. O brilho de
+"quase a subir de nível" passou de Dourado a Cream, para a barra não voltar a ler-se como duas
+cores nem competir com o botão JOGAR.
+
+**ⓘ nos três ecrãs de escolha.** Formato, categoria e modo passaram a ter um ícone de informação
+no `ScreenHeader` — vive no componente partilhado para os três o porem no mesmo sítio. Disco
+Cream, neutro de propósito: Dourado é a ação primária do ecrã, Teal e Coral são cores de estado.
+Abre um `StickerDialog` cuja regra de texto é **não repetir o cartão**: explica o matchmaking, o
+que a contagem de perguntas significa, e como os pontos se calculam.
+
+**Micro-transições novas — só duas.** O coração que se perde nas Eliminatórias dá um pinote antes
+de esvaziar (era a única mudança de estado do ecrã que passava despercebida), e o `StickerDialog`
+entra com o mesmo `stickerSpring` de tudo o resto em vez de aparecer instantaneamente. O resto
+dos ecrãs ficou como estava.
+
+**Quizzes da Comunidade escondidos.** `FeatureFlags.QUIZZES_COMUNIDADE_VISIVEIS = false` tira o
+botão do Início. Nada foi apagado — ecrã, repositório, salas privadas por código e rules estão
+intactos, e a flag a `true` devolve tudo. Era o **único** ponto de entrada na navegação normal
+(o ramo `"COMUNIDADE"` em `selectCategory` já era código morto), por isso não ficou botão sem
+destino em lado nenhum.

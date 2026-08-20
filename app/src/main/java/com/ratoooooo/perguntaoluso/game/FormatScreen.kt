@@ -25,6 +25,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,11 +52,41 @@ fun FormatScreen(
     onMulti: (MatchFormat) -> Unit,
     onBack: () -> Unit
 ) {
+    var ajudaAberta by remember { mutableStateOf(false) }
+
+    if (ajudaAberta) {
+        InfoDialog(
+            titulo = "Como funcionam os formatos",
+            linhas = listOf(
+                "Não precisas de convidar ninguém" to
+                    "Nos formatos com adversários entras numa sala aberta e esperas que apareça " +
+                    "gente. Vês os outros a entrar em tempo real e podes trocar de sala.",
+                "A partida começa de três maneiras" to
+                    "Quando a sala enche, quando o anfitrião carrega em INICIAR JOGO, ou " +
+                    "sozinha ao fim de 60 s parada. Cada jogador novo que entra devolve os 60 s.",
+                "Só jogas contra quem escolheu o mesmo" to
+                    "As salas são por categoria e modo. Escolher Desporto · Caótico só te " +
+                    "emparelha com quem escolheu Desporto · Caótico.",
+                "Se alguém desistir" to
+                    "No 1x1 e no Grupo o jogo segue com quem ficar. No 2x2 a equipa de quem sai " +
+                    "perde — jogar 1 contra 2 tornava o total de equipa injusto."
+            ),
+            rodape = "Eliminatórias só existe em Solo: não dá para sincronizar uma ronda em que " +
+                "cada jogador é eliminado num momento diferente.",
+            onDismiss = { ajudaAberta = false }
+        )
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().background(Cream)
             .verticalScroll(rememberScrollState()).padding(24.dp)
     ) {
-        ScreenHeader(title = "Sozinho ou à batalha?", subtitle = "Escolhe o formato de jogo", onBack = onBack)
+        ScreenHeader(
+            title = "Sozinho ou à batalha?",
+            subtitle = "Escolhe o formato de jogo",
+            onBack = onBack,
+            onInfo = { ajudaAberta = true }
+        )
         Spacer(Modifier.size(24.dp))
 
         FormatOption("Solo", "Tu contra as perguntas", Icons.Rounded.Person, Purple, 0, onSolo)
