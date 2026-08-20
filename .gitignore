@@ -118,3 +118,13 @@ skills-lock.json
 
 # macOS
 .DS_Store
+
+# Obsidian: configuração local do editor, não é conteúdo do vault
+.obsidian/
+docs/.obsidian/
+
+# Páginas legais: main tem só o vault em docs/; as páginas HTML vivem em gh-pages
+# (ver CLAUDE.md, "Files never committed"). Não misturar as duas árvores.
+docs/index.html
+docs/privacidade.html
+docs/eliminar-conta.html
