@@ -10,7 +10,7 @@
  *   1. Consola do Firebase → Definições do projeto → Contas de serviço → Gerar nova chave
  *      privada. Guarda o JSON FORA do repositório (é uma credencial).
  *   2. export GOOGLE_APPLICATION_CREDENTIALS=/caminho/para/chave.json
- *   3. npm install firebase-admin
+ *   3. npm install          # a partir de qa/, que tem o seu package.json
  *   4. node qa/apagar-contas-teste.js --dry-run     # lista o que ia apagar
  *      node qa/apagar-contas-teste.js               # apaga mesmo
  *

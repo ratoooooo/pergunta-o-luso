@@ -1,0 +1,9 @@
+{
+  "name": "starforge-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scripts de manutenção da RTDB (perguntas, contas de teste). Precisam de uma chave de conta de serviço em GOOGLE_APPLICATION_CREDENTIALS — ver o cabeçalho de cada script.",
+  "dependencies": {
+    "firebase-admin": "^14.3.0"
+  }
+}
