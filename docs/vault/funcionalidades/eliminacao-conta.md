@@ -64,12 +64,38 @@ Anonimizar preservaria conteúdo que outros possam ter gostado, mas exigia mexer
 propriedade — `.write` em `categorias_comunitarias/$catId` exige `criadorUid === auth.uid`, e com
 o uid extinto o quiz ficaria **permanentemente não-editável e não-moderável**.
 
+## O ramo de reautenticação — exercitado a 9 ago 2026
+
+Conta e-mail/palavra-passe criada de propósito (`reauth1@starforge.test`, ligada por
+`linkWithCredential` a uma sessão anónima que já tinha 2 jogos), deixada a repousar ~15 min — o
+Firebase exige sessão com menos de ~5 min para `delete()`. Depois: Perfil → Eliminar conta →
+escrever `ELIMINAR` → ELIMINAR DEFINITIVAMENTE. Observado:
+
+1. O diálogo **ficou aberto**, com campo **Palavra-passe** novo e a mensagem
+   *"Por segurança, confirma a palavra-passe para concluir."* O botão principal deixou de estar
+   Coral. Nada fechou sem explicação.
+2. A **janela conhecida reproduziu-se tal e qual**: naquele instante `jogadores/{uid}`,
+   `presenca/{uid}` e os 2 registos em `/scores` já não existiam, e a conta **continuava** no
+   Auth. A purga tinha corrido, o `delete()` não.
+3. Palavra-passe correcta → reautenticou, purgou outra vez (idempotente, sem estoiro) e apagou a
+   conta. A app voltou sozinha a uma sessão anónima limpa ("Convidado", 0 pontos, GRUMETE).
+4. Confirmado por fora: `auth_get_users` devolve lista vazia para o e-mail, e
+   `jogadores/`, `presenca/`, `amigos/`, `convites/` e `/scores` não têm nada com aquele uid.
+
+**Duas coisas que ficaram por confirmar ou correram mal:**
+
+- **Palavra-passe errada não foi testada.** Uma tentativa falhada podia atirar com o rate limit
+  do Firebase para cima e deixar a conta a meio (dados apagados, conta viva); preferiu-se
+  garantir o ramo principal. `friendlyAuthError` para credencial inválida continua sem
+  observação.
+- Numa das submissões apareceu, em inglês e cru, *"An internal error has occurred. [ unexpected
+  end of stream on com.android.okhttp.Address@… ]"* — falha de transporte. Repetir com a mesma
+  palavra-passe resolveu. `friendlyAuthError` não traduz este caso, e a app é toda em português.
+
 ## Por fazer
 
-- **O ramo de reautenticação nunca foi exercitado** — só é alcançável por contas
-  e-mail/palavra-passe com sessão antiga; o teste correu com conta anónima. O código trata a
-  exceção, mas isso é análise, não observação.
 - **A Play Store exige também um URL web de pedido de eliminação**, além do fluxo na app, para o
   formulário Data Safety. Continua por fazer — não é trabalho de app.
+- Mapear o erro de transporte acima (e a credencial inválida) em `friendlyAuthError`.
 
 Ver também: [autenticacao](../arquitetura/autenticacao.md) · [rules](../arquitetura/rules.md)
