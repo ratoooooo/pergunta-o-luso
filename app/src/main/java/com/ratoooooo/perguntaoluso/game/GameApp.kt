@@ -212,6 +212,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
             won = state.wonLastGame,
             subiuDeNivel = state.subiuDeNivel,
             novasConquistas = state.novasConquistas,
+            profile = state.profile,
             topScores = state.topScores,
             onPlayAgain = viewModel::playAgain,
             onHome = viewModel::backToStart
