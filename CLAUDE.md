@@ -149,8 +149,10 @@ colouring them earlier implied the answer.
   When claiming something is verified, state what was actually observed — a `SoundPool.play()`
   returning a stream id is not proof of audible sound (the emulators here run with `-no-audio`).
 - Distinguish *verified* from *deduced* in reports.
-- `/categorias` has `.write: false`. Seeding requires temporarily unlocking rules, backing up,
-  writing, then re-locking **and confirming with a PUT that returns `Permission denied`**.
+- `/categorias` has `.write: false`, but **`firebase database:set` authenticates as admin and
+  rules do not apply to it** — seed with the rules locked the whole time rather than unlocking
+  them (the older documented procedure). Still back up first, and still confirm afterwards with
+  an unauthenticated PUT that returns `Permission denied`.
 - Stale `/lobbies` and `/multisalas` state from earlier QA causes ghost matchmaking. Clear them
   before testing multiplayer.
 - The Portuguese/UI text of this project is in **European Portuguese**; commit messages and docs

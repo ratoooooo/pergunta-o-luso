@@ -6,7 +6,8 @@ ligado abaixo; não é preciso ler o histórico completo para trabalhar.
 ## O que é
 
 Jogo de trivia de cultura portuguesa para Android. Solo e multijogador em tempo real.
-1090 perguntas em 5 categorias visíveis, escolha múltipla e Verdadeiro/Falso.
+1630 perguntas em 5 categorias visíveis — 326 em cada, niveladas a 9 ago 2026 — mais 55 em duas
+categorias escondidas. Escolha múltipla e Verdadeiro/Falso.
 
 - **Stack:** Kotlin 2.2 · Jetpack Compose (Material 3) · MVVM (`ViewModel` + `StateFlow`)
 - **Backend:** Firebase Auth + Realtime Database. **Sem servidor próprio, sem Cloud Functions.**
