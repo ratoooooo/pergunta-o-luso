@@ -67,7 +67,10 @@ internal fun posicaoLabel(rank: Int): String {
 internal suspend fun <T> coletarListener(
     fluxo: Flow<T>,
     onFalha: (Throwable) -> Unit,
-    onValor: (T) -> Unit
+    // `suspend` porque o corpo do `listenToLobby` chama a RTDB de dentro do `collect`
+    // (joinRoom/startLobbyRoom). Alargar aqui evita um segundo helper só para esse caso; quem
+    // passa uma lambda normal, como o `observeRoom`, não nota diferença.
+    onValor: suspend (T) -> Unit
 ) {
     try {
         fluxo.collect { onValor(it) }
@@ -77,6 +80,18 @@ internal suspend fun <T> coletarListener(
         onFalha(e)
     }
 }
+
+/**
+ * Vale a pena atirar o jogador para o ecrã de erro quando um listener do **lobby** morre?
+ *
+ * Só se ele ainda estiver à espera. Depois de [jaTemSala] os listeners de `/lobbies` deixaram de
+ * interessar — o jogo vive em `/multisalas` a partir daí, e o próprio lobby chega a ser apagado
+ * no arranque normal. Sem esta guarda, apagar um lobby a meio de uma partida em curso trocava o
+ * jogo pelo ecrã de erro. É a mesma regra que o `listenToLobby` já aplicava ao lobby desaparecer
+ * (`if (salaId == null)`), agora também para o listener falhar.
+ */
+internal fun deveAvisarDeFalhaNoLobby(jaTemSala: Boolean, jaTerminou: Boolean): Boolean =
+    !jaTemSala && !jaTerminou
 
 data class PlayerLive(
     val uid: String,
@@ -206,8 +221,13 @@ class MultiMatchViewModel(
                 _uiState.value = _uiState.value.copy(myUid = myUid, myName = nome)
                 serverOffset = runCatching { matchRepository.serverTimeOffset() }.getOrDefault(0L)
 
+                // Corrotina **filha**: o `catch` deste `try` não a apanha (defeito B2). A falha do
+                // listener tem de ser tratada cá dentro, como no `observeRoom`.
                 openLobbiesJob = viewModelScope.launch {
-                    matchRepository.observeOpenLobbies(format.id).collect { lobbies ->
+                    coletarListener(
+                        fluxo = matchRepository.observeOpenLobbies(format.id),
+                        onFalha = { falhaDoListenerDoLobby() }
+                    ) { lobbies ->
                         _uiState.value = _uiState.value.copy(openLobbies = lobbies)
                     }
                 }
@@ -225,12 +245,18 @@ class MultiMatchViewModel(
     private fun listenToLobby(lobbyId: String) {
         lobbyJob?.cancel()
         lobbyJob = viewModelScope.launch {
-            matchRepository.observeLobby(format.id, lobbyId).collect { lobby ->
+            // Além da falha do próprio listener, este corpo tem chamadas suspensas que também
+            // podiam estoirar para fora do `collect` (joinRoom, loadGameQuestions,
+            // startLobbyRoom) — o `coletarListener` apanha as duas coisas.
+            coletarListener(
+                fluxo = matchRepository.observeLobby(format.id, lobbyId),
+                onFalha = { falhaDoListenerDoLobby() }
+            ) { lobby ->
                 if (lobby == null || lobby.estado == "cancelled") {
                     if (salaId == null) {
                         _uiState.value = _uiState.value.copy(phase = MultiPhase.ERROR, error = "A sala de espera foi cancelada")
                     }
-                    return@collect
+                    return@coletarListener
                 }
 
                 val count = lobby.membros.size
@@ -345,6 +371,22 @@ class MultiMatchViewModel(
                 onFalha = { falhaDoListenerDaSala() }
             ) { room -> onRoom(room) }
         }
+    }
+
+    /**
+     * Morreu um dos listeners de `/lobbies` — o da lista de salas abertas ou o da sala de espera
+     * onde este jogador está. Os dois vivem na mesma subárvore, por isso uma negação de leitura
+     * costuma matá-los aos pares e não há matchmaking possível a seguir.
+     *
+     * Mesma saída do defeito B: ecrã de erro com VOLTAR ligado ao `leave()` de sempre. Não se
+     * tenta reconectar — ver [deveAvisarDeFalhaNoLobby] para quando é que isto se cala.
+     */
+    private fun falhaDoListenerDoLobby() {
+        if (!deveAvisarDeFalhaNoLobby(jaTemSala = salaId != null, jaTerminou = finished)) return
+        _uiState.value = _uiState.value.copy(
+            phase = MultiPhase.ERROR,
+            error = "Perdeste o acesso à sala de espera."
+        )
     }
 
     /**

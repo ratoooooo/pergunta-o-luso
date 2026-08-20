@@ -39,6 +39,24 @@ Consolidado das listas "Por fazer" espalhadas pelas fases. Ordenado por o que bl
 
 ## Defeitos abertos
 
+**B3. `switchLobby` não tem protecção nenhuma.** Encontrado ao corrigir o B2, não corrigido.
+`switchLobby` faz `viewModelScope.launch { … }` **sem** try/catch, e lá dentro chama
+`leaveLobby`(protegido), mas também `joinLobbyById`, `findOrCreateLobby` e `listenToLobby` a
+descoberto. Uma negação de escrita ao trocar de sala segue o mesmo caminho dos defeitos B/B2 —
+`FATAL EXCEPTION: main`. Não é um listener, por isso o `coletarListener` não serve: precisa de um
+try/catch com a decisão de para onde mandar o jogador. Deduzido por leitura do código, não
+observado a estoirar.
+
+> **B2 (listeners do lobby) — resolvido.** `openLobbiesJob` (`observeOpenLobbies`) e `lobbyJob`
+> (`observeLobby`) faziam o mesmo `collect` cru do B. *Pareciam* cobertos pelo `try` do `start()`,
+> mas cada um lança a sua `viewModelScope.launch` — corrotina filha, o `catch` do pai não a
+> apanha. Passam os dois pelo `coletarListener`, com `falhaDoListenerDoLobby()` a mandá-los para o
+> mesmo ecrã de erro do B. A guarda `deveAvisarDeFalhaNoLobby` impede o efeito colateral que isto
+> abria: com o jogo já a decorrer em `/multisalas`, um listener de `/lobbies` a morrer não pode
+> trocar a partida pelo ecrã de erro — o lobby até é apagado no arranque normal. De caminho ficou
+> coberto o **corpo** do `collect` do `listenToLobby`, que chama a RTDB lá dentro (`joinRoom`,
+> `loadGameQuestions`, `startLobbyRoom`) e estoirava pela mesma porta.
+
 > **B (`observeRoom`) — resolvido.** `MultiMatchViewModel.observeRoom` fazia `collect` sem
 > protecção e a excepção saía por `viewModelScope` como `FATAL EXCEPTION: main`
 > (`DatabaseException: This client does not have permission to perform this operation`). Passa

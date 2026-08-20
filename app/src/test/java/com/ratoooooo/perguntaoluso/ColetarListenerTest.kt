@@ -2,6 +2,7 @@ package com.ratoooooo.perguntaoluso
 
 import com.google.firebase.database.DatabaseException
 import com.ratoooooo.perguntaoluso.game.multi.coletarListener
+import com.ratoooooo.perguntaoluso.game.multi.deveAvisarDeFalhaNoLobby
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -104,6 +106,59 @@ class ColetarListenerTest {
         assertEquals(listOf("sala-viva"), recebidos)
         assertEquals(1, falhas.size)
         assertTrue(naoApanhadas.isEmpty())
+    }
+
+    // --- Defeito B2: os dois listeners do lobby (openLobbiesJob e lobbyJob) ---
+    //
+    // O fluxo falhar já está coberto acima — o helper é o mesmo. O que é **novo** nestes dois
+    // pontos de chamada é o corpo do `collect`: o `listenToLobby` chama a RTDB lá dentro
+    // (joinRoom, loadGameQuestions, startLobbyRoom), e uma dessas chamadas a estoirar saía pelo
+    // `collect` exactamente como a falha do listener — o mesmo crash, por outra porta.
+
+    /** Controlo: o corpo a estoirar mata a app tal como o listener a falhar. */
+    @Test
+    fun `o corpo do collect a estoirar chega ao handler do scope`() = runBlocking {
+        val naoApanhadas = mutableListOf<Throwable>()
+        val scope = scopeComoViewModelScope(naoApanhadas)
+
+        val job = scope.launch {
+            fluxoQueNuncaAcaba().collect { throw DatabaseException(MENSAGEM_RTDB) }
+        }
+        job.join()
+
+        assertEquals("o cenário tem mesmo de falhar", 1, naoApanhadas.size)
+        assertTrue(naoApanhadas.first() is DatabaseException)
+    }
+
+    @Test
+    fun `coletarListener tambem apanha o corpo do collect a estoirar`() = runBlocking {
+        val naoApanhadas = mutableListOf<Throwable>()
+        val falhas = mutableListOf<Throwable>()
+        val scope = scopeComoViewModelScope(naoApanhadas)
+
+        val job = scope.launch {
+            coletarListener(fluxoQueNuncaAcaba(), onFalha = { falhas += it }) {
+                throw DatabaseException(MENSAGEM_RTDB)   // o joinRoom/startLobbyRoom a falhar
+            }
+        }
+        job.join()
+
+        assertTrue("nada pode chegar ao handler do scope: $naoApanhadas", naoApanhadas.isEmpty())
+        assertEquals(1, falhas.size)
+        assertTrue(falhas.first() is DatabaseException)
+    }
+
+    /**
+     * A guarda que impede o pior efeito colateral desta correcção: com o jogo já a decorrer em
+     * `/multisalas`, um listener de `/lobbies` a morrer **não** pode trocar a partida pelo ecrã
+     * de erro. O lobby até é apagado no arranque normal.
+     */
+    @Test
+    fun `falha no lobby so avisa enquanto o jogador espera`() {
+        assertTrue("à espera: tem de avisar", deveAvisarDeFalhaNoLobby(jaTemSala = false, jaTerminou = false))
+        assertFalse("jogo a decorrer: calar", deveAvisarDeFalhaNoLobby(jaTemSala = true, jaTerminou = false))
+        assertFalse("já no pódio: calar", deveAvisarDeFalhaNoLobby(jaTemSala = false, jaTerminou = true))
+        assertFalse("acabou e tinha sala: calar", deveAvisarDeFalhaNoLobby(jaTemSala = true, jaTerminou = true))
     }
 
     /**
