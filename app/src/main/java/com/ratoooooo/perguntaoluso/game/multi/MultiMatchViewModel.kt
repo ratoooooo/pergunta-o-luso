@@ -13,8 +13,10 @@ import com.ratoooooo.perguntaoluso.data.QuestionRepository
 import com.ratoooooo.perguntaoluso.game.ChaoticEvent
 import com.ratoooooo.perguntaoluso.game.Difficulty
 import com.ratoooooo.perguntaoluso.game.Scoring
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +47,35 @@ private const val MATCHED_REVEAL_MS = 2_500L
 internal fun posicaoLabel(rank: Int): String {
     val posicao = rank + 1
     return if (rank == 0) "$posicao.º lugar!" else "$posicao.º lugar"
+}
+
+/**
+ * Recolhe um fluxo de listener da RTDB **sem deixar a falha matar a app**.
+ *
+ * Os `callbackFlow` do [com.ratoooooo.perguntaoluso.data.MultiMatchRepository] fecham-se com a
+ * excepção quando o listener é cancelado (`onCancelled` → `close(error.toException())`). Um
+ * `collect` cru dentro de `viewModelScope.launch` deixa essa excepção sair pelo scope e chegar
+ * ao handler por omissão: `FATAL EXCEPTION: main`, com
+ * `DatabaseException: This client does not have permission to perform this operation`. Foi
+ * provocado a apagar `/multisalas` com clientes lá dentro, mas qualquer negação de leitura na
+ * sala (sair de `meta.membrosNomes`, limpeza de estado) segue o mesmo caminho.
+ *
+ * [CancellationException] é **re-lançada de propósito**: `leave()` e `onCleared()` cancelam estes
+ * jobs, e engolir o cancelamento partia a concorrência estruturada — o job ficaria "vivo" para o
+ * pai e o listener nunca seria removido.
+ */
+internal suspend fun <T> coletarListener(
+    fluxo: Flow<T>,
+    onFalha: (Throwable) -> Unit,
+    onValor: (T) -> Unit
+) {
+    try {
+        fluxo.collect { onValor(it) }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        onFalha(e)
+    }
 }
 
 data class PlayerLive(
@@ -309,8 +340,29 @@ class MultiMatchViewModel(
     private fun observeRoom(id: String) {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
-            matchRepository.observeRoom(id).collect { room -> onRoom(room) }
+            coletarListener(
+                fluxo = matchRepository.observeRoom(id),
+                onFalha = { falhaDoListenerDaSala() }
+            ) { room -> onRoom(room) }
         }
+    }
+
+    /**
+     * O listener da sala morreu a meio (permissão negada, sala apagada). Manda o jogador para o
+     * ecrã de erro, que tem o botão VOLTAR ligado a `leave()` — a mesma saída limpa da
+     * desistência normal, sem inventar caminho novo.
+     *
+     * Se a partida **já acabou** não se mexe em nada: no pódio os resultados já estão agregados e
+     * no ecrã, e trocá-lo por um erro só apagava o que o jogador tem para ver. O temporizador é
+     * cortado porque ficaria a contar por trás do ecrã de erro, para uma sala que já não existe.
+     */
+    private fun falhaDoListenerDaSala() {
+        if (finished) return
+        timerJob?.cancel()
+        _uiState.value = _uiState.value.copy(
+            phase = MultiPhase.ERROR,
+            error = "Perdeste o acesso a esta sala."
+        )
     }
 
     private fun teamOf(room: MultiRoom, uid: String): String? =

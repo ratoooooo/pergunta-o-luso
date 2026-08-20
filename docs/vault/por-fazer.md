@@ -39,14 +39,13 @@ Consolidado das listas "Por fazer" espalhadas pelas fases. Ordenado por o que bl
 
 ## Defeitos abertos
 
-**B. `observeRoom` mata a app quando a RTDB cancela o listener.**
-`MultiMatchViewModel.observeRoom` (linha ~300) faz `collect` sem `runCatching`, e
-`MultiMatchRepository.kt:374` fecha o `callbackFlow` com a exceção — sai por `viewModelScope`
-como `FATAL EXCEPTION: main` (`DatabaseException: This client does not have permission to
-perform this operation`). Provocado por apagar `/multisalas` com clientes dentro da sala, o que
-não é uso normal; mas qualquer negação de leitura na sala (sair de `meta.membrosNomes`, limpeza
-de estado) segue o mesmo caminho. Todas as outras chamadas do ficheiro estão dentro de
-try/catch — esta é a excepção.
+> **B (`observeRoom`) — resolvido.** `MultiMatchViewModel.observeRoom` fazia `collect` sem
+> protecção e a excepção saía por `viewModelScope` como `FATAL EXCEPTION: main`
+> (`DatabaseException: This client does not have permission to perform this operation`). Passa
+> pelo `coletarListener`, que encaminha a falha para o ecrã de erro — o jogador sai pelo VOLTAR,
+> que é o `leave()` de sempre. `CancellationException` é re-lançada, para o cancelamento normal
+> (`leave()`, `onCleared()`) não passar por falha. `ColetarListenerTest` reproduz o crash antigo
+> como caso de controlo e prende os dois lados.
 
 **C. A lista do top do pódio nunca se actualiza em directo.** `sessionOnly()` limpa `topScores` e
 `loadTopScores()` corre uma vez por pódio, por isso uma pontuação nova só aparece no pódio
