@@ -110,6 +110,9 @@ google-services.json
 *firebase-adminsdk*.json
 service-account*.json
 qa/*.key.json
+# A chave do servidor da partida é OUTRA, dedicada, e vive no VPS (/etc), não aqui. O padrão
+# fica na mesma para o caso de alguém a trazer para a máquina de desenvolvimento.
+servidor/*.key.json
 
 # Build output
 *.apk

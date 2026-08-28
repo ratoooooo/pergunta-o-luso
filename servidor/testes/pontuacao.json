@@ -1,0 +1,33 @@
+{
+  "_comentario": [
+    "Vectores dourados da fórmula de pontos. Valores calculados À MÃO a partir de",
+    "game/Scoring.kt, NÃO gerados por nenhuma das duas implementações — gerar a partir do",
+    "código que se quer testar não testa nada.",
+    "Lidos por servidor/testes/pontuacao.test.js e por PontuacaoVectoresTest.kt. Mexer na",
+    "fórmula sem mexer aqui faz falhar os dois lados; mexer aqui sem mexer na fórmula também.",
+    "Fórmula: base = max(0, segundos) * 10; pergunta_dupla dobra a base;",
+    "base * multiplicador(dificuldade), truncado; + bonusSequencia; roubo +50; tudo_ou_nada +100.",
+    "Errada vale 0, excepto tudo_ou_nada que vale -50."
+  ],
+  "vectores": [
+    { "nome": "errada sem evento",                "certa": false, "segundosRestantes": 9,  "dificuldade": "dificil", "evento": null,                "sequenciaDepois": 0, "esperado": 0 },
+    { "nome": "errada com tudo_ou_nada penaliza", "certa": false, "segundosRestantes": 9,  "dificuldade": "facil",   "evento": "tudo_ou_nada",      "sequenciaDepois": 0, "esperado": -50 },
+    { "nome": "errada com roubo nao penaliza",    "certa": false, "segundosRestantes": 9,  "dificuldade": "facil",   "evento": "roubo",             "sequenciaDepois": 0, "esperado": 0 },
+    { "nome": "certa facil 15s sem sequencia",    "certa": true,  "segundosRestantes": 15, "dificuldade": "facil",   "evento": null,                "sequenciaDepois": 1, "esperado": 150 },
+    { "nome": "certa mas sem tempo vale zero",    "certa": true,  "segundosRestantes": 0,  "dificuldade": "facil",   "evento": null,                "sequenciaDepois": 1, "esperado": 0 },
+    { "nome": "certa facil 1s",                   "certa": true,  "segundosRestantes": 1,  "dificuldade": "facil",   "evento": null,                "sequenciaDepois": 1, "esperado": 10 },
+    { "nome": "certa medio 9s sequencia 2",       "certa": true,  "segundosRestantes": 9,  "dificuldade": "medio",   "evento": null,                "sequenciaDepois": 2, "esperado": 185 },
+    { "nome": "certa dificil 7s sequencia 3",     "certa": true,  "segundosRestantes": 7,  "dificuldade": "dificil", "evento": null,                "sequenciaDepois": 3, "esperado": 215 },
+    { "nome": "certa medio 3s sequencia 4",       "certa": true,  "segundosRestantes": 3,  "dificuldade": "medio",   "evento": null,                "sequenciaDepois": 4, "esperado": 145 },
+    { "nome": "sequencia 5 nao passa do tecto",   "certa": true,  "segundosRestantes": 12, "dificuldade": "dificil", "evento": null,                "sequenciaDepois": 5, "esperado": 340 },
+    { "nome": "pergunta_dupla dobra a base",      "certa": true,  "segundosRestantes": 10, "dificuldade": "facil",   "evento": "pergunta_dupla",    "sequenciaDepois": 1, "esperado": 200 },
+    { "nome": "dupla antes do multiplicador",     "certa": true,  "segundosRestantes": 5,  "dificuldade": "medio",   "evento": "pergunta_dupla",    "sequenciaDepois": 2, "esperado": 200 },
+    { "nome": "maximo por pergunta",              "certa": true,  "segundosRestantes": 15, "dificuldade": "dificil", "evento": "pergunta_dupla",    "sequenciaDepois": 4, "esperado": 700 },
+    { "nome": "roubo soma 50",                    "certa": true,  "segundosRestantes": 8,  "dificuldade": "facil",   "evento": "roubo",             "sequenciaDepois": 1, "esperado": 130 },
+    { "nome": "roubo com sequencia e dificil",    "certa": true,  "segundosRestantes": 8,  "dificuldade": "dificil", "evento": "roubo",             "sequenciaDepois": 3, "esperado": 285 },
+    { "nome": "tudo_ou_nada certa soma 100",      "certa": true,  "segundosRestantes": 6,  "dificuldade": "facil",   "evento": "tudo_ou_nada",      "sequenciaDepois": 3, "esperado": 235 },
+    { "nome": "velocidade_maxima nao da pontos",  "certa": true,  "segundosRestantes": 7,  "dificuldade": "medio",   "evento": "velocidade_maxima", "sequenciaDepois": 1, "esperado": 105 },
+    { "nome": "dificuldade desconhecida e facil", "certa": true,  "segundosRestantes": 10, "dificuldade": "sei_la",  "evento": null,                "sequenciaDepois": 1, "esperado": 100 },
+    { "nome": "dificuldade acentuada conta",      "certa": true,  "segundosRestantes": 10, "dificuldade": "médio",   "evento": null,                "sequenciaDepois": 1, "esperado": 150 }
+  ]
+}

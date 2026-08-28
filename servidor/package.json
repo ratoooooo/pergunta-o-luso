@@ -1,0 +1,18 @@
+{
+  "name": "pol-servidor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Servidor autoritativo da partida ao vivo do Pergunta ó Luso. Decide certo/errado e pontuação; a app deixa de o fazer. Ver PROTOCOLO.md.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/servidor.js",
+    "test": "node --test --test-force-exit 'testes/*.test.js'"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.3.0",
+    "ws": "^8.18.0"
+  }
+}
