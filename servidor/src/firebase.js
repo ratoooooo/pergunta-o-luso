@@ -16,7 +16,13 @@
  * ficheiro e o utilizador dedicado do systemd.
  */
 
-import admin from 'firebase-admin';
+// API modular (`firebase-admin/app`, `/auth`, `/database`). A antiga, com namespace —
+// `admin.credential.applicationDefault()`, `admin.auth()`, `admin.database()` — foi **removida**
+// no firebase-admin v13/v14 e rebenta com `Cannot read properties of undefined`. Mesmo padrão
+// que `qa/apagar-contas-teste.js` e `qa/perguntas-admin.js` já usam.
+import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getDatabase } from 'firebase-admin/database';
 
 export const UID_DO_SERVIDOR = 'pol-servidor';
 
@@ -30,8 +36,8 @@ export function iniciarFirebase({
   if (!projectId || !databaseURL) {
     throw new Error('faltam FIREBASE_PROJECT_ID / FIREBASE_DATABASE_URL');
   }
-  app = admin.initializeApp({
-    credential: admin.credential.applicationDefault(),   // GOOGLE_APPLICATION_CREDENTIALS
+  app = getApps().length ? getApps()[0] : initializeApp({
+    credential: applicationDefault(),   // GOOGLE_APPLICATION_CREDENTIALS
     projectId,
     databaseURL,
     databaseAuthVariableOverride: { uid: UID_DO_SERVIDOR }
@@ -40,17 +46,30 @@ export function iniciarFirebase({
 }
 
 /**
+ * A app a usar em cada chamada. `iniciarFirebase()` corre no arranque, mas fora do caminho do
+ * `listen()` (ver servidor.js): um handshake que chegue nesse intervalo apanhava `app` a null.
+ * Resolver pelo `getApps()` fecha essa janela, e o erro explícito é melhor do que o
+ * `Cannot read properties of null` que sairia daqui a nomear a causa errada.
+ */
+function appAtiva() {
+  if (app) return app;
+  const [existente] = getApps();
+  if (existente) return (app = existente);
+  throw new Error('firebase por iniciar — iniciarFirebase() ainda não correu');
+}
+
+/**
  * Verifica o ID token do Firebase Auth que o cliente traz no handshake. Devolve o `uid` — que
  * fica preso à ligação e é o único que o servidor usa daí em diante. **Nenhuma mensagem
  * posterior transporta uid**: é isto que substitui o `auth.uid === $uid` das rules.
  */
 export async function verificarToken(idToken) {
-  const decodificado = await admin.auth().verifyIdToken(idToken);
+  const decodificado = await getAuth(appAtiva()).verifyIdToken(idToken);
   return { uid: decodificado.uid, anonimo: decodificado.firebase?.sign_in_provider === 'anonymous' };
 }
 
 export async function lerCaminho(caminho) {
-  const snap = await admin.database().ref(caminho).get();
+  const snap = await getDatabase(appAtiva()).ref(caminho).get();
   return snap.exists() ? snap.val() : null;
 }
 
@@ -72,7 +91,7 @@ export async function nomeDoJogador(uid) {
  */
 export async function gravarScore({ uid, modo, categoria, formato, score, correctCount, total }) {
   try {
-    const ref = admin.database().ref('scores').push();
+    const ref = getDatabase(appAtiva()).ref('scores').push();
     await ref.set({
       uid, modo, categoria, formato,
       score, correctCount, total,
