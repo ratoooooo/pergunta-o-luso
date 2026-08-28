@@ -1,0 +1,12 @@
+# /etc/caddy/Caddyfile
+#
+# O Caddy é a única coisa exposta à internet. Trata do TLS (Let's Encrypt automático, renovação
+# incluída) e passa o tráfego ao Node em 127.0.0.1:2567, que nunca é aberto no ufw.
+#
+# O upgrade para WebSocket não precisa de configuração: o Caddy v2 encaminha-o de origem, e
+# mantém o cabeçalho `Authorization` — que é por onde viaja o ID token do Firebase.
+
+perguntaoluso.duckdns.org {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:2567
+}

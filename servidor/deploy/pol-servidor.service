@@ -1,0 +1,44 @@
+# /etc/systemd/system/pol-servidor.service
+[Unit]
+Description=Pergunta o Luso — servidor da partida ao vivo
+Documentation=https://github.com/ratoescobar/StarForge/blob/main/servidor/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pol-servidor
+Group=pol-servidor
+WorkingDirectory=/opt/pol-servidor
+ExecStart=/usr/bin/node /opt/pol-servidor/src/servidor.js
+EnvironmentFile=/etc/pol-servidor.env
+
+Restart=always
+RestartSec=2
+
+# Actualizar sem derrubar partidas: o SIGTERM não mata o processo, põe-no em DRENAGEM — recusa
+# matchmaking novo e deixa acabar as partidas em curso (ver `drenar()` em src/app.js). O tecto
+# interno é de 5 minutos, por isso este tem de ser maior, ou o systemd matava a meio o que o
+# servidor estava a tentar deixar acabar.
+KillSignal=SIGTERM
+TimeoutStopSec=330
+
+# Endurecimento. `ProtectSystem=strict` deixa o disco todo em leitura apenas: o servidor não
+# escreve ficheiros nenhuns (o estado é memória, os registos vão para o journald), por isso não
+# precisa de nenhum `ReadWritePaths`. Se um dia precisar, é sinal de que algo mudou de desenho.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pol-servidor
+
+[Install]
+WantedBy=multi-user.target
