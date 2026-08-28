@@ -93,6 +93,26 @@ internal suspend fun <T> coletarListener(
 internal fun deveAvisarDeFalhaNoLobby(jaTemSala: Boolean, jaTerminou: Boolean): Boolean =
     !jaTemSala && !jaTerminou
 
+/**
+ * Corre uma acção do jogador que fala com a RTDB, **sem deixar a falha matar a app**.
+ *
+ * Irmão do [coletarListener], para o outro lado do problema: aquele protege listeners passivos,
+ * este protege um `viewModelScope.launch` disparado por um toque. A porta de saída da excepção é
+ * a mesma — corrotina lançada no scope, excepção não apanhada, `FATAL EXCEPTION: main`.
+ *
+ * [CancellationException] é re-lançada pela mesma razão de sempre: sair do ecrã cancela o scope,
+ * e engolir o cancelamento partia a concorrência estruturada.
+ */
+internal suspend fun executarAcao(onFalha: (Throwable) -> Unit, acao: suspend () -> Unit) {
+    try {
+        acao()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        onFalha(e)
+    }
+}
+
 data class PlayerLive(
     val uid: String,
     val nome: String,
@@ -138,6 +158,30 @@ data class MultiUiState(
 ) {
     val currentQuestion: Question? get() = perguntas.getOrNull(currentIndex)
 }
+
+/**
+ * Estado a mostrar quando a troca de sala falha **a meio**.
+ *
+ * O `switchLobby` é optimista: sai do lobby antigo e escreve já o novo em `currentLobbyId`/
+ * `isHost` **antes** de saber se a entrada correu bem. Quando o `joinLobbyById` ou o
+ * `findOrCreateLobby` estoiram, o jogador fica num sítio que não existe — saiu de um lobby e não
+ * entrou em nenhum, mas o estado continua a dizer que pertence ao lobby de destino.
+ *
+ * Deixar assim não era só feio: o botão VOLTAR do ecrã de erro chama `leave()`, que usa
+ * `currentLobbyId` para publicar a saída — ia tentar sair de um lobby onde nunca chegou a entrar.
+ * Por isso `currentLobbyId` volta a `null` e `isHost` a `false`: é o que é verdade.
+ *
+ * O que **não** se limpa, de propósito: `categoria` e `modo` são a escolha do jogador e continuam
+ * a valer para a tentativa seguinte; `players`/`joinedCount` ficam como estão porque o ecrã de
+ * erro não os mostra e o `resetMatchState()` limpa-os no arranque seguinte.
+ */
+internal fun estadoAposFalhaAoTrocarDeSala(anterior: MultiUiState): MultiUiState =
+    anterior.copy(
+        phase = MultiPhase.ERROR,
+        error = "Não foi possível entrar na sala escolhida.",
+        currentLobbyId = null,
+        isHost = false
+    )
 
 class MultiMatchViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
@@ -305,16 +349,35 @@ class MultiMatchViewModel(
                 currentLobbyId = targetLobby.lobbyId,
                 isHost = (targetLobby.hostUid == myUid)
             )
-            val joined = matchRepository.joinLobbyById(format.id, targetLobby.lobbyId, myUid, _uiState.value.myName)
-            if (joined) {
-                listenToLobby(targetLobby.lobbyId)
-            } else {
-                val (newId, isHost) = matchRepository.findOrCreateLobby(format, categoria, modo, myUid, _uiState.value.myName)
-                this@MultiMatchViewModel.currentLobbyId = newId
-                _uiState.value = _uiState.value.copy(currentLobbyId = newId, isHost = isHost)
-                listenToLobby(newId)
+            // Defeito B3: estas duas chamadas corriam a descoberto. É uma acção do jogador, não um
+            // listener, mas a porta de saída da excepção é a mesma do B/B2 — `viewModelScope`.
+            executarAcao(onFalha = { falhaAoTrocarDeSala() }) {
+                val joined = matchRepository.joinLobbyById(format.id, targetLobby.lobbyId, myUid, _uiState.value.myName)
+                if (joined) {
+                    listenToLobby(targetLobby.lobbyId)
+                } else {
+                    val (newId, isHost) = matchRepository.findOrCreateLobby(format, categoria, modo, myUid, _uiState.value.myName)
+                    this@MultiMatchViewModel.currentLobbyId = newId
+                    _uiState.value = _uiState.value.copy(currentLobbyId = newId, isHost = isHost)
+                    listenToLobby(newId)
+                }
             }
         }
+    }
+
+    /**
+     * A troca de sala falhou depois de já se ter saído do lobby antigo. Mesmo ecrã de erro do
+     * B/B2 — VOLTAR ligado ao `leave()` de sempre —, com o estado corrigido para dizer a verdade
+     * (ver [estadoAposFalhaAoTrocarDeSala]).
+     *
+     * Guardado por [deveAvisarDeFalhaNoLobby] pela mesma razão que o `falhaDoListenerDoLobby`:
+     * com o jogo já a decorrer em `/multisalas`, nada vindo de `/lobbies` pode trocar a partida
+     * pelo ecrã de erro.
+     */
+    private fun falhaAoTrocarDeSala() {
+        if (!deveAvisarDeFalhaNoLobby(jaTemSala = salaId != null, jaTerminou = finished)) return
+        currentLobbyId = null
+        _uiState.value = estadoAposFalhaAoTrocarDeSala(_uiState.value)
     }
 
     fun forceStartGame() {

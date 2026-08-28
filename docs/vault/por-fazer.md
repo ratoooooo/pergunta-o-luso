@@ -36,13 +36,18 @@ Consolidado das listas "Por fazer" espalhadas pelas fases. Ordenado por o que bl
 
 ## Defeitos abertos
 
-**B3. `switchLobby` não tem protecção nenhuma.** Encontrado ao corrigir o B2, não corrigido.
-`switchLobby` faz `viewModelScope.launch { … }` **sem** try/catch, e lá dentro chama
-`leaveLobby`(protegido), mas também `joinLobbyById`, `findOrCreateLobby` e `listenToLobby` a
-descoberto. Uma negação de escrita ao trocar de sala segue o mesmo caminho dos defeitos B/B2 —
-`FATAL EXCEPTION: main`. Não é um listener, por isso o `coletarListener` não serve: precisa de um
-try/catch com a decisão de para onde mandar o jogador. Deduzido por leitura do código, não
-observado a estoirar.
+> **B3 (`switchLobby`) — resolvido.** `joinLobbyById` e `findOrCreateLobby` corriam a descoberto
+> dentro do `viewModelScope.launch`. Não é um listener, por isso o `coletarListener` não servia:
+> passam pelo `executarAcao`, irmão dele para acções do jogador — mesma re-lançada de
+> `CancellationException`, mesmo ecrã de erro. O `runCatching` do `leaveLobby` ficou como estava.
+>
+> O que isto obrigou a decidir foi o **estado a meio**: o `switchLobby` é optimista e escreve o
+> lobby de destino em `currentLobbyId`/`isHost` antes de saber se a entrada resulta. A falhar,
+> o jogador já saiu do lobby antigo e não entrou em nenhum — e o VOLTAR do ecrã de erro chama
+> `leave()`, que ia tentar sair de um lobby onde nunca esteve. `estadoAposFalhaAoTrocarDeSala`
+> repõe `currentLobbyId = null` e `isHost = false`; `categoria`/`modo` sobrevivem por serem
+> escolha do jogador. `ExecutarAcaoTest` reproduz o crash nos **dois** pontos como controlo e
+> prende também esta transição de estado.
 
 > **B2 (listeners do lobby) — resolvido.** `openLobbiesJob` (`observeOpenLobbies`) e `lobbyJob`
 > (`observeLobby`) faziam o mesmo `collect` cru do B. *Pareciam* cobertos pelo `try` do `start()`,
