@@ -1,7 +1,7 @@
 # /etc/systemd/system/pol-servidor.service
 [Unit]
 Description=Pergunta o Luso — servidor da partida ao vivo
-Documentation=https://github.com/ratoescobar/StarForge/blob/main/servidor/README.md
+Documentation=https://github.com/ratoooooo/pergunta-o-luso/blob/main/servidor/README.md
 After=network-online.target
 Wants=network-online.target
 
