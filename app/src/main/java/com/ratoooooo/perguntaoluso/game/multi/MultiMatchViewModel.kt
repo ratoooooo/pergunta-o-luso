@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.max
 
-import com.ratoooooo.perguntaoluso.data.ScoreRepository
 import com.ratoooooo.perguntaoluso.data.LobbyData
 
 enum class MultiPhase { SEARCHING, MATCHED, IN_GAME, PODIUM, ERROR }
@@ -187,8 +186,7 @@ class MultiMatchViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
     private val profileRepository: ProfileRepository = ProfileRepository(),
     private val questionRepository: QuestionRepository = QuestionRepository(),
-    private val matchRepository: MultiMatchRepository = MultiMatchRepository(),
-    private val scoreRepository: ScoreRepository = ScoreRepository()
+    private val matchRepository: MultiMatchRepository = MultiMatchRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MultiUiState())
@@ -650,6 +648,16 @@ class MultiMatchViewModel(
      * on the same device that played it (RTDB rules only allow writing your own uid). Uses the
      * same [GameResult]/[ProfileRepository] path and XP formula as Solo. [won] follows each
      * format's podium criterion: team-level for 2x2, strictly-top individual for 1x1/Grupo.
+     *
+     * **Já não grava em `/scores`.** Gravava, ao lado da agregação, e desde a fase 2 do
+     * servidor da partida essa escrita é sempre recusada: as rules só aceitam `formato` de
+     * multijogador vindo do uid `pol-servidor`, e daqui o `formato` nunca é `solo`. Como
+     * corria dentro de um `runCatching`, falhava em silêncio — e o único sintoma era o
+     * Histórico de multijogador a ficar vazio sem explicação. Quem passa a gravar o registo
+     * em bruto é o servidor, que é quem apura os números.
+     *
+     * A agregação do perfil abaixo **não** é afectada: `/jogadores/{uid}` continua a ser
+     * escrito pelo dispositivo, e é dela que vêm XP, conquistas e sequência diária.
      */
     private fun aggregateProfile(won: Boolean) {
         if (aggregated || myUid.isEmpty()) return
@@ -669,16 +677,6 @@ class MultiMatchViewModel(
                         formato = format.id,
                         categoria = categoria
                     )
-                )
-            }
-            runCatching {
-                scoreRepository.saveScore(
-                    modo = modo,
-                    categoria = categoria,
-                    score = st.myScore,
-                    correctCount = st.myCorrect,
-                    total = totalPerguntas,
-                    formato = format.id
                 )
             }
         }

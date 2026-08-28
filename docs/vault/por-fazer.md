@@ -33,6 +33,15 @@ Consolidado das listas "Por fazer" espalhadas pelas fases. Ordenado por o que bl
 8. **Índices e queries no servidor:** `loadAllProfiles` e `loadMyScores` descarregam tudo para
    filtrar no cliente. Falta `.indexOn` em `pontos`/`uid`.
 9. **Guardar o `mapping.txt`** de cada release publicado, fora do repositório.
+10. **Fase 5 do servidor da partida: o `saveScore` do multijogador já foi removido.** Saiu
+    antecipadamente do `MultiMatchViewModel.aggregateProfile` (28 ago 2026), fora da fase que o
+    previa: desde a fase 2 as rules recusam qualquer `formato` de multijogador que não venha do
+    uid `pol-servidor`, por isso a escrita passou a falhar sempre — e em silêncio, por correr
+    dentro de um `runCatching`, deixando o Histórico de multijogador vazio sem explicação. Saiu
+    com ele o parâmetro `scoreRepository` do construtor e o import, que ficaram sem utilizadores.
+    **Não há nada para tirar aqui na fase 5**; o que falta continua a ser o resto da fase (o
+    cliente a ler os números do servidor em vez dos seus). `ScoreRepository` não foi tocado — o
+    solo continua a usá-lo.
 
 ## Defeitos abertos
 
