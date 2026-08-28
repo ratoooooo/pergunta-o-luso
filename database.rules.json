@@ -34,12 +34,27 @@
            A eliminação de conta (Fase 23) continua a funcionar: só apaga os próprios registos.
            Os 12 registos legados sem `uid` deixam de ser apagáveis por ninguém — não são
            atribuíveis a nenhuma conta, por isso ficam só de leitura. */
-        ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid) || (data.exists() && data.child('uid').val() === auth.uid))",
+        /* Fase 2 do servidor da partida: acrescenta-se a via do `pol-servidor` À FRENTE da
+           condição do jogador, que fica intacta — a segunda metade é palavra por palavra a de
+           antes, e é ela que continua a permitir a eliminação de conta apagar os próprios
+           registos.
+
+           `pol-servidor` não é o admin do Firebase: é a identidade que o servidor assume com
+           `databaseAuthVariableOverride` (ver servidor/src/firebase.js), e por isso passa por
+           estas rules como qualquer outro autenticado. Precisa de duas coisas que um jogador
+           não pode ter — gravar um registo com o uid de OUTRA pessoa (é ele que apura o
+           resultado de todos os jogadores da partida) e usar um `formato` de multijogador. */
+        ".write": "auth != null && (auth.uid === 'pol-servidor' || ((!data.exists() && newData.child('uid').val() === auth.uid) || (data.exists() && data.child('uid').val() === auth.uid)))",
         ".validate": "newData.hasChildren(['uid', 'modo', 'categoria', 'score', 'correctCount', 'total', 'timestamp'])",
-        "uid": { ".validate": "auth != null && newData.val() === auth.uid" },
+        "uid": { ".validate": "auth != null && (newData.val() === auth.uid || auth.uid === 'pol-servidor')" },
         "modo": { ".validate": "newData.isString()" },
         "categoria": { ".validate": "newData.isString()" },
-        "formato": { ".validate": "newData.isString()" },
+        /* O travão de fundo desta fase: a pontuação de multijogador deixa de poder ser
+           declarada pelo dispositivo. Um cliente só grava `solo` — que continua a ser decidido
+           no cliente e sempre será, por não haver servidor de solo. Omitir o campo continua a
+           passar (é a forma dos registos antigos, e o Histórico lê-os como solo); o que já não
+           passa é um dispositivo afirmar que ganhou um 1x1. */
+        "formato": { ".validate": "newData.isString() && (newData.val() === 'solo' || auth.uid === 'pol-servidor')" },
         "score": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 6000" },
         "correctCount": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" },
         "total": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 20" },
