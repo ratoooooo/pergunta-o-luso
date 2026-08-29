@@ -865,18 +865,36 @@ class MultiMatchViewModel(
                 iniciarCronometroDoServidor(evento.fimEm)
                 libertarToques(evento.indice)
             }
-            is EventoServidor.Podio -> {
-                cronometroServidorJob?.cancel()
-                maxStreak = evento.maxSequencia
-            }
+            is EventoServidor.Podio -> cronometroServidorJob?.cancel()
             else -> Unit
         }
 
         _uiState.value = aplicarEvento(_uiState.value, evento)
 
-        // Depois do estado, nunca antes: `aggregateProfile` lê a pontuação e o total de perguntas
-        // do `_uiState`, que é onde o pódio do servidor os acabou de pousar.
-        if (evento is EventoServidor.Podio) aggregateProfile(evento.ganhei)
+        // Depois do estado, nunca antes: o uid do jogador vem do `sessao` e vive no `_uiState`.
+        if (evento is EventoServidor.Podio) agregarPerfilDoServidor(evento)
+    }
+
+    /**
+     * Agrega o perfil no fim de uma partida do servidor.
+     *
+     * **Não** passa pelo `aggregateProfile`: aquele lê o `myUid` privado, que só o arranque da
+     * RTDB preenche. Foi esse o defeito da fase 4 — o caminho do servidor pedia a agregação com
+     * um uid vazio, o `aggregateProfile` devolvia logo, e o perfil não era escrito. Sem erro e
+     * sem aviso, com o pódio a anunciar o XP na mesma. Aqui o uid é o que o servidor mandou no
+     * `sessao`, que é o mesmo com que ele gravou o `/scores`.
+     *
+     * `ScoreRepository` não entra: o registo em bruto é gravado pelo servidor, e as rules recusam
+     * a um cliente qualquer `formato` que não seja `solo` (fase 2).
+     */
+    private fun agregarPerfilDoServidor(podio: EventoServidor.Podio) {
+        if (aggregated) return
+        val uid = _uiState.value.myUid
+        val resultado = agregacaoDoServidor(uid, format, modo, categoria, podio) ?: return
+        aggregated = true
+        viewModelScope.launch {
+            runCatching { profileRepository.updateAfterGame(uid, resultado) }
+        }
     }
 
     private fun pedirRelogio() = socket.ping(System.currentTimeMillis())

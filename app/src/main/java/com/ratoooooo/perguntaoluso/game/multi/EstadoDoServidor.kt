@@ -1,5 +1,6 @@
 package com.ratoooooo.perguntaoluso.game.multi
 
+import com.ratoooooo.perguntaoluso.data.GameResult
 import com.ratoooooo.perguntaoluso.data.Question
 import com.ratoooooo.perguntaoluso.data.multi.EstadoDePresenca
 import com.ratoooooo.perguntaoluso.data.multi.EventoServidor
@@ -219,4 +220,40 @@ private fun List<Question>.substituir(indice: Int, nova: Question): List<Questio
     while (lista.size <= indice) lista += Question()
     lista[indice] = nova
     return lista
+}
+
+/**
+ * O [GameResult] com que a app agrega o perfil depois de uma partida do servidor.
+ *
+ * Existe como função à parte porque foi aqui que um defeito se escondeu na fase 4: o caminho do
+ * servidor pedia a agregação com o `myUid` **do ViewModel**, que só é preenchido pelo arranque da
+ * RTDB e ficava vazio. O `aggregateProfile` começa por `if (uid.isEmpty()) return`, por isso o
+ * perfil simplesmente não era escrito — sem erro, sem aviso, e com o pódio a anunciar o XP
+ * ganho na mesma. Observado em dispositivo: dois jogadores acabaram uma partida, `/scores`
+ * recebeu os dois registos, e `/jogadores` não mexeu um número.
+ *
+ * O uid a usar é o que o servidor mandou no `sessao` — é ele a autoridade sobre quem somos nesta
+ * ligação, e é o mesmo que ele usou para gravar o `/scores`.
+ *
+ * Devolve `null` quando não há uid. O chamador **tem** de tratar isso como falha visível, não
+ * como um "não faz nada": foi precisamente o silêncio que escondeu o defeito.
+ */
+internal fun agregacaoDoServidor(
+    uid: String,
+    formato: MatchFormat,
+    modo: String,
+    categoria: String,
+    podio: EventoServidor.Podio
+): GameResult? {
+    if (uid.isBlank()) return null
+    return GameResult(
+        modo = modo,
+        score = podio.meuScore,
+        correctCount = podio.minhasCertas,
+        total = podio.totalPerguntas,
+        won = podio.ganhei,
+        maxStreak = podio.maxSequencia,
+        formato = formato.id,
+        categoria = categoria
+    )
 }

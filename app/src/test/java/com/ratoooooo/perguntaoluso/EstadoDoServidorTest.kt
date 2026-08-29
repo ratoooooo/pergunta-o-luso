@@ -9,6 +9,7 @@ import com.ratoooooo.perguntaoluso.game.multi.MatchFormat
 import com.ratoooooo.perguntaoluso.game.multi.MultiPhase
 import com.ratoooooo.perguntaoluso.game.multi.MultiUiState
 import com.ratoooooo.perguntaoluso.game.multi.PlayerLive
+import com.ratoooooo.perguntaoluso.game.multi.agregacaoDoServidor
 import com.ratoooooo.perguntaoluso.game.multi.aplicarEvento
 import com.ratoooooo.perguntaoluso.game.multi.tituloDoPodio
 import org.junit.Assert.assertEquals
@@ -256,5 +257,43 @@ class EstadoDoServidorTest {
     private data class RankDeTeste(val score: Int, val isMe: Boolean) {
         fun paraRankResult() =
             com.ratoooooo.perguntaoluso.game.multi.RankResult("n", score, isMe, false)
+    }
+}
+
+/**
+ * Prende o defeito encontrado na fase 4, com dois emuladores contra o servidor real: a partida
+ * acabou, `/scores` recebeu os dois registos, e `/jogadores` não mexeu **um único número** —
+ * nem pontos, nem jogos, nem XP —, apesar de o pódio anunciar "+50 XP ganho".
+ *
+ * A causa era o caminho do servidor pedir a agregação com o `myUid` privado do ViewModel, que só
+ * o arranque da RTDB preenche. Vazio, o `aggregateProfile` devolvia logo e não escrevia nada.
+ */
+class AgregacaoDoServidorTest {
+
+    private val podio = EventoServidor.Podio(
+        walkover = false, ganhei = true, meuScore = 340, minhasCertas = 7,
+        maxSequencia = 4, totalPerguntas = 10, ranking = emptyList(), equipas = emptyList()
+    )
+
+    @org.junit.Test
+    fun `sem uid nao ha agregacao — era isto que falhava em silencio`() {
+        org.junit.Assert.assertNull(
+            agregacaoDoServidor("", MatchFormat.ONE_V_ONE, "classico", "Cultura Geral", podio)
+        )
+    }
+
+    @org.junit.Test
+    fun `o uid vem da sessao do servidor, e os numeros do podio`() {
+        // O uid tem de ser o que o servidor mandou — o mesmo com que ele gravou o /scores.
+        val estado = aplicarEvento(MultiUiState(), EventoServidor.Sessao("uid-do-servidor", "Rato", "0.1.0"))
+        val r = agregacaoDoServidor(estado.myUid, MatchFormat.ONE_V_ONE, "classico", "Cultura Geral", podio)!!
+
+        org.junit.Assert.assertEquals(340, r.score)
+        org.junit.Assert.assertEquals(7, r.correctCount)
+        org.junit.Assert.assertEquals(10, r.total)
+        org.junit.Assert.assertEquals(4, r.maxStreak)
+        org.junit.Assert.assertTrue(r.won)
+        org.junit.Assert.assertEquals("1x1", r.formato)
+        org.junit.Assert.assertEquals("Cultura Geral", r.categoria)
     }
 }
