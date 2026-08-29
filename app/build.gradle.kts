@@ -84,6 +84,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
+    // WebSocket para o servidor da partida ao vivo (fase 3). É a única dependência de rede fora
+    // do Firebase. O JSON vai em `org.json`, que já vem na plataforma Android — não é preciso
+    // Moshi nem kotlinx-serialization para um protocolo de doze mensagens.
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")

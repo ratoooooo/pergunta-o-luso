@@ -25,6 +25,9 @@ import kotlin.math.ceil
 import kotlin.math.max
 
 import com.ratoooooo.perguntaoluso.data.LobbyData
+import com.ratoooooo.perguntaoluso.data.multi.EventoServidor
+import com.ratoooooo.perguntaoluso.data.multi.MultiSocketClient
+import com.ratoooooo.perguntaoluso.ui.FeatureFlags
 
 enum class MultiPhase { SEARCHING, MATCHED, IN_GAME, PODIUM, ERROR }
 
@@ -210,6 +213,16 @@ class MultiMatchViewModel(
     private var lobbyJob: Job? = null
     private var openLobbiesJob: Job? = null
 
+    // ---- caminho do servidor (só vive com FeatureFlags.MULTIJOGADOR_SERVIDOR a true) ----
+    private val socket = MultiSocketClient()
+    private var socketJob: Job? = null
+    private var cronometroServidorJob: Job? = null
+    private var toquesJob: Job? = null
+    /** Desvio entre o relógio deste dispositivo e o do servidor, relido a cada pergunta. */
+    private var desvioDoServidor: Long = 0L
+    /** Trava um segundo envio enquanto o veredicto da mesma pergunta não chega. */
+    private var respostaEnviada = false
+
     private val isCaotico get() = modo == "caotico"
 
     /**
@@ -250,6 +263,7 @@ class MultiMatchViewModel(
     }
 
     fun start(format: MatchFormat, categoria: String, modo: String) {
+        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return iniciarNoServidor(format, categoria, modo)
         resetMatchState()
         this.format = format
         this.categoria = categoria
@@ -331,6 +345,7 @@ class MultiMatchViewModel(
     }
 
     fun switchLobby(targetLobby: LobbyData) {
+        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return socket.trocarSala(targetLobby.lobbyId)
         if (targetLobby.lobbyId == currentLobbyId || targetLobby.membros.any { it.first == myUid }) return
         val oldLobbyId = currentLobbyId
         viewModelScope.launch {
@@ -379,6 +394,7 @@ class MultiMatchViewModel(
     }
 
     fun forceStartGame() {
+        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return socket.iniciar()
         val lobbyId = currentLobbyId ?: return
         if (salaId != null || !_uiState.value.isHost) return
         viewModelScope.launch {
@@ -402,6 +418,7 @@ class MultiMatchViewModel(
      * random matchmaking.
      */
     fun startExisting(format: MatchFormat, categoria: String, modo: String, salaId: String) {
+        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return desafioAindaNaoMigrado()
         resetMatchState()
         this.format = format
         this.categoria = categoria
@@ -584,6 +601,7 @@ class MultiMatchViewModel(
     }
 
     fun selectAnswer(option: String) {
+        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return responderNoServidor(option)
         val state = _uiState.value
         val question = state.currentQuestion ?: return
         val id = salaId ?: return
@@ -768,6 +786,7 @@ class MultiMatchViewModel(
     }
 
     fun leave() {
+        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return sairDoServidor()
         // Lidos e limpos de forma SÍNCRONA: o `MultiMatchHost` faz `vm.leave(); restart++`, e o
         // `start()` que se segue chamaria `resetMatchState()` antes de esta corrotina correr —
         // a saída acabava por ser escrita com `salaId` já a null, ou seja, nunca era publicada.
@@ -793,7 +812,173 @@ class MultiMatchViewModel(
         }
     }
 
+    // -----------------------------------------------------------------------------------------
+    // Caminho do servidor da partida (fase 3).
+    //
+    // Vive inteiro abaixo desta linha e é alcançado só pelos `return` no topo de cada acção
+    // pública. Com `FeatureFlags.MULTIJOGADOR_SERVIDOR` a `false` nada aqui corre — o que torna
+    // trivial a garantia de que o caminho da RTDB continua a comportar-se exactamente como antes.
+    //
+    // NUNCA exercido contra o servidor a sério: isso é a fase 4, com dispositivos reais.
+    // -----------------------------------------------------------------------------------------
+
+    private fun iniciarNoServidor(format: MatchFormat, categoria: String, modo: String) {
+        resetMatchState()
+        resetEstadoDoServidor()
+        this.format = format
+        this.categoria = categoria
+        this.modo = modo
+        _uiState.value = MultiUiState(format = format, categoria = categoria, modo = modo)
+        socketJob = viewModelScope.launch {
+            // O mesmo `coletarListener` dos listeners da RTDB: um erro no fluxo não pode sair
+            // pelo `viewModelScope` e virar `FATAL EXCEPTION: main` (defeitos B/B2/B3).
+            coletarListener(
+                fluxo = socket.ligar(),
+                onFalha = { falhaDoServidor() }
+            ) { evento -> aoReceberDoServidor(evento) }
+        }
+    }
+
+    private fun resetEstadoDoServidor() {
+        socketJob?.cancel(); socketJob = null
+        cronometroServidorJob?.cancel(); cronometroServidorJob = null
+        toquesJob?.cancel(); toquesJob = null
+        socket.fechar()
+        desvioDoServidor = 0L
+        respostaEnviada = false
+    }
+
+    /**
+     * Os efeitos primeiro, o estado depois. O redutor [aplicarEvento] é puro e não pode enviar
+     * mensagens nem arrancar cronómetros; tudo o que é efeito está neste `when`.
+     */
+    private suspend fun aoReceberDoServidor(evento: EventoServidor) {
+        when (evento) {
+            EventoServidor.Ligado -> socket.procurar(format.id, categoria, modo)
+            is EventoServidor.Sonda -> socket.sondaOk(evento.s)
+            is EventoServidor.Pong -> ajustarRelogio(evento)
+            is EventoServidor.Pergunta -> {
+                respostaEnviada = false
+                // Relê-se o desvio a CADA pergunta, não uma vez por partida: um desvio velho era
+                // a principal fonte de dessincronia na versão RTDB, e a lição migra com o resto.
+                pedirRelogio()
+                iniciarCronometroDoServidor(evento.fimEm)
+                libertarToques(evento.indice)
+            }
+            is EventoServidor.Podio -> {
+                cronometroServidorJob?.cancel()
+                maxStreak = evento.maxSequencia
+            }
+            else -> Unit
+        }
+
+        _uiState.value = aplicarEvento(_uiState.value, evento)
+
+        // Depois do estado, nunca antes: `aggregateProfile` lê a pontuação e o total de perguntas
+        // do `_uiState`, que é onde o pódio do servidor os acabou de pousar.
+        if (evento is EventoServidor.Podio) aggregateProfile(evento.ganhei)
+    }
+
+    private fun pedirRelogio() = socket.ping(System.currentTimeMillis())
+
+    /** `desvio = tS - (t0 + t1) / 2` — ver a secção "Relógio" do PROTOCOLO.md. */
+    private fun ajustarRelogio(pong: EventoServidor.Pong) {
+        val t1 = System.currentTimeMillis()
+        desvioDoServidor = pong.tS - (pong.t0 + t1) / 2
+    }
+
+    private fun agoraNoServidor(): Long = System.currentTimeMillis() + desvioDoServidor
+
+    /**
+     * Conta até ao `fimEm` que o servidor carimbou. **Não avança a pergunta** — quem decide que a
+     * pergunta acabou é o servidor, e a seguinte chega por mensagem. Aqui só se desenha o tempo.
+     */
+    private fun iniciarCronometroDoServidor(fimEm: Long) {
+        cronometroServidorJob?.cancel()
+        cronometroServidorJob = viewModelScope.launch {
+            while (true) {
+                val restante = max(0L, fimEm - agoraNoServidor())
+                _uiState.value = _uiState.value.copy(remainingMillis = restante)
+                if (restante <= 0L) {
+                    // Sem resposta até ao fim: marca-se respondido para o ecrã tocar o som de
+                    // errado, como o `registerTimeout` faz no caminho da RTDB. A resposta certa
+                    // fica por revelar — o servidor só a manda a quem respondeu (ver PROTOCOLO.md).
+                    if (!_uiState.value.isAnswered) {
+                        _uiState.value = _uiState.value.copy(isAnswered = true)
+                    }
+                    break
+                }
+                delay(TICK_MS)
+            }
+        }
+    }
+
+    /** Mesma carência do caminho da RTDB: bloqueia toques herdados da pergunta anterior. */
+    private fun libertarToques(indice: Int) {
+        toquesJob?.cancel()
+        toquesJob = viewModelScope.launch {
+            delay(INPUT_GRACE_MS)
+            val s = _uiState.value
+            if (s.currentIndex == indice && !s.isAnswered) {
+                _uiState.value = s.copy(aceitaToques = true)
+            }
+        }
+    }
+
+    /**
+     * Envia a opção tocada. **Não pontua nada** — é essa a diferença toda.
+     *
+     * `isAnswered` fica por marcar de propósito: o ecrã revela as cores e toca o som comparando
+     * com `respostaCorreta`, que só chega no veredicto. Marcá-lo já fazia soar "errado" durante
+     * o tempo de ida e volta. Quem trava o duplo toque nesse intervalo é [respostaEnviada].
+     */
+    private fun responderNoServidor(option: String) {
+        val s = _uiState.value
+        val pergunta = s.currentQuestion ?: return
+        if (s.isAnswered || respostaEnviada || !s.aceitaToques) return
+        if (option !in pergunta.opcoes) return
+        respostaEnviada = true
+        _uiState.value = s.copy(selectedOption = option)
+        socket.responder(s.currentIndex, option, agoraNoServidor())
+    }
+
+    private fun sairDoServidor() {
+        if (_uiState.value.phase != MultiPhase.PODIUM) socket.sair()
+        resetEstadoDoServidor()
+    }
+
+    /**
+     * Um listener morto depois do pódio não pode trocar o resultado pelo ecrã de erro — mesma
+     * regra do `deveAvisarDeFalhaNoLobby` no caminho da RTDB.
+     */
+    private fun falhaDoServidor() {
+        if (_uiState.value.phase == MultiPhase.PODIUM) return
+        cronometroServidorJob?.cancel()
+        _uiState.value = _uiState.value.copy(
+            phase = MultiPhase.ERROR,
+            error = "Perdeste a ligação ao servidor."
+        )
+    }
+
+    /**
+     * Os desafios diretos ainda não passaram para o servidor: a sala é criada pelo `GameViewModel`
+     * **antes** do convite, para o id viajar dentro dele, e isso é da fase 5. Falhar com uma
+     * mensagem clara é melhor do que um ecrã parado à espera de uma sala que ninguém criou.
+     */
+    private fun desafioAindaNaoMigrado() {
+        _uiState.value = _uiState.value.copy(
+            phase = MultiPhase.ERROR,
+            error = "Os desafios de amigos ainda não passaram para o servidor."
+        )
+    }
+
     override fun onCleared() {
+        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) {
+            socketJob?.cancel()
+            cronometroServidorJob?.cancel()
+            toquesJob?.cancel()
+            socket.fechar()
+        }
         lobbyJob?.cancel()
         observeJob?.cancel()
         timerJob?.cancel()

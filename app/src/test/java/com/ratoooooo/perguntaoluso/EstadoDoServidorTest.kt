@@ -1,0 +1,260 @@
+package com.ratoooooo.perguntaoluso
+
+import com.ratoooooo.perguntaoluso.data.multi.EquipaNoPodio
+import com.ratoooooo.perguntaoluso.data.multi.EstadoDePresenca
+import com.ratoooooo.perguntaoluso.data.multi.EventoServidor
+import com.ratoooooo.perguntaoluso.data.multi.LugarNoPodio
+import com.ratoooooo.perguntaoluso.data.multi.MembroDaSala
+import com.ratoooooo.perguntaoluso.game.multi.MatchFormat
+import com.ratoooooo.perguntaoluso.game.multi.MultiPhase
+import com.ratoooooo.perguntaoluso.game.multi.MultiUiState
+import com.ratoooooo.perguntaoluso.game.multi.PlayerLive
+import com.ratoooooo.perguntaoluso.game.multi.aplicarEvento
+import com.ratoooooo.perguntaoluso.game.multi.tituloDoPodio
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * O redutor que traduz o servidor para o estado que o `MultiMatchScreen` já sabe desenhar.
+ *
+ * Corre sem socket, sem Firebase e sem ViewModel — é uma função pura, como o
+ * `estadoAposFalhaAoTrocarDeSala` e o `posicaoLabel`. O que aqui se prende é sobretudo o que a
+ * leitura do ecrã obrigou: o total de perguntas e o momento da revelação.
+ */
+class EstadoDoServidorTest {
+
+    private val eu = "uid-eu"
+    private val base = MultiUiState(format = MatchFormat.ONE_V_ONE, myUid = eu)
+
+    private fun membro(uid: String, equipa: String? = null) = MembroDaSala(uid, "Nome $uid", equipa)
+
+    // --- sala de espera ---
+
+    @Test
+    fun `sessao guarda quem eu sou`() {
+        val depois = aplicarEvento(MultiUiState(), EventoServidor.Sessao(eu, "Rato", "0.1.0"))
+        assertEquals(eu, depois.myUid)
+        assertEquals("Rato", depois.myName)
+    }
+
+    @Test
+    fun `sala marca-me a mim entre os membros`() {
+        val depois = aplicarEvento(
+            base,
+            EventoServidor.Sala("L1", "História", "classico", null, listOf(membro("outro"), membro(eu)), souAnfitriao = true)
+        )
+        assertEquals(MultiPhase.SEARCHING, depois.phase)
+        assertEquals("L1", depois.currentLobbyId)
+        assertEquals(2, depois.joinedCount)
+        assertTrue(depois.isHost)
+        assertEquals(listOf(false, true), depois.players.map { it.isMe })
+    }
+
+    // --- o total de perguntas, que o ecrã lê de perguntas.size ---
+
+    @Test
+    fun `partida abre a lista com o tamanho final, nao a crescer`() {
+        // MultiMatchScreen mostra "Pergunta X de ${perguntas.size}" e o pódio conta pelo mesmo
+        // size. Uma lista a crescer daria "1 de 1", "2 de 2", e um total errado no fim.
+        val depois = aplicarEvento(base, EventoServidor.Partida("S1", listOf(membro(eu), membro("outro")), 10))
+        assertEquals(MultiPhase.MATCHED, depois.phase)
+        assertEquals(10, depois.perguntas.size)
+    }
+
+    @Test
+    fun `pergunta so preenche a sua posicao e o total nao muda`() {
+        val comPartida = aplicarEvento(base, EventoServidor.Partida("S1", listOf(membro(eu)), 10))
+        val depois = aplicarEvento(comPartida, pergunta(indice = 3))
+        assertEquals(10, depois.perguntas.size)
+        assertEquals(3, depois.currentIndex)
+        assertEquals("Capital?", depois.perguntas[3].pergunta)
+        assertEquals("", depois.perguntas[4].pergunta)
+    }
+
+    // --- a revelação, que o ecrã faz por respostaCorreta ---
+
+    @Test
+    fun `uma pergunta sem partida antes ainda assim joga-se`() {
+        // Voltar a uma partida a decorrer: o servidor manda `reentraste` e a pergunta seguinte,
+        // mas não repete a `partida`. Descartar a pergunta deixava o ecrã vazio até ao pódio.
+        val depois = aplicarEvento(base, pergunta(indice = 2))
+        assertEquals("Capital?", depois.perguntas[2].pergunta)
+        assertEquals(2, depois.currentIndex)
+    }
+
+    @Test
+    fun `a pergunta chega SEM a resposta certa`() {
+        val comPartida = aplicarEvento(base, EventoServidor.Partida("S1", listOf(membro(eu)), 10))
+        val depois = aplicarEvento(comPartida, pergunta(indice = 0))
+        assertEquals("", depois.perguntas[0].respostaCorreta)
+        assertFalse(depois.isAnswered)
+        assertFalse("a carência de toques tem de recomeçar", depois.aceitaToques)
+    }
+
+    @Test
+    fun `so o veredicto revela a resposta e marca respondido`() {
+        // Marcar `isAnswered` ao toque fazia o ecrã tocar o som de errado e pintar a opção certa
+        // de vermelho durante o tempo de ida e volta, porque `respostaCorreta` ainda era "".
+        val comPartida = aplicarEvento(base, EventoServidor.Partida("S1", listOf(membro(eu)), 10))
+        val comPergunta = aplicarEvento(comPartida, pergunta(indice = 0))
+        val depois = aplicarEvento(
+            comPergunta,
+            EventoServidor.Resposta(indice = 0, certa = true, respostaCorreta = "Lisboa", total = 340, certas = 1)
+        )
+        assertTrue(depois.isAnswered)
+        assertEquals("Lisboa", depois.perguntas[0].respostaCorreta)
+        assertEquals("as opções não podem ser perdidas na substituição", 2, depois.perguntas[0].opcoes.size)
+    }
+
+    @Test
+    fun `a pontuacao vem do servidor, nao e calculada aqui`() {
+        val depois = aplicarEvento(
+            base.copy(myScore = 999, myCorrect = 9),
+            EventoServidor.Resposta(0, certa = false, respostaCorreta = "Lisboa", total = 120, certas = 4)
+        )
+        assertEquals(120, depois.myScore)
+        assertEquals(4, depois.myCorrect)
+    }
+
+    // --- placar e presenças ---
+
+    @Test
+    fun `placar actualiza so quem vem na mensagem`() {
+        val comJogadores = base.copy(
+            players = listOf(
+                PlayerLive(eu, "Eu", 10, null, isMe = true, left = false),
+                PlayerLive("outro", "Outro", 20, null, isMe = false, left = false)
+            )
+        )
+        val depois = aplicarEvento(comJogadores, EventoServidor.Placar(mapOf(eu to 300)))
+        assertEquals(300, depois.players.first { it.isMe }.score)
+        assertEquals("quem não vem na mensagem mantém o que tinha", 20, depois.players.last().score)
+    }
+
+    @Test
+    fun `perder a ligacao ainda nao e sair`() {
+        val comJogadores = base.copy(players = listOf(PlayerLive("outro", "Outro", 0, null, false, false)))
+        val ausente = aplicarEvento(comJogadores, EventoServidor.Presenca("outro", EstadoDePresenca.AUSENTE))
+        assertFalse("há carência para voltar antes de contar como desistência", ausente.players[0].left)
+
+        val saiu = aplicarEvento(ausente, EventoServidor.Presenca("outro", EstadoDePresenca.SAIU))
+        assertTrue(saiu.players[0].left)
+    }
+
+    // --- pódio ---
+
+    @Test
+    fun `podio marca o meu lugar e traz os numeros do servidor`() {
+        val depois = aplicarEvento(
+            base.copy(format = MatchFormat.GRUPO),
+            podio(
+                ganhei = false,
+                ranking = listOf(
+                    LugarNoPodio("outro", "Outro", 400, false),
+                    LugarNoPodio(eu, "Eu", 300, false)
+                )
+            )
+        )
+        assertEquals(MultiPhase.PODIUM, depois.phase)
+        assertEquals(listOf(false, true), depois.ranking.map { it.isMe })
+        assertEquals(275, depois.myScore)
+        assertEquals("2.º lugar", depois.resultTitle)
+    }
+
+    @Test
+    fun `titulo do 1x1 distingue vitoria, derrota e empate`() {
+        fun titulo(meus: Int, outros: Int, ganhei: Boolean) = tituloDoPodio(
+            MatchFormat.ONE_V_ONE,
+            podio(ganhei = ganhei, ranking = emptyList()),
+            listOf(RankDeTeste(meus, true), RankDeTeste(outros, false)).map { it.paraRankResult() },
+            emptyList()
+        )
+        assertEquals("Vitória!", titulo(400, 300, ganhei = true))
+        assertEquals("Derrota", titulo(300, 400, ganhei = false))
+        assertEquals("Empate!", titulo(300, 300, ganhei = false))
+    }
+
+    @Test
+    fun `walkover sem equipas diz que o adversario desistiu`() {
+        val depois = aplicarEvento(
+            base,
+            podio(ganhei = true, ranking = listOf(LugarNoPodio(eu, "Eu", 0, false)), walkover = true)
+        )
+        assertEquals("Adversário desistiu!", depois.resultTitle)
+        assertTrue(depois.walkover)
+        assertTrue(depois.iWon)
+    }
+
+    @Test
+    fun `2x2 usa o total de equipa e sabe qual e a minha`() {
+        val comEquipas = base.copy(
+            format = MatchFormat.TWO_V_TWO,
+            players = listOf(PlayerLive(eu, "Eu", 0, "B", isMe = true, left = false))
+        )
+        val depois = aplicarEvento(
+            comEquipas,
+            podio(
+                ganhei = true,
+                ranking = emptyList(),
+                equipas = listOf(
+                    EquipaNoPodio("A", 200, venceu = false, jogadores = emptyList()),
+                    EquipaNoPodio("B", 500, venceu = true, jogadores = emptyList())
+                )
+            )
+        )
+        assertEquals(listOf("Equipa A", "Equipa B"), depois.teams.map { it.name })
+        assertEquals(listOf(false, true), depois.teams.map { it.isMine })
+        assertEquals("A tua equipa ganhou!", depois.resultTitle)
+    }
+
+    // --- robustez ---
+
+    @Test
+    fun `erro do servidor manda para o ecra de erro com texto`() {
+        val depois = aplicarEvento(base, EventoServidor.Erro("em_manutencao", null))
+        assertEquals(MultiPhase.ERROR, depois.phase)
+        assertTrue(depois.error!!.isNotBlank())
+    }
+
+    @Test
+    fun `mensagem desconhecida nao mexe em nada`() {
+        // Um servidor mais recente do que a app é normal; rebentar por causa disso não é.
+        val antes = base.copy(phase = MultiPhase.IN_GAME, myScore = 120)
+        assertEquals(antes, aplicarEvento(antes, EventoServidor.Desconhecido("mensagem_do_futuro")))
+    }
+
+    // --- ajudas ---
+
+    private fun pergunta(indice: Int) = EventoServidor.Pergunta(
+        indice = indice,
+        pergunta = "Capital?",
+        opcoes = listOf("Lisboa", "Porto"),
+        dificuldade = "facil",
+        evento = null,
+        duracao = 15_000,
+        fimEm = 1_000_000
+    )
+
+    private fun podio(
+        ganhei: Boolean,
+        ranking: List<LugarNoPodio>,
+        equipas: List<EquipaNoPodio> = emptyList(),
+        walkover: Boolean = false
+    ) = EventoServidor.Podio(
+        walkover = walkover,
+        ganhei = ganhei,
+        meuScore = 275,
+        minhasCertas = 6,
+        maxSequencia = 3,
+        totalPerguntas = 10,
+        ranking = ranking,
+        equipas = equipas
+    )
+
+    private data class RankDeTeste(val score: Int, val isMe: Boolean) {
+        fun paraRankResult() =
+            com.ratoooooo.perguntaoluso.game.multi.RankResult("n", score, isMe, false)
+    }
+}
