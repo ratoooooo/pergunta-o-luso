@@ -1,7 +1,6 @@
 package com.ratoooooo.perguntaoluso.data.multi
 
 import com.google.firebase.auth.FirebaseAuth
-import com.ratoooooo.perguntaoluso.data.LobbyData
 import com.ratoooooo.perguntaoluso.game.multi.MatchFormat
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +23,23 @@ import java.util.concurrent.TimeUnit
  * Firebase viaja no handshake, e o Android 9+ bloqueia texto em claro de qualquer maneira.
  */
 const val SERVIDOR_PARTIDA_WSS = "wss://perguntaoluso.duckdns.org"
+
+/**
+ * Uma sala aberta na lista de "VER OUTRAS SALAS ABERTAS".
+ *
+ * Vivia em `MultiMatchRepository` e veio para aqui quando esse ficheiro desapareceu (fase 6).
+ * Perdeu pelo caminho `hostUid`, `estado`, `salaId` e `format`: eram todos do modelo da RTDB, em
+ * que o cliente precisava de saber quem era o anfitrião e em que estado estava o lobby para
+ * decidir sozinho quando arrancar. Agora quem decide é o servidor, e o ecrã só precisa de saber
+ * o que mostrar.
+ */
+data class LobbyData(
+    val lobbyId: String = "",
+    val hostNome: String = "",
+    val categoria: String = "",
+    val modo: String = "classico",
+    val membros: List<Pair<String, String>> = emptyList()
+)
 
 /**
  * O que o servidor manda. Espelha a tabela "Servidor → cliente" de `servidor/PROTOCOLO.md`, que é
@@ -291,10 +307,8 @@ internal fun interpretar(texto: String): EventoServidor = runCatching {
                 LobbyData(
                     lobbyId = s.optString("lobbyId"),
                     hostNome = s.optString("anfitriao").ifBlank { "Jogador" },
-                    format = MatchFormat.fromId(j.optString("formato")),
                     categoria = s.optString("categoria"),
                     modo = s.optString("modo"),
-                    estado = "waiting",
                     // O servidor manda a CONTAGEM de jogadores, não a lista de uids — quem está
                     // na sala dos outros não é assunto de quem está a escolher. O ecrã só usa
                     // `membros.size`, por isso enche-se com lugares anónimos até ao número certo.

@@ -301,3 +301,21 @@ private val ERROS_DE_ENTRADA = setOf(
  */
 internal fun erroEhFatal(codigo: String, fase: MultiPhase): Boolean =
     fase == MultiPhase.SEARCHING && codigo in ERROS_DE_ENTRADA
+
+/**
+ * O convite de um desafio deve sair agora?
+ *
+ * Só quando **a sala já existe no servidor**, e só uma vez. É a inversão que o servidor obriga:
+ * na RTDB o `GameViewModel` criava a sala e só depois enviava o convite, porque o id tinha de lá
+ * caber. No servidor o id só nasce quando o socket abre e o `sala` responde — por isso o convite
+ * passou a sair daqui, e o desafiante espera dentro da sala em vez de voltar ao ecrã Amigos.
+ *
+ * Voltar ao ecrã Amigos deixou de ser possível, e não por gosto: o servidor larga o lobby quando
+ * o socket fecha (`lobbies.sair` no `close`), por isso o desafiante que saísse destruía a sala
+ * que acabou de criar e o convite ficava a apontar para o nada.
+ */
+internal fun deveEnviarConvite(
+    pedido: PedidoDeEntrada,
+    lobbyId: String?,
+    jaEnviado: Boolean
+): Boolean = pedido is PedidoDeEntrada.DesafioCriar && !jaEnviado && !lobbyId.isNullOrBlank()

@@ -5,22 +5,25 @@
 Não são bugs por corrigir — são **consequências assumidas** da arquitetura. Estão aqui para
 ninguém as descobrir a meio de uma auditoria e achar que são novidade.
 
-## 1. A pontuação é validada no cliente
+## 1. A pontuação do **solo** é validada no cliente
 
-**Não há servidor nem Cloud Functions.** O dispositivo decide se a resposta está certa
-(`writeAnswer` recebe `correct: Boolean` já decidido) e calcula os pontos.
+No solo o dispositivo decide se a resposta está certa e calcula os pontos. O único travão são os
+tectos numéricos das rules de `/scores` — bloqueiam um valor impossível, **não um valor plausível
+mas não merecido**. Continua assim, e vai continuar: um servidor para o solo não se justifica.
 
-Esconder a `respostaCorreta` dos próprios jogadores é **impossível nesta arquitetura**: o cliente
-tem de a ler para corrigir. O que se pôde fazer com rules foi fechar a leitura de `meta.perguntas`
-aos **não-membros** da sala.
+**No multijogador já não é verdade.** Desde 29 ago 2026 a partida ao vivo corre no
+[servidor próprio](../arquitetura/servidor-partida.md), que decide certo/errado, calcula a
+pontuação e escreve `/scores` com a identidade `pol-servidor`. As rules recusam a um cliente
+qualquer `formato` que não seja `solo`, por isso um dispositivo não consegue declarar que ganhou
+um 1x1.
 
-**O único travão a batota são os tectos numéricos nas rules** — `pontuacao ≤ 4000` (10 perguntas
-× 400, o máximo matemático: 15 s × 10 × 2.0 de dificuldade + 100 de sequência),
-`respostasCertas ≤ 10`, e limites equivalentes em `/scores`. Isto bloqueia um valor impossível;
-**não bloqueia um valor plausível mas não merecido**.
+Caiu com isso a limitação que aqui estava escrita como impossível de fechar: **esconder a
+`respostaCorreta` era impossível enquanto o cliente tinha de a ler para corrigir.** Agora ela
+não sai do servidor antes de a pergunta fechar, e só vai para quem já respondeu.
 
-Validação a sério exigiria Cloud Functions: o cliente enviaria a escolha e a função devolvia
-certo/errado e escrevia a pontuação. Está fora de âmbito e é conhecido.
+O que **fica** por fechar no multijogador: o perfil agregado (`/jogadores/{uid}`) continua escrito
+pelo dispositivo, com os números que o servidor lhe mandou. Falsificável, ao mesmo nível do solo —
+e pela mesma razão de sempre, que é o solo passar por lá também.
 
 ## 2. O contador de denúncias não é verificável
 
@@ -31,18 +34,19 @@ As rules da RTDB não têm `numChildren()`. Detalhe em
 
 A RTDB não expira nada sozinha e não há job de limpeza:
 
-- **Lobbies e multisalas** de sessões de QA acumulam-se e já causaram emparelhamentos fantasma
-  mais do que uma vez. Convém limpar `/lobbies` e `/multisalas` antes de testar multijogador.
-- **`/salas_privadas`** nunca expira. Com 9000 códigos de 4 dígitos, a probabilidade de colisão
-  cresce com o tempo. Há retentativa, mas sem limpeza acaba por esgotar.
 - **Contas anónimas** criadas em testes ficam no Auth sem dados associados.
 
-## 4. O código de sala não é um segredo forte
+O que aqui estava sobre lobbies, multisalas e códigos de sala **deixou de se aplicar**: esses nós
+foram removidos a 29 ago 2026 e o estado da partida vive em memória no servidor, que o larga
+quando a sala esvazia. Já não há nada nesses caminhos para acumular — nem emparelhamentos
+fantasma, nem códigos de 4 dígitos a esgotar.
 
-`/lobbies` tem `.read: auth != null` (o matchmaking aleatório precisa) e o `codigo` está lá
-dentro. Quem enumerar lobbies vê códigos. **A protecção real do conteúdo é a pertença ao lobby,
-não o segredo do código.** Fechar isto implicaria tirar o `codigo` do lobby e repensar a listagem
-de salas abertas.
+## 4. ~~O código de sala não é um segredo forte~~ — resolvido
+
+Era: `/lobbies` tinha `.read: auth != null` e o `codigo` lá dentro, por isso quem enumerasse
+lobbies via os códigos de toda a gente. Com `/lobbies` fora da RTDB não há o que enumerar: o
+servidor manda a lista de salas abertas sem códigos, e o código só é conhecido por quem criou a
+sala. A protecção do conteúdo continua a ser a pertença à sala, agora imposta pelo servidor.
 
 ## 5. Escala e custo
 

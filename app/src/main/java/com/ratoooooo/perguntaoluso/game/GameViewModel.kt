@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.ratoooooo.perguntaoluso.data.AccountDeletionRepository
 import com.ratoooooo.perguntaoluso.data.AuthRepository
+import com.ratoooooo.perguntaoluso.ui.FeatureFlags
 import com.ratoooooo.perguntaoluso.data.CategoryRepository
 import com.ratoooooo.perguntaoluso.data.CONVITE_ACEITE
 import com.ratoooooo.perguntaoluso.data.CONVITE_RECUSADO
@@ -16,7 +17,6 @@ import com.ratoooooo.perguntaoluso.data.FriendRef
 import com.ratoooooo.perguntaoluso.data.FriendsRepository
 import com.ratoooooo.perguntaoluso.data.FriendsState
 import com.ratoooooo.perguntaoluso.data.GameResult
-import com.ratoooooo.perguntaoluso.data.MultiMatchRepository
 import com.ratoooooo.perguntaoluso.game.multi.MatchFormat
 import com.ratoooooo.perguntaoluso.data.PresenceRepository
 import com.ratoooooo.perguntaoluso.data.Profile
@@ -116,6 +116,12 @@ data class GameUiState(
     val desafioAviso: String? = null,
     /** Room id when this match came from a direct challenge (null = random matchmaking). */
     val multiSalaId: String? = null,
+    /**
+     * O que pedir ao servidor da partida assim que o socket abrir. Só é preenchido quando o
+     * multijogador corre pelo servidor: aí a sala **não existe** antes de se navegar — nasce da
+     * ligação —, ao contrário da RTDB, onde era criada primeiro e o id viajava até aqui.
+     */
+    val multiPedido: com.ratoooooo.perguntaoluso.game.multi.PedidoDeEntrada? = null,
     /** `false` durante a carência inicial da pergunta — ver [INPUT_GRACE_MS]. */
     val aceitaToques: Boolean = true,
     val delete: DeleteAccountUi = DeleteAccountUi(),
@@ -167,7 +173,6 @@ class GameViewModel(
     private val presenceRepository: PresenceRepository = PresenceRepository(),
     private val friendsRepository: FriendsRepository = FriendsRepository(),
     private val challengeRepository: ChallengeRepository = ChallengeRepository(),
-    private val matchRepository: MultiMatchRepository = MultiMatchRepository(),
     private val deletionRepository: AccountDeletionRepository = AccountDeletionRepository()
 ) : ViewModel() {
 
@@ -425,7 +430,8 @@ class GameViewModel(
         format: com.ratoooooo.perguntaoluso.game.multi.MatchFormat,
         categoria: String,
         modo: String,
-        salaId: String? = null
+        salaId: String? = null,
+        pedido: com.ratoooooo.perguntaoluso.game.multi.PedidoDeEntrada? = null
     ) {
         stopTimer()
         _uiState.value = _uiState.value.sessionOnly().copy(
@@ -433,7 +439,8 @@ class GameViewModel(
             multiFormat = format,
             multiCategory = categoria,
             multiMode = modo,
-            multiSalaId = salaId
+            multiSalaId = salaId,
+            multiPedido = pedido
         )
     }
 
@@ -608,54 +615,19 @@ class GameViewModel(
      * The challenger stays on the Amigos screen until the friend answers.
      */
     private fun sendChallenge(friend: FriendRef, categoria: String, modo: String) {
-        val uid = authRepository.currentUserInfo()?.uid ?: return
-        val myNome = _uiState.value.profile?.nomeVisivel ?: "Jogador"
-        _uiState.value = _uiState.value.sessionOnly().copy(
-            screen = GameScreen.FRIENDS,
-            desafioPara = friend,
-            desafioSegundos = (CONVITE_TTL_MS / 1000).toInt(),
-            desafioAviso = null
+        // A sala nasce da ligação ao servidor, não antes dela: o desafiante entra já na sala de
+        // espera e o convite sai de lá, com o id que o servidor devolveu. Voltar ao ecrã Amigos
+        // deixou de ser possível — o servidor larga o lobby quando o socket fecha, por isso quem
+        // saísse destruía a sala que acabou de criar e o convite ficava a apontar para o nada.
+        goToMultiMatch(
+            MatchFormat.ONE_V_ONE, categoria, modo,
+            pedido = com.ratoooooo.perguntaoluso.game.multi.PedidoDeEntrada
+                .DesafioCriar(friend.uid, friend.nome)
         )
-        viewModelScope.launch {
-            try {
-                val questions = questionRepository.loadGameQuestions(categoria, 10)
-                val salaId = matchRepository.createRoomDirect(
-                    format = MatchFormat.ONE_V_ONE,
-                    hostUid = uid,
-                    membros = listOf(uid to myNome, friend.uid to friend.nome),
-                    questions = questions,
-                    categoria = categoria,
-                    modo = modo
-                )
-                challengeRepository.send(uid, myNome, friend.uid, friend.nome, MatchFormat.ONE_V_ONE.id, categoria, modo, salaId)
-                startChallengeCountdown(uid, friend)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    desafioPara = null, desafioSegundos = 0,
-                    desafioAviso = e.message ?: "Não foi possível enviar o desafio."
-                )
-            }
-        }
     }
 
     /** Ticks the sender's countdown and drops the invite from both sides when it expires. */
-    private fun startChallengeCountdown(myUid: String, friend: FriendRef) {
-        desafioJob?.cancel()
-        desafioJob = viewModelScope.launch {
-            val fim = System.currentTimeMillis() + CONVITE_TTL_MS
-            while (true) {
-                val restante = fim - System.currentTimeMillis()
-                if (restante <= 0) break
-                _uiState.value = _uiState.value.copy(desafioSegundos = ((restante + 999) / 1000).toInt())
-                delay(500)
-            }
-            runCatching { challengeRepository.clear(myUid, friend.uid) }
-            _uiState.value = _uiState.value.copy(
-                desafioPara = null, desafioSegundos = 0,
-                desafioAviso = "${friend.nome} não respondeu a tempo."
-            )
-        }
-    }
+
 
     fun cancelChallenge() {
         val uid = authRepository.currentUserInfo()?.uid ?: return
@@ -840,41 +812,21 @@ class GameViewModel(
     }
 
     fun createPrivateRoomForCustomCategory(cat: com.ratoooooo.perguntaoluso.data.CustomCategory, format: com.ratoooooo.perguntaoluso.game.multi.MatchFormat) {
-        val uid = authRepository.currentUserInfo()?.uid ?: return
-        val nome = _uiState.value.profile?.nomeVisivel ?: "Jogador"
-        viewModelScope.launch {
-            try {
-                val (salaId, code) = matchRepository.createPrivateRoomWithCode(
-                    format = format,
-                    hostUid = uid,
-                    hostNome = nome,
-                    categoria = cat.titulo,
-                    modo = "classico",
-                    questions = cat.perguntas
-                )
-                goToMultiMatch(format, cat.titulo, "classico", salaId)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = "Erro a criar sala privada: ${e.message}")
-            }
-        }
+        // É o servidor que lê o quiz de `/categorias_comunitarias` e gera o código — o anfitrião
+        // deixou de escolher as perguntas, que era o que lhe permitia inventá-las.
+        goToMultiMatch(
+            format, cat.titulo, "classico",
+            pedido = com.ratoooooo.perguntaoluso.game.multi.PedidoDeEntrada.PrivadaCriar(cat.id)
+        )
     }
 
     fun joinPrivateRoomByCode(code: String) {
-        val uid = authRepository.currentUserInfo()?.uid ?: return
-        val nome = _uiState.value.profile?.nomeVisivel ?: "Jogador"
-        viewModelScope.launch {
-            try {
-                val result = matchRepository.joinPrivateRoomWithCode(code.trim(), uid, nome)
-                if (result != null) {
-                    val (formatId, salaId) = result
-                    goToMultiMatch(com.ratoooooo.perguntaoluso.game.multi.MatchFormat.fromId(formatId), "Comunidade", "classico", salaId)
-                } else {
-                    _uiState.value = _uiState.value.copy(error = "Código de sala inválido ou expirado!")
-                }
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(error = "Erro ao entrar com código: ${e.message}")
-            }
-        }
+        // O formato entra como GRUPO só para o estado inicial ter alguma coisa: de um código de
+        // 4 dígitos não se deduz o formato, e é o `sala` do servidor que o corrige.
+        goToMultiMatch(
+            com.ratoooooo.perguntaoluso.game.multi.MatchFormat.GRUPO, "Comunidade", "classico",
+            pedido = com.ratoooooo.perguntaoluso.game.multi.PedidoDeEntrada.PrivadaEntrar(code.trim())
+        )
     }
 
     /** Mode chosen — routes to a solo game or to multiplayer matchmaking based on pending format. */

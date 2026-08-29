@@ -10,7 +10,8 @@ Jogo de trivia de cultura portuguesa para Android. Solo e multijogador em tempo 
 categorias escondidas. Escolha múltipla e Verdadeiro/Falso.
 
 - **Stack:** Kotlin 2.2 · Jetpack Compose (Material 3) · MVVM (`ViewModel` + `StateFlow`)
-- **Backend:** Firebase Auth + Realtime Database. **Sem servidor próprio, sem Cloud Functions.**
+- **Backend:** Firebase Auth + Realtime Database **+ servidor de partida próprio** (VPS, Node)
+  para o multijogador ao vivo. Sem Cloud Functions.
 - **Build:** Gradle 9.4.1 · AGP 9.2.1 · compileSdk 36 · minSdk 26
 - **Pacote:** `com.ratoooooo.perguntaoluso` (permanente — ver [firebase](arquitetura/firebase.md))
 - **Estado:** funcional ponta a ponta. **Não publicado** na Play Store.
@@ -51,6 +52,7 @@ categorias escondidas. Escolha múltipla e Verdadeiro/Falso.
 - [Firebase e identidade da app](arquitetura/firebase.md)
 - [Schema da Realtime Database](arquitetura/rtdb-schema.md)
 - [Regras de segurança](arquitetura/rules.md)
+- [Servidor da partida ao vivo](arquitetura/servidor-partida.md)
 - [Autenticação](arquitetura/autenticacao.md)
 - [Sistema visual e componentes](arquitetura/sistema-visual.md)
 

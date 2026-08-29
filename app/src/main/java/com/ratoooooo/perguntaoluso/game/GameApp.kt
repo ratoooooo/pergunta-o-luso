@@ -124,6 +124,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
                 categoria = state.multiCategory,
                 modo = state.multiMode,
                 salaId = state.multiSalaId,
+                pedido = state.multiPedido,
                 onExit = viewModel::backToStart
             )
 

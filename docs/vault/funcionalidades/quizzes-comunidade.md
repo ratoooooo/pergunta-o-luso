@@ -17,6 +17,11 @@ ou por atalho no Início.
   `RadioButton`.
 - **Publicar / despublicar** (`publica`), **explorar as públicas**, **avaliar por estrelas**.
 - **Jogar a solo** ou **criar sala privada por código** — ver [multiplayer](multiplayer.md).
+  A sala privada passou a ser criada **pelo servidor da partida** (29 ago 2026): o cliente manda
+  o id do quiz e o servidor é que lê as perguntas de `/categorias_comunitarias` e gera o código.
+  O anfitrião deixou de as enviar, e portanto de as poder inventar. O caminho está ligado e
+  testado, mas **continua sem porta de entrada na UI** enquanto
+  `QUIZZES_COMUNIDADE_VISIVEIS` for `false`.
 - **Denunciar** um quiz.
 
 Pontuação de um quiz da comunidade **não entra** em `/scores` nem nos agregados normais: dá

@@ -22,6 +22,12 @@ fun MultiMatchHost(
     categoria: String,
     modo: String,
     salaId: String? = null,
+    /**
+     * Só o caminho do servidor: diz o que pedir assim que o socket abrir (criar um desafio, criar
+     * uma sala privada, entrar por código). Na RTDB a sala já existia antes de se chegar aqui e o
+     * [salaId] bastava.
+     */
+    pedido: PedidoDeEntrada? = null,
     onExit: () -> Unit
 ) {
     var restart by remember { mutableIntStateOf(0) }
@@ -30,8 +36,12 @@ fun MultiMatchHost(
         val state by vm.uiState.collectAsState()
 
         LaunchedEffect(Unit) {
-            if (salaId != null && restart == 0) vm.startExisting(format, categoria, modo, salaId)
-            else vm.start(format, categoria, modo)
+            when {
+                restart > 0 -> vm.start(format, categoria, modo)
+                pedido != null -> vm.iniciarComPedido(format, categoria, modo, pedido)
+                salaId != null -> vm.startExisting(format, categoria, modo, salaId)
+                else -> vm.start(format, categoria, modo)
+            }
         }
         BackHandler { vm.leave(); onExit() }
 

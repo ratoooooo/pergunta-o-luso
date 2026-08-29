@@ -10,6 +10,8 @@ import com.ratoooooo.perguntaoluso.game.multi.MultiPhase
 import com.ratoooooo.perguntaoluso.game.multi.MultiUiState
 import com.ratoooooo.perguntaoluso.game.multi.PlayerLive
 import com.ratoooooo.perguntaoluso.game.multi.agregacaoDoServidor
+import com.ratoooooo.perguntaoluso.game.multi.PedidoDeEntrada
+import com.ratoooooo.perguntaoluso.game.multi.deveEnviarConvite
 import com.ratoooooo.perguntaoluso.game.multi.erroEhFatal
 import com.ratoooooo.perguntaoluso.game.multi.aplicarEvento
 import com.ratoooooo.perguntaoluso.game.multi.tituloDoPodio
@@ -477,5 +479,45 @@ class FormatosEEstadosDoServidorTest {
         val caido = base.copy(phase = MultiPhase.IN_GAME, aReconectar = true)
         assertFalse(aplicarEvento(caido, EventoServidor.Ligado).aReconectar)
         assertFalse(aplicarEvento(caido, EventoServidor.Aviso("reentraste")).aReconectar)
+    }
+}
+
+/**
+ * A inversão que o servidor obriga: na RTDB a sala era criada primeiro e o convite levava o id;
+ * no servidor o id só nasce quando o socket abre, por isso o convite sai depois — e de dentro da
+ * sala, porque quem sair dela larga o lobby e deixa o convite a apontar para o nada.
+ */
+class ConviteDoDesafioTest {
+
+    private val desafio = PedidoDeEntrada.DesafioCriar("uid-amigo", "Amigo")
+
+    @org.junit.Test
+    fun `o convite espera pela sala`() {
+        org.junit.Assert.assertFalse("sem sala não há id para pôr no convite",
+            deveEnviarConvite(desafio, lobbyId = null, jaEnviado = false))
+        org.junit.Assert.assertFalse(deveEnviarConvite(desafio, lobbyId = "", jaEnviado = false))
+        org.junit.Assert.assertTrue(deveEnviarConvite(desafio, lobbyId = "L1", jaEnviado = false))
+    }
+
+    @org.junit.Test
+    fun `o convite sai uma vez so`() {
+        // O `sala` chega a cada mudança do lobby. Sem esta guarda, cada entrada e saída de
+        // jogador reenviava o convite ao amigo.
+        org.junit.Assert.assertFalse(deveEnviarConvite(desafio, lobbyId = "L1", jaEnviado = true))
+    }
+
+    @org.junit.Test
+    fun `so o desafio envia convite`() {
+        for (outro in listOf(
+            PedidoDeEntrada.Aleatoria,
+            PedidoDeEntrada.PrivadaCriar("quiz1"),
+            PedidoDeEntrada.PrivadaEntrar("4242"),
+            PedidoDeEntrada.DesafioEntrar("L1")
+        )) {
+            org.junit.Assert.assertFalse(
+                outro.toString(),
+                deveEnviarConvite(outro, lobbyId = "L1", jaEnviado = false)
+            )
+        }
     }
 }

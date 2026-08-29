@@ -2,8 +2,12 @@
 
 ← [índice](../00-indice.md)
 
-Um sistema **generalizado de N jogadores** (`game/multi/`, `data/MultiMatchRepository.kt`)
-serve os três formatos. O 1x1 autónomo que existiu no início foi dobrado aqui e removido.
+**A partida ao vivo corre num servidor próprio** (`servidor/`, num VPS), não na RTDB. O servidor
+decide se a resposta está certa, calcula a pontuação, carimba o início de cada pergunta e apura o
+vencedor. O cliente manda a opção que o jogador tocou e mais nada.
+
+Como se lá chegou, fase a fase: [servidor-partida](../arquitetura/servidor-partida.md).
+O contrato das mensagens é `servidor/PROTOCOLO.md` — é a fonte única, não este ficheiro.
 
 ## Formatos
 
@@ -21,107 +25,116 @@ Só o Grupo é flexível (`hasFlexibleSize`). Porquê 4 a 10 e não 10 fixos:
 Multijogador oferece **Clássico + Caótico apenas** — Eliminatórias é solo, o formato de
 sobrevivência não mapeia numa ronda sincronizada.
 
-## Matchmaking (o que corre mesmo)
+## Matchmaking
 
-**É baseado em lobbies**, sobre `/lobbies/{formato}`. Não há fila.
+Baseado em salas de espera, em memória no servidor. Não há fila.
 
-1. `findOrCreateLobby` corre uma **transação sobre o nó do formato inteiro**: entra no primeiro
-   lobby `waiting` com a **mesma categoria e modo** e com `membrosCount < players`; se não houver
-   nenhum, cria um e quem cria é anfitrião.
-2. O jogador vê os outros a entrarem em tempo real (`observeLobby`) e pode trocar de sala com
-   `switchLobby` ("VER OUTRAS SALAS ABERTAS").
-3. A partida arranca quando:
-   - a sala **enche** (`>= players`) → automático, o anfitrião cria a multisala; **ou**
-   - o anfitrião carrega em **INICIAR JOGO**, disponível a partir de `minPlayers`; **ou**
-   - o **temporizador de 60 s** expira. Reinicia a cada entrada nova — essa reposição *é* a
-     janela de graça: uma sala a encher continua a esperar, uma sala parada fecha sozinha. Só
-     arma a partir de `minPlayers`.
-4. `startLobbyRoom` cria `/multisalas/{id}`, escreve `meta` (create-once) e põe o lobby a
-   `started`; toda a gente entra por aí.
+1. `procurar` entra na primeira sala **à espera** com a mesma categoria e modo e com lugar; se
+   não houver nenhuma, cria uma e quem cria é anfitrião.
+2. O jogador vê os outros a entrar em tempo real e pode trocar de sala ("VER OUTRAS SALAS
+   ABERTAS"), que manda `trocar_sala`.
+3. A partida arranca quando a sala **enche**, quando o anfitrião carrega em **INICIAR JOGO**
+   (disponível a partir de `minPlayers`), ou quando o **temporizador de 60 s** expira.
+4. O temporizador reinicia a cada entrada nova — essa reposição *é* a janela de graça: uma sala a
+   encher continua a esperar, uma sala parada fecha sozinha. Só arma a partir de `minPlayers`.
 
-> **`/matchmakingN` é código morto.** `MultiMatchRepository.createRoom` — a única função que lá
-> escreve — não é chamada de lado nenhum. As rules continuam publicadas. Apagar os dois é
-> limpeza segura, ainda por fazer.
+**Correcção que veio com o servidor:** o temporizador de 60 s corria na composição do ecrã do
+anfitrião e parava se ele pusesse a app em segundo plano. Agora corre no servidor.
+
+A guarda do mínimo vive **num sítio só** — o servidor. Antes estava repetida no ecrã e no
+ViewModel, porque o temporizador podia disparar depois de alguém sair.
 
 ## Salas privadas por código
 
 Alternativa ao matchmaking aleatório, usada pelos [Quizzes da
-Comunidade](quizzes-comunidade.md). Ordem obrigatória: **lobby → código → sala**, porque a regra
-de `/salas_privadas` exige que quem regista o código já seja o anfitrião do lobby referido.
+Comunidade](quizzes-comunidade.md). O cliente manda `privada_criar` com o id do quiz e o servidor
+devolve a sala já com um código de 4 dígitos; quem entra manda `privada_entrar` com o código.
 
-O código tem 4 dígitos (9000 possíveis) e é **create-once**, por isso uma colisão falha em vez de
-repontar silenciosamente a sala de outra pessoa — daí a retentativa. Quem entra pelo código tem
-de ser acrescentado a `meta.membrosNomes`, senão entra no lobby e **não consegue ler a sala** (a
-regra de leitura exige constar dessa lista).
+Duas coisas mudaram e são o ponto:
+
+- **O anfitrião deixou de escolher as perguntas.** Era ele que as enviava, e portanto podia
+  inventá-las. Agora é o servidor que lê o quiz de `/categorias_comunitarias`.
+- **A ordem "lobby → código → sala" desapareceu.** Existia porque as rules da RTDB exigiam ver o
+  lobby escrito antes de aceitar o código. O servidor cria as três coisas de uma vez.
+
+O tecto de 10 perguntas (`MAX_PERGUNTAS_SALA`) mantém-se: as rules de `/scores` travam
+`correctCount <= 20` e `total <= 20`.
+
+## Desafios de amigos
+
+O convite continua a viajar por `/convites` na RTDB. O que mudou é **quando** a sala nasce.
+
+Na RTDB a sala era criada primeiro e o id viajava dentro do convite, com o desafiante a esperar
+no ecrã Amigos com uma contagem decrescente. No servidor o id só existe depois de o socket abrir,
+por isso **o desafiante entra já na sala de espera** e o convite sai de lá.
+
+Não foi preferência: o servidor larga a sala quando o socket fecha, por isso um desafiante que
+voltasse ao ecrã Amigos destruía a sala que acabou de criar. O convite é limpo quando a partida
+arranca e quando o desafiante sai da sala.
 
 ## Sincronização (lockstep)
 
-- O início de cada pergunta é carimbado **uma vez, no servidor**: transação sobre
-  `perguntaInicios/{index}` com `ServerValue.TIMESTAMP`. Todos os clientes leem o mesmo valor.
-- Cada cliente calcula `remaining = duração − (serverNow − inícioPartilhado)`, com
-  `serverNow = System.currentTimeMillis() + serverTimeOffset`.
-- **O offset é relido no início de cada pergunta**, não uma vez por partida — um offset velho era
-  a principal fonte de desvio.
-- Avança-se para a pergunta seguinte quando **todos os jogadores activos responderam** ou o
-  cronómetro partilhado expira.
-
-Desvio residual: limitado pelo tick de 100 ms mais jitter de rede. Eliminá-lo por completo exigia
-um canal de sincronização contínuo, ou seja, um servidor.
+- O servidor abre cada pergunta com um `fimEm` no **seu** relógio e fecha-a quando todos os
+  activos responderem ou o tempo esgotar.
+- O cliente afere o desvio do seu relógio com `ping`/`pong` **a cada pergunta**, não uma vez por
+  partida — um desvio velho era a principal fonte de dessincronia na versão RTDB, e a lição
+  migrou com o resto.
+- **A latência não custa pontos.** Os pontos dependem dos segundos que sobram, por isso carimbar
+  a resposta à chegada penalizava quem tem rede pior. O cliente envia o instante em que
+  respondeu e o servidor credita-o preso ao intervalo `[chegada − rtt, chegada]`, com o rtt
+  medido por ele. Mentir só devolve o rtt real do próprio jogador.
 
 ## Desistências e walkover
 
-Cada cliente arma `onDisconnect` para pôr o seu `estado = "off"` ao entrar na sala.
+O servidor vê o socket fechar. Abre-se uma **carência de 10 s** com "a reconectar…" no ecrã — o
+lugar continua a ser do jogador, e o cliente tenta voltar. Passada a carência, é desistência.
 
 - **Sem equipas** (1x1, Grupo): se sobrar **um só jogador activo** numa sala que tinha mais do
-  que um, a partida fecha por walkover. A condição é genérica de propósito — no Grupo, sair um de
+  que um, a partida fecha por walkover, e **quem fica ganha** — mesmo 0-0. No Grupo, sair um de
   quatro deixa três e o jogo segue.
-- **2x2:** se **qualquer** jogador sai, **a equipa dele perde**. Escolhido em vez de "jogar 1
-  contra 2", que tornaria o total de equipa injusto.
-
-Deteção em ~2 s depois de um force-stop.
+- **2x2:** se **qualquer** jogador sai, **a equipa dele perde**, mesmo indo à frente no placar.
+  Escolhido em vez de "jogar 1 contra 2", que tornaria o total de equipa injusto.
 
 ## Pontuação e agregação
 
-Reutiliza o `Scoring` do solo. No fim, cada dispositivo grava o **seu** resultado em `/scores`
-(com `formato`) e agrega no perfil pela mesma via do solo, incluindo o caminho de walkover.
+A fórmula é a mesma do solo (`Scoring`), mas quem a aplica é o servidor. No fim:
+
+- **o servidor** grava `/scores` de todos os jogadores, com a identidade `pol-servidor`;
+- **a app** agrega o perfil (`/jogadores/{uid}`) pela mesma via do solo, com os números que o
+  servidor lhe mandou — é daí que vêm XP, conquistas e sequência diária.
+
 "Ganhou" por formato: 1x1 e Grupo = pontuação estritamente mais alta (empate não conta); 2x2 =
-total de equipa estritamente maior.
+total de equipa estritamente maior; walkover = quem ficou.
 
-## Grupo com mais do que o mínimo — observado
+> A fórmula de pontos existe em Kotlin e em JavaScript, e é a **única** duplicação deliberada do
+> desenho — quem corrige tem de saber pontuar. Está presa por vectores calculados à mão em
+> `servidor/testes/pontuacao.json`, lidos pelos testes dos dois lados.
 
-Testado a 9 ago 2026 com **6 emuladores** e depois com **5** (`/lobbies` e `/multisalas` limpos
-antes). O que se viu, não o que se deduziu:
+## Observado
 
-- A sala aceitou entradas até **6/10** sem tocar em nenhum limiar: o rótulo passou por
-  `2/10 … 6/10`, sempre com `MÍNIMO 4`.
-- Abaixo de 4: *"Faltam N para poder começar (mínimo 4, máximo 10)"*. Ao chegar a 4 apareceu
-  *"Já podes começar. A sala continua a aceitar jogadores até 10."* e o botão **INICIAR JOGO
-  (N JOGADORES) · Auto: NNs**, com o N a acompanhar cada entrada.
-- **O temporizador reinicia mesmo a cada entrada** — lido logo a seguir a cada entrada nova
-  deu 54 s, 49 s e 52 s numa corrida, 55 s e 56 s na outra: nunca ia abaixo do valor anterior,
-  apesar de os segundos correrem entre leituras.
-- Arranque **manual acima do mínimo e abaixo da capacidade** (6 de 10, e noutra corrida 5 de 10):
-  funciona. A capacidade 10 nunca chegou a encher — não há emuladores para isso.
-- **Pódio com 5 jogadores:** os 5 dispositivos mostraram a mesma lista, mesma ordem e mesmas
-  pontuações (275 / 100 / 90 / 80 / 0), cada um com o seu *(tu)*. Sem discrepâncias.
+**Grupo com 5 e 6 jogadores** (9 ago 2026, ainda na RTDB): a sala aceitou entradas até 6/10 sem
+tocar em nenhum limiar, o temporizador reiniciou a cada entrada, e o arranque manual acima do
+mínimo e abaixo da capacidade funcionou. Os 5 dispositivos mostraram o mesmo pódio, mesma ordem e
+mesmas pontuações.
 
-**Defeito encontrado por causa disto:** o título do pódio está limitado ao 4.º lugar —
-`MultiMatchViewModel.kt:559` faz `else -> "4.º lugar"`, por isso quem termina em 5.º a 10.º lê
-*"4.º lugar"* com a sua linha a dizer **#5**. Só aparece com 5+ jogadores, que é exactamente o
-cenário que nunca tinha sido corrido. Ver [por-fazer](../por-fazer.md).
+**Grupo com 10** (28 ago 2026): corrido contra o servidor pelo cliente de teste em
+`servidor/testes/` — o cenário que nunca se conseguiu com emuladores, por não haver máquinas que
+cheguem.
+
+**1x1, 2x2 e Grupo em produção** (29 ago 2026): partidas reais com dispositivos, pontuações
+idênticas nos dois lados, cronómetros alinhados ao pixel em capturas com 166 ms de intervalo, e
+walkover observado entre t+8 s e t+10 s depois de fechar a app — dentro da carência.
 
 ## Limitações conhecidas
 
-- **7 a 10 jogadores continua por observar** — a casa dá para 6 emuladores, e o sexto (a imagem
-  16 KB) encravou. Que a sala aceita além de 6 é dedução a partir de `membrosCount < players`.
-- Na corrida com 6, dois clientes apareceram como **"— saiu"** no pódio dos outros e uma
-  pontuação chegou tarde. A RTDB dizia `estado: "terminado"` para todos: foi o Mac a ficar sem
-  fôlego com 6 emuladores, não o código. Com 5 não voltou a acontecer.
-- O temporizador de auto-arranque vive na **composição** da sala de espera e só corre para o
-  anfitrião: se ele puser a app em segundo plano, o relógio pára.
-- Salas e lobbies abandonados **não expiram** — a RTDB não tem TTL e não há limpeza. Estado velho
-  de QA já causou emparelhamentos fantasma mais do que uma vez; convém limpar antes de testar.
-- Pontuação é validada no cliente — ver [limitacoes-conhecidas](../seguranca/limitacoes-conhecidas.md).
+- **Ponto único de falha:** o VPS em baixo é multijogador em baixo. O solo não é afectado.
+- **Quem desiste não agrega.** O `/scores` fica com os dois jogadores, porque é o servidor que o
+  escreve, mas o perfil só é actualizado por quem estava vivo no pódio — a agregação corre no
+  dispositivo. Vem do desenho antigo e não é regressão.
+- **Quem esgota o tempo não vê a resposta certa.** O servidor só a manda a quem respondeu. Antes,
+  na RTDB, toda a gente a via porque vinha com a pergunta — que era exactamente o problema.
+- **O perfil agregado continua escrito pelo cliente** e continua falsificável, ao mesmo nível do
+  solo. Ver [limitacoes-conhecidas](../seguranca/limitacoes-conhecidas.md).
 
-Ver também: [modos-de-jogo](modos-de-jogo.md) · [rtdb-schema](../arquitetura/rtdb-schema.md) ·
+Ver também: [modos-de-jogo](modos-de-jogo.md) · [servidor-partida](../arquitetura/servidor-partida.md) ·
 [grupo-4-a-10](../decisoes/grupo-4-a-10.md)

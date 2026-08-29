@@ -75,7 +75,7 @@ import com.ratoooooo.perguntaoluso.ui.theme.stickerBlock
 import com.ratoooooo.perguntaoluso.ui.theme.stickerCircle
 import com.ratoooooo.perguntaoluso.ui.theme.stickerDashed
 import com.ratoooooo.perguntaoluso.ui.theme.textColorFor
-import com.ratoooooo.perguntaoluso.data.LobbyData
+import com.ratoooooo.perguntaoluso.data.multi.LobbyData
 import kotlinx.coroutines.delay
 
 @Composable

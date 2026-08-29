@@ -2,7 +2,6 @@ package com.ratoooooo.perguntaoluso
 
 import com.google.firebase.database.DatabaseException
 import com.ratoooooo.perguntaoluso.game.multi.coletarListener
-import com.ratoooooo.perguntaoluso.game.multi.deveAvisarDeFalhaNoLobby
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +13,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -146,19 +144,6 @@ class ColetarListenerTest {
         assertTrue("nada pode chegar ao handler do scope: $naoApanhadas", naoApanhadas.isEmpty())
         assertEquals(1, falhas.size)
         assertTrue(falhas.first() is DatabaseException)
-    }
-
-    /**
-     * A guarda que impede o pior efeito colateral desta correcção: com o jogo já a decorrer em
-     * `/multisalas`, um listener de `/lobbies` a morrer **não** pode trocar a partida pelo ecrã
-     * de erro. O lobby até é apagado no arranque normal.
-     */
-    @Test
-    fun `falha no lobby so avisa enquanto o jogador espera`() {
-        assertTrue("à espera: tem de avisar", deveAvisarDeFalhaNoLobby(jaTemSala = false, jaTerminou = false))
-        assertFalse("jogo a decorrer: calar", deveAvisarDeFalhaNoLobby(jaTemSala = true, jaTerminou = false))
-        assertFalse("já no pódio: calar", deveAvisarDeFalhaNoLobby(jaTemSala = false, jaTerminou = true))
-        assertFalse("acabou e tinha sala: calar", deveAvisarDeFalhaNoLobby(jaTemSala = true, jaTerminou = true))
     }
 
     /**

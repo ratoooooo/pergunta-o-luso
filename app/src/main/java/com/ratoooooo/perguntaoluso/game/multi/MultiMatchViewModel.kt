@@ -3,13 +3,10 @@ package com.ratoooooo.perguntaoluso.game.multi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ratoooooo.perguntaoluso.data.AuthRepository
-import com.ratoooooo.perguntaoluso.data.FormResult
+import com.ratoooooo.perguntaoluso.data.ChallengeRepository
 import com.ratoooooo.perguntaoluso.data.GameResult
-import com.ratoooooo.perguntaoluso.data.MultiMatchRepository
-import com.ratoooooo.perguntaoluso.data.MultiRoom
 import com.ratoooooo.perguntaoluso.data.ProfileRepository
 import com.ratoooooo.perguntaoluso.data.Question
-import com.ratoooooo.perguntaoluso.data.QuestionRepository
 import com.ratoooooo.perguntaoluso.game.ChaoticEvent
 import com.ratoooooo.perguntaoluso.game.Difficulty
 import com.ratoooooo.perguntaoluso.game.Scoring
@@ -24,10 +21,9 @@ import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.max
 
-import com.ratoooooo.perguntaoluso.data.LobbyData
+import com.ratoooooo.perguntaoluso.data.multi.LobbyData
 import com.ratoooooo.perguntaoluso.data.multi.EventoServidor
 import com.ratoooooo.perguntaoluso.data.multi.MultiSocketClient
-import com.ratoooooo.perguntaoluso.ui.FeatureFlags
 
 enum class MultiPhase { SEARCHING, MATCHED, IN_GAME, PODIUM, ERROR }
 
@@ -37,7 +33,6 @@ private const val QUESTION_COUNT = 10
 private const val INPUT_GRACE_MS = 350L
 private const val BASE_QUESTION_MILLIS = 15_000L
 private const val TICK_MS = 100L
-private const val MATCHED_REVEAL_MS = 2_500L
 
 /**
  * Reconexão: 4 tentativas de 2 em 2 segundos = 8 s, dentro da carência de 10 s que o servidor dá
@@ -62,7 +57,7 @@ internal fun posicaoLabel(rank: Int): String {
 /**
  * Recolhe um fluxo de listener da RTDB **sem deixar a falha matar a app**.
  *
- * Os `callbackFlow` do [com.ratoooooo.perguntaoluso.data.MultiMatchRepository] fecham-se com a
+ * Os `callbackFlow` do [com.ratoooooo.perguntaoluso.data.multi.MultiSocketClient] fecham-se com a
  * excepção quando o listener é cancelado (`onCancelled` → `close(error.toException())`). Um
  * `collect` cru dentro de `viewModelScope.launch` deixa essa excepção sair pelo scope e chegar
  * ao handler por omissão: `FATAL EXCEPTION: main`, com
@@ -92,38 +87,6 @@ internal suspend fun <T> coletarListener(
 }
 
 /**
- * Vale a pena atirar o jogador para o ecrã de erro quando um listener do **lobby** morre?
- *
- * Só se ele ainda estiver à espera. Depois de [jaTemSala] os listeners de `/lobbies` deixaram de
- * interessar — o jogo vive em `/multisalas` a partir daí, e o próprio lobby chega a ser apagado
- * no arranque normal. Sem esta guarda, apagar um lobby a meio de uma partida em curso trocava o
- * jogo pelo ecrã de erro. É a mesma regra que o `listenToLobby` já aplicava ao lobby desaparecer
- * (`if (salaId == null)`), agora também para o listener falhar.
- */
-internal fun deveAvisarDeFalhaNoLobby(jaTemSala: Boolean, jaTerminou: Boolean): Boolean =
-    !jaTemSala && !jaTerminou
-
-/**
- * Corre uma acção do jogador que fala com a RTDB, **sem deixar a falha matar a app**.
- *
- * Irmão do [coletarListener], para o outro lado do problema: aquele protege listeners passivos,
- * este protege um `viewModelScope.launch` disparado por um toque. A porta de saída da excepção é
- * a mesma — corrotina lançada no scope, excepção não apanhada, `FATAL EXCEPTION: main`.
- *
- * [CancellationException] é re-lançada pela mesma razão de sempre: sair do ecrã cancela o scope,
- * e engolir o cancelamento partia a concorrência estruturada.
- */
-internal suspend fun executarAcao(onFalha: (Throwable) -> Unit, acao: suspend () -> Unit) {
-    try {
-        acao()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        onFalha(e)
-    }
-}
-
-/**
  * O que se pede ao servidor **assim que o socket abre**.
  *
  * Existe porque a ligação e o pedido são coisas separadas: numa reconexão o socket reabre e não
@@ -131,15 +94,18 @@ internal suspend fun executarAcao(onFalha: (Throwable) -> Unit, acao: suspend ()
  * distinção, voltar de uma queda punha o jogador em matchmaking novo em vez de o pôr de volta no
  * duelo que estava a meio.
  */
-internal sealed interface PedidoDeEntrada {
+sealed interface PedidoDeEntrada {
     /** Matchmaking normal, por categoria e modo. */
     data object Aleatoria : PedidoDeEntrada
     /** Sala privada com um quiz da comunidade; o servidor devolve o código. */
     data class PrivadaCriar(val quizId: String) : PedidoDeEntrada
     /** Entrar numa sala privada com os 4 dígitos. O formato só se sabe quando o `sala` chegar. */
     data class PrivadaEntrar(val codigo: String) : PedidoDeEntrada
-    /** Desafio direto: cria a sala para o id poder viajar dentro do convite. */
-    data class DesafioCriar(val paraUid: String) : PedidoDeEntrada
+    /**
+     * Desafio direto: cria a sala para o id poder viajar dentro do convite. O nome vem junto
+     * porque é o convite que o mostra ao amigo, e quem o envia é agora o `MultiMatchViewModel`.
+     */
+    data class DesafioCriar(val paraUid: String, val paraNome: String) : PedidoDeEntrada
     /** Aceitar um desafio. Só o convidado entra — o servidor guarda a lista de permitidos. */
     data class DesafioEntrar(val salaId: String) : PedidoDeEntrada
 }
@@ -197,35 +163,10 @@ data class MultiUiState(
     val currentQuestion: Question? get() = perguntas.getOrNull(currentIndex)
 }
 
-/**
- * Estado a mostrar quando a troca de sala falha **a meio**.
- *
- * O `switchLobby` é optimista: sai do lobby antigo e escreve já o novo em `currentLobbyId`/
- * `isHost` **antes** de saber se a entrada correu bem. Quando o `joinLobbyById` ou o
- * `findOrCreateLobby` estoiram, o jogador fica num sítio que não existe — saiu de um lobby e não
- * entrou em nenhum, mas o estado continua a dizer que pertence ao lobby de destino.
- *
- * Deixar assim não era só feio: o botão VOLTAR do ecrã de erro chama `leave()`, que usa
- * `currentLobbyId` para publicar a saída — ia tentar sair de um lobby onde nunca chegou a entrar.
- * Por isso `currentLobbyId` volta a `null` e `isHost` a `false`: é o que é verdade.
- *
- * O que **não** se limpa, de propósito: `categoria` e `modo` são a escolha do jogador e continuam
- * a valer para a tentativa seguinte; `players`/`joinedCount` ficam como estão porque o ecrã de
- * erro não os mostra e o `resetMatchState()` limpa-os no arranque seguinte.
- */
-internal fun estadoAposFalhaAoTrocarDeSala(anterior: MultiUiState): MultiUiState =
-    anterior.copy(
-        phase = MultiPhase.ERROR,
-        error = "Não foi possível entrar na sala escolhida.",
-        currentLobbyId = null,
-        isHost = false
-    )
-
 class MultiMatchViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
     private val profileRepository: ProfileRepository = ProfileRepository(),
-    private val questionRepository: QuestionRepository = QuestionRepository(),
-    private val matchRepository: MultiMatchRepository = MultiMatchRepository()
+    private val challengeRepository: ChallengeRepository = ChallengeRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MultiUiState())
@@ -234,20 +175,8 @@ class MultiMatchViewModel(
     private lateinit var format: MatchFormat
     private var categoria: String = ""
     private var modo: String = "classico"
-    private var myUid: String = ""
-    private var salaId: String? = null
-    private var currentLobbyId: String? = null
-    private var serverOffset: Long = 0L
-    private var streak: Int = 0
-    private var maxStreak: Int = 0
-    private var gameStarted = false
-    private var finished = false
     private var aggregated = false
 
-    private var observeJob: Job? = null
-    private var timerJob: Job? = null
-    private var lobbyJob: Job? = null
-    private var openLobbiesJob: Job? = null
 
     // ---- caminho do servidor (só vive com FeatureFlags.MULTIJOGADOR_SERVIDOR a true) ----
     private val socket = MultiSocketClient()
@@ -261,17 +190,8 @@ class MultiMatchViewModel(
     private var pedido: PedidoDeEntrada = PedidoDeEntrada.Aleatoria
     /** Na reabertura do socket depois de uma queda não se pede entrada nenhuma. */
     private var reconectando = false
-
-    private val isCaotico get() = modo == "caotico"
-
-    /**
-     * Quantas perguntas esta partida tem mesmo. No matchmaking aleatório são sempre
-     * [QUESTION_COUNT]; numa sala privada são as do quiz da comunidade escolhido. Usar o valor
-     * real evita terminar cedo, indexar fora dos limites, e gravar em `/scores` um `total` que
-     * não corresponde ao que foi jogado.
-     */
-    private val totalPerguntas: Int
-        get() = _uiState.value.perguntas.size.takeIf { it > 0 } ?: QUESTION_COUNT
+    /** O convite de um desafio sai UMA vez, quando a sala existe. Ver [deveEnviarConvite]. */
+    private var convitePorEnviar = true
 
     /**
      * Limpa TODO o estado por-partida antes de começar outra (Fase 28).
@@ -287,167 +207,32 @@ class MultiMatchViewModel(
      *    a saída deixava de ser publicada — do outro lado o jogador continuava "presente";
      *  - `openLobbiesJob` nunca era cancelado em lado nenhum, acumulando listeners.
      */
-    private fun resetMatchState() {
-        lobbyJob?.cancel(); lobbyJob = null
-        observeJob?.cancel(); observeJob = null
-        timerJob?.cancel(); timerJob = null
-        openLobbiesJob?.cancel(); openLobbiesJob = null
-        salaId = null
-        currentLobbyId = null
-        gameStarted = false
-        finished = false
-        aggregated = false
-        streak = 0
-        maxStreak = 0
-    }
-
-    fun start(format: MatchFormat, categoria: String, modo: String) {
-        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return iniciarNoServidor(format, categoria, modo, PedidoDeEntrada.Aleatoria)
-        resetMatchState()
-        this.format = format
-        this.categoria = categoria
-        this.modo = modo
-        _uiState.value = MultiUiState(format = format, categoria = categoria, modo = modo)
-        viewModelScope.launch {
-            try {
-                val user = authRepository.ensureSignedIn()
-                myUid = user.uid
-                val nome = runCatching { profileRepository.loadProfile(myUid).nomeVisivel }.getOrDefault("Convidado")
-                _uiState.value = _uiState.value.copy(myUid = myUid, myName = nome)
-                serverOffset = runCatching { matchRepository.serverTimeOffset() }.getOrDefault(0L)
-
-                // Corrotina **filha**: o `catch` deste `try` não a apanha (defeito B2). A falha do
-                // listener tem de ser tratada cá dentro, como no `observeRoom`.
-                openLobbiesJob = viewModelScope.launch {
-                    coletarListener(
-                        fluxo = matchRepository.observeOpenLobbies(format.id),
-                        onFalha = { falhaDoListenerDoLobby() }
-                    ) { lobbies ->
-                        _uiState.value = _uiState.value.copy(openLobbies = lobbies)
-                    }
-                }
-
-                val (lobbyId, isHost) = matchRepository.findOrCreateLobby(format, categoria, modo, myUid, nome)
-                currentLobbyId = lobbyId
-                _uiState.value = _uiState.value.copy(currentLobbyId = lobbyId, isHost = isHost)
-                listenToLobby(lobbyId)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(phase = MultiPhase.ERROR, error = e.message ?: "Erro no matchmaking")
-            }
-        }
-    }
-
-    private fun listenToLobby(lobbyId: String) {
-        lobbyJob?.cancel()
-        lobbyJob = viewModelScope.launch {
-            // Além da falha do próprio listener, este corpo tem chamadas suspensas que também
-            // podiam estoirar para fora do `collect` (joinRoom, loadGameQuestions,
-            // startLobbyRoom) — o `coletarListener` apanha as duas coisas.
-            coletarListener(
-                fluxo = matchRepository.observeLobby(format.id, lobbyId),
-                onFalha = { falhaDoListenerDoLobby() }
-            ) { lobby ->
-                if (lobby == null || lobby.estado == "cancelled") {
-                    if (salaId == null) {
-                        _uiState.value = _uiState.value.copy(phase = MultiPhase.ERROR, error = "A sala de espera foi cancelada")
-                    }
-                    return@coletarListener
-                }
-
-                val count = lobby.membros.size
-                val playerLives = lobby.membros.map { (uid, name) ->
-                    PlayerLive(uid = uid, nome = name, score = 0, team = null, isMe = uid == myUid, left = false)
-                }
-                _uiState.value = _uiState.value.copy(
-                    categoria = lobby.categoria,
-                    modo = lobby.modo,
-                    currentLobbyId = lobbyId,
-                    joinedCount = count,
-                    players = playerLives,
-                    isHost = (lobby.hostUid == myUid)
-                )
-
-                if (lobby.estado == "started" && lobby.salaId != null && salaId == null) {
-                    salaId = lobby.salaId
-                    matchRepository.joinRoom(lobby.salaId, myUid, _uiState.value.myName)
-                    matchRepository.setupDisconnect(lobby.salaId, myUid)
-                    observeRoom(lobby.salaId)
-                } else if (lobby.estado == "waiting" && lobby.hostUid == myUid && count >= format.players && salaId == null) {
-                    val questions = questionRepository.loadGameQuestions(lobby.categoria, QUESTION_COUNT)
-                    val id = matchRepository.startLobbyRoom(format.id, lobbyId, myUid, lobby.membros, questions, lobby.categoria, lobby.modo)
-                    salaId = id
-                    matchRepository.setupDisconnect(id, myUid)
-                    observeRoom(id)
-                }
-            }
-        }
-    }
-
-    fun switchLobby(targetLobby: LobbyData) {
-        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return socket.trocarSala(targetLobby.lobbyId)
-        if (targetLobby.lobbyId == currentLobbyId || targetLobby.membros.any { it.first == myUid }) return
-        val oldLobbyId = currentLobbyId
-        viewModelScope.launch {
-            lobbyJob?.cancel()
-            if (oldLobbyId != null) {
-                runCatching { matchRepository.leaveLobby(format.id, oldLobbyId, myUid) }
-            }
-            this@MultiMatchViewModel.categoria = targetLobby.categoria
-            this@MultiMatchViewModel.modo = targetLobby.modo
-            this@MultiMatchViewModel.currentLobbyId = targetLobby.lobbyId
-            _uiState.value = _uiState.value.copy(
-                categoria = targetLobby.categoria,
-                modo = targetLobby.modo,
-                currentLobbyId = targetLobby.lobbyId,
-                isHost = (targetLobby.hostUid == myUid)
-            )
-            // Defeito B3: estas duas chamadas corriam a descoberto. É uma acção do jogador, não um
-            // listener, mas a porta de saída da excepção é a mesma do B/B2 — `viewModelScope`.
-            executarAcao(onFalha = { falhaAoTrocarDeSala() }) {
-                val joined = matchRepository.joinLobbyById(format.id, targetLobby.lobbyId, myUid, _uiState.value.myName)
-                if (joined) {
-                    listenToLobby(targetLobby.lobbyId)
-                } else {
-                    val (newId, isHost) = matchRepository.findOrCreateLobby(format, categoria, modo, myUid, _uiState.value.myName)
-                    this@MultiMatchViewModel.currentLobbyId = newId
-                    _uiState.value = _uiState.value.copy(currentLobbyId = newId, isHost = isHost)
-                    listenToLobby(newId)
-                }
-            }
-        }
-    }
-
     /**
-     * A troca de sala falhou depois de já se ter saído do lobby antigo. Mesmo ecrã de erro do
-     * B/B2 — VOLTAR ligado ao `leave()` de sempre —, com o estado corrigido para dizer a verdade
-     * (ver [estadoAposFalhaAoTrocarDeSala]).
+     * Limpa o estado por-partida antes de começar outra.
      *
-     * Guardado por [deveAvisarDeFalhaNoLobby] pela mesma razão que o `falhaDoListenerDoLobby`:
-     * com o jogo já a decorrer em `/multisalas`, nada vindo de `/lobbies` pode trocar a partida
-     * pelo ecrã de erro.
+     * O `MultiMatchHost` faz `key(restart) { viewModel() }`, mas `viewModel()` resolve pelo
+     * `ViewModelStore` da Activity — a `key()` muda a identidade da composição, **não** a do
+     * ViewModel. "NOVO JOGO" reutiliza sempre a mesma instância, por isso o que sobrevive a uma
+     * partida tem de ser limpo à mão (Fase 28). O resto do estado por-partida vive agora no
+     * servidor, e o que é local morre com o socket em `resetEstadoDoServidor`.
      */
-    private fun falhaAoTrocarDeSala() {
-        if (!deveAvisarDeFalhaNoLobby(jaTemSala = salaId != null, jaTerminou = finished)) return
-        currentLobbyId = null
-        _uiState.value = estadoAposFalhaAoTrocarDeSala(_uiState.value)
+    private fun resetMatchState() {
+        aggregated = false
     }
 
+    /** Matchmaking aleatório: entra na primeira sala compatível, ou cria uma. */
+    fun start(format: MatchFormat, categoria: String, modo: String) {
+        iniciarNoServidor(format, categoria, modo, PedidoDeEntrada.Aleatoria)
+    }
+
+    /** "VER OUTRAS SALAS ABERTAS". Se a sala já não der, o servidor devolve-nos a outra. */
+    fun switchLobby(targetLobby: LobbyData) {
+        socket.trocarSala(targetLobby.lobbyId)
+    }
+
+    /** INICIAR JOGO. O servidor recusa se não formos anfitriões ou se faltar gente. */
     fun forceStartGame() {
-        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return socket.iniciar()
-        val lobbyId = currentLobbyId ?: return
-        if (salaId != null || !_uiState.value.isHost) return
-        viewModelScope.launch {
-            try {
-                val questions = questionRepository.loadGameQuestions(categoria, QUESTION_COUNT)
-                val currentPlayers = _uiState.value.players.map { it.uid to it.nome }
-                val id = matchRepository.startLobbyRoom(format.id, lobbyId, myUid, currentPlayers, questions, categoria, modo)
-                salaId = id
-                matchRepository.setupDisconnect(id, myUid)
-                observeRoom(id)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(phase = MultiPhase.ERROR, error = e.message ?: "Erro ao iniciar sala")
-            }
-        }
+        socket.iniciar()
     }
 
     /**
@@ -456,399 +241,22 @@ class MultiMatchViewModel(
      * everything after this point (lockstep timing, podium, profile aggregation) is identical to
      * random matchmaking.
      */
+    /**
+     * Aceitar um desafio direto: a sala já existe no servidor e o id veio dentro do convite.
+     * Só o convidado lá entra — o servidor guarda a lista de permitidos.
+     */
     fun startExisting(format: MatchFormat, categoria: String, modo: String, salaId: String) {
-        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return iniciarNoServidor(format, categoria, modo, PedidoDeEntrada.DesafioEntrar(salaId))
-        resetMatchState()
-        this.format = format
-        this.categoria = categoria
-        this.modo = modo
-        _uiState.value = MultiUiState(format = format, categoria = categoria, modo = modo)
-        viewModelScope.launch {
-            try {
-                val user = authRepository.ensureSignedIn()
-                myUid = user.uid
-                val nome = runCatching { profileRepository.loadProfile(myUid).nomeVisivel }.getOrDefault("Convidado")
-                _uiState.value = _uiState.value.copy(myName = nome)
-                serverOffset = runCatching { matchRepository.serverTimeOffset() }.getOrDefault(0L)
-                this@MultiMatchViewModel.salaId = salaId
-                matchRepository.joinRoom(salaId, myUid, nome)
-                matchRepository.setupDisconnect(salaId, myUid)
-                observeRoom(salaId)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(phase = MultiPhase.ERROR, error = e.message ?: "Erro ao entrar na sala")
-            }
-        }
+        iniciarNoServidor(format, categoria, modo, PedidoDeEntrada.DesafioEntrar(salaId))
     }
 
-    private fun observeRoom(id: String) {
-        observeJob?.cancel()
-        observeJob = viewModelScope.launch {
-            coletarListener(
-                fluxo = matchRepository.observeRoom(id),
-                onFalha = { falhaDoListenerDaSala() }
-            ) { room -> onRoom(room) }
-        }
-    }
-
-    /**
-     * Morreu um dos listeners de `/lobbies` — o da lista de salas abertas ou o da sala de espera
-     * onde este jogador está. Os dois vivem na mesma subárvore, por isso uma negação de leitura
-     * costuma matá-los aos pares e não há matchmaking possível a seguir.
-     *
-     * Mesma saída do defeito B: ecrã de erro com VOLTAR ligado ao `leave()` de sempre. Não se
-     * tenta reconectar — ver [deveAvisarDeFalhaNoLobby] para quando é que isto se cala.
-     */
-    private fun falhaDoListenerDoLobby() {
-        if (!deveAvisarDeFalhaNoLobby(jaTemSala = salaId != null, jaTerminou = finished)) return
-        _uiState.value = _uiState.value.copy(
-            phase = MultiPhase.ERROR,
-            error = "Perdeste o acesso à sala de espera."
-        )
-    }
-
-    /**
-     * O listener da sala morreu a meio (permissão negada, sala apagada). Manda o jogador para o
-     * ecrã de erro, que tem o botão VOLTAR ligado a `leave()` — a mesma saída limpa da
-     * desistência normal, sem inventar caminho novo.
-     *
-     * Se a partida **já acabou** não se mexe em nada: no pódio os resultados já estão agregados e
-     * no ecrã, e trocá-lo por um erro só apagava o que o jogador tem para ver. O temporizador é
-     * cortado porque ficaria a contar por trás do ecrã de erro, para uma sala que já não existe.
-     */
-    private fun falhaDoListenerDaSala() {
-        if (finished) return
-        timerJob?.cancel()
-        _uiState.value = _uiState.value.copy(
-            phase = MultiPhase.ERROR,
-            error = "Perdeste o acesso a esta sala."
-        )
-    }
-
-    private fun teamOf(room: MultiRoom, uid: String): String? =
-        room.equipas.entries.firstOrNull { it.value.contains(uid) }?.key
-
-    private fun onRoom(room: MultiRoom) {
-        val live = room.membros.map { uid ->
-            val p = room.jogadores[uid]
-            PlayerLive(
-                uid = uid,
-                nome = p?.nome ?: room.membrosNomes[uid] ?: "Jogador",
-                score = p?.pontuacao ?: 0,
-                team = teamOf(room, uid),
-                isMe = uid == myUid,
-                left = p?.estado == "off" || p?.desistiu == true
-            )
-        }
-        _uiState.value = _uiState.value.copy(perguntas = room.perguntas, players = live, joinedCount = room.jogadores.size)
-
-        // All present + questions loaded → reveal the match, then start.
-        // Fase 25: era `room.perguntas.size == QUESTION_COUNT`. O matchmaking aleatório escreve
-        // sempre 10 perguntas, mas uma sala privada usa o quiz da comunidade escolhido, que pode
-        // ter qualquer número — com 1 ou 7 perguntas a condição nunca era verdadeira e a sala
-        // ficava eternamente em "À procura de adversário". `meta` é escrita de uma só vez
-        // (create-once), por isso `isNotEmpty()` já garante que as perguntas chegaram inteiras.
-        // Fase 30: era `>= format.players`, que no Grupo é 10. O arranque manual ("INICIAR
-        // JOGO", e o auto-arranque aos 60 s) cria a sala com os jogadores que lá estão — quatro,
-        // por exemplo — e depois este portão exigia dez e nunca deixava entrar: a sala existia,
-        // o lobby ficava `started`, e toda a gente continuava presa em "À procura de jogadores".
-        // O número certo é quantos membros a sala tem MESMO, que o anfitrião fixou ao criá-la.
-        val esperados = room.membros.size.takeIf { it > 0 } ?: format.players
-        if (!gameStarted && room.perguntas.isNotEmpty() && room.jogadores.size >= esperados) {
-            gameStarted = true
-            _uiState.value = _uiState.value.copy(phase = MultiPhase.MATCHED)
-            viewModelScope.launch {
-                delay(MATCHED_REVEAL_MS)
-                beginQuestion(0)
-            }
-            return
-        }
-
-        if (gameStarted && !finished) {
-            if (format.teamBased) {
-                val leaver = room.membros.firstOrNull { uid ->
-                    val p = room.jogadores[uid]
-                    (p?.estado == "off" || p?.desistiu == true) && room.pontuacoes[uid] == null
-                }
-                if (leaver != null) { finishTeamWalkover(room, leaver); return }
-            }
-            val active = room.membros.filter { room.jogadores[it]?.estado != "off" && room.jogadores[it]?.desistiu != true }
-
-            // Fase 28: o walkover só existia no ramo `teamBased`, ou seja, apenas em 2x2. Num 1x1
-            // o adversário podia sair e o jogador que ficava continuava a responder sozinho até à
-            // décima pergunta, com o outro ainda no marcador — era o comportamento reportado.
-            // O 1x1 autónomo tinha esta deteção; perdeu-se ao ser dobrado no MultiMatch.
-            //
-            // A condição é genérica em vez de específica do 1x1: se sobrar UM só jogador activo
-            // numa sala que tinha mais do que um, a partida não tem como continuar. No Grupo, sair
-            // um de quatro deixa três activos e o jogo segue — que é o comportamento documentado.
-            if (!format.teamBased && room.membros.size > 1 && active.size == 1 &&
-                active.first() == myUid && !room.pontuacoes.containsKey(myUid)
-            ) {
-                finishSoloWalkover(); return
-            }
-
-            if (active.isNotEmpty() && active.all { room.pontuacoes.containsKey(it) }) { showPodium(room); return }
-            maybeAdvance(room)
-        }
-    }
-
-    private fun beginQuestion(index: Int) {
-        val id = salaId ?: return
-        val event = if (isCaotico) ChaoticEvent.forIndex(index) else null
-        val duration = if (event == ChaoticEvent.VELOCIDADE_MAXIMA) BASE_QUESTION_MILLIS / 2 else BASE_QUESTION_MILLIS
-        _uiState.value = _uiState.value.copy(
-            phase = MultiPhase.IN_GAME,
-            currentIndex = index,
-            currentEvent = event,
-            selectedOption = null,
-            isAnswered = false,
-            remainingMillis = duration,
-            durationMillis = duration,
-            aceitaToques = false
-        )
-        viewModelScope.launch {
-            delay(INPUT_GRACE_MS)
-            val s = _uiState.value
-            if (s.currentIndex == index && !s.isAnswered) {
-                _uiState.value = s.copy(aceitaToques = true)
-            }
-        }
-        viewModelScope.launch {
-            // Refresh the server-clock offset each question so a stale one-time value can't drift.
-            serverOffset = runCatching { matchRepository.serverTimeOffset() }.getOrDefault(serverOffset)
-            val startMs = runCatching { matchRepository.syncQuestionStart(id, index) }.getOrDefault(serverNow())
-            startTimer(startMs, duration)
-        }
-    }
-
-    private fun serverNow(): Long = System.currentTimeMillis() + serverOffset
-
-    private fun startTimer(startMs: Long, duration: Long) {
-        timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            while (true) {
-                val remaining = max(0L, duration - (serverNow() - startMs))
-                _uiState.value = _uiState.value.copy(remainingMillis = remaining)
-                if (remaining <= 0L) {
-                    if (!_uiState.value.isAnswered) registerTimeout()
-                    maybeAdvance(null)
-                    break
-                }
-                delay(TICK_MS)
-            }
-        }
-    }
-
+    /** Manda a opção tocada. **Não pontua nada** — quem pontua é o servidor. */
     fun selectAnswer(option: String) {
-        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return responderNoServidor(option)
-        val state = _uiState.value
-        val question = state.currentQuestion ?: return
-        val id = salaId ?: return
-        if (state.isAnswered || !state.aceitaToques) return
-
-        val isCorrect = option == question.respostaCorreta
-        val remainingSeconds = ceil(state.remainingMillis / 1000.0).toInt()
-        val newStreak = if (isCorrect) streak + 1 else 0
-        streak = newStreak
-        if (newStreak > maxStreak) maxStreak = newStreak
-        val delta = Scoring.pointsForAnswer(isCorrect, remainingSeconds, Difficulty.fromId(question.dificuldade), state.currentEvent, newStreak)
-        val newScore = Scoring.clampTotal(state.myScore + delta)
-        val newCorrect = state.myCorrect + if (isCorrect) 1 else 0
-
-        _uiState.value = state.copy(selectedOption = option, isAnswered = true, myScore = newScore, myCorrect = newCorrect)
-        viewModelScope.launch {
-            runCatching { matchRepository.writeAnswer(id, myUid, state.currentIndex, isCorrect, newScore, newCorrect) }
-            maybeAdvance(null)
-        }
+        responderNoServidor(option)
     }
 
-    private fun registerTimeout() {
-        val state = _uiState.value
-        val id = salaId ?: return
-        streak = 0
-        // Caótico tudo_ou_nada penalises a wrong/timeout answer.
-        val delta = Scoring.pointsForAnswer(false, 0, Difficulty.FACIL, state.currentEvent, 0)
-        val newScore = Scoring.clampTotal(state.myScore + delta)
-        _uiState.value = state.copy(isAnswered = true, selectedOption = null, myScore = newScore)
-        viewModelScope.launch {
-            runCatching { matchRepository.writeAnswer(id, myUid, state.currentIndex, false, newScore, state.myCorrect) }
-        }
-    }
-
-    private fun maybeAdvance(room: MultiRoom?) {
-        val state = _uiState.value
-        if (!gameStarted || finished || state.phase != MultiPhase.IN_GAME) return
-        val index = state.currentIndex
-        val timerExpired = state.remainingMillis <= 0L
-        val allAnswered = if (room != null) {
-            val active = room.membros.filter { room.jogadores[it]?.estado != "off" && room.jogadores[it]?.desistiu != true }
-            active.isNotEmpty() && active.all { uid ->
-                if (uid == myUid) state.isAnswered else room.jogadores[uid]?.answered?.contains(index) == true
-            }
-        } else false
-        if (!allAnswered && !timerExpired) return
-        timerJob?.cancel()
-        val next = index + 1
-        if (next < totalPerguntas) beginQuestion(next) else finishGame()
-    }
-
-    private fun finishGame() {
-        if (finished) return
-        val id = salaId ?: return
-        viewModelScope.launch {
-            runCatching { matchRepository.writeFinal(id, myUid, _uiState.value.myScore) }
-        }
-    }
-
-    /**
-     * Folds this match into the local player's aggregated profile — exactly once per game,
-     * on the same device that played it (RTDB rules only allow writing your own uid). Uses the
-     * same [GameResult]/[ProfileRepository] path and XP formula as Solo. [won] follows each
-     * format's podium criterion: team-level for 2x2, strictly-top individual for 1x1/Grupo.
-     *
-     * **Já não grava em `/scores`.** Gravava, ao lado da agregação, e desde a fase 2 do
-     * servidor da partida essa escrita é sempre recusada: as rules só aceitam `formato` de
-     * multijogador vindo do uid `pol-servidor`, e daqui o `formato` nunca é `solo`. Como
-     * corria dentro de um `runCatching`, falhava em silêncio — e o único sintoma era o
-     * Histórico de multijogador a ficar vazio sem explicação. Quem passa a gravar o registo
-     * em bruto é o servidor, que é quem apura os números.
-     *
-     * A agregação do perfil abaixo **não** é afectada: `/jogadores/{uid}` continua a ser
-     * escrito pelo dispositivo, e é dela que vêm XP, conquistas e sequência diária.
-     */
-    private fun aggregateProfile(won: Boolean) {
-        if (aggregated || myUid.isEmpty()) return
-        aggregated = true
-        val st = _uiState.value
-        viewModelScope.launch {
-            runCatching {
-                profileRepository.updateAfterGame(
-                    myUid,
-                    GameResult(
-                        modo = modo,
-                        score = st.myScore,
-                        correctCount = st.myCorrect,
-                        total = totalPerguntas,
-                        won = won,
-                        maxStreak = maxStreak,
-                        formato = format.id,
-                        categoria = categoria
-                    )
-                )
-            }
-        }
-    }
-
-    private fun showPodium(room: MultiRoom) {
-        if (finished) return
-        finished = true
-        timerJob?.cancel()
-        salaId?.let { matchRepository.cancelDisconnect(it, myUid) }
-
-        fun score(uid: String) = room.pontuacoes[uid] ?: room.jogadores[uid]?.pontuacao ?: 0
-        fun nome(uid: String) = room.jogadores[uid]?.nome ?: room.membrosNomes[uid] ?: "Jogador"
-
-        if (format.teamBased) {
-            val a = room.equipas["A"].orEmpty(); val b = room.equipas["B"].orEmpty()
-            val totalA = a.sumOf { score(it) }; val totalB = b.sumOf { score(it) }
-            val myTeam = teamOf(room, myUid)
-            val aWins = totalA > totalB; val bWins = totalB > totalA
-            val teams = listOf(
-                TeamResult("Equipa A", a.map { nome(it) to score(it) }, totalA, myTeam == "A", aWins),
-                TeamResult("Equipa B", b.map { nome(it) to score(it) }, totalB, myTeam == "B", bWins)
-            )
-            val iWon = (myTeam == "A" && aWins) || (myTeam == "B" && bWins)
-            val title = when {
-                totalA == totalB -> "Empate!"
-                iWon -> "A tua equipa ganhou!"
-                else -> "A tua equipa perdeu"
-            }
-            _uiState.value = _uiState.value.copy(phase = MultiPhase.PODIUM, teams = teams, iWon = iWon, resultTitle = title)
-            aggregateProfile(iWon)   // 2x2: team-level win (strict; a tie is not a win)
-        } else {
-            val ranked = room.membros
-                .map { uid ->
-                    val left = room.jogadores[uid]?.estado == "off" || room.jogadores[uid]?.desistiu == true
-                    RankResult(nome(uid), score(uid), uid == myUid, left)
-                }
-                .sortedWith(compareByDescending<RankResult> { !it.left }.thenByDescending { it.score })
-            val myRank = ranked.indexOfFirst { it.isMe }
-            val iWon = myRank == 0
-            // 1x1 is head-to-head → Vitória/Derrota wording; larger groups → placement.
-            val title = if (format == MatchFormat.ONE_V_ONE) {
-                val mine = ranked.getOrNull(myRank)?.score ?: 0
-                val other = ranked.firstOrNull { !it.isMe }?.score ?: 0
-                when { mine == other -> "Empate!"; iWon -> "Vitória!"; else -> "Derrota" }
-            } else posicaoLabel(myRank)
-            _uiState.value = _uiState.value.copy(phase = MultiPhase.PODIUM, ranking = ranked, iWon = iWon, resultTitle = title)
-            // 1x1/Grupo: win = strictly top score (a tie for 1st is not a win).
-            val wonStrict = ranked.firstOrNull()?.isMe == true && (ranked.size < 2 || ranked[0].score > ranked[1].score)
-            aggregateProfile(wonStrict)
-        }
-    }
-
-    /**
-     * Sobrou só este jogador numa sala sem equipas (1x1, ou Grupo esvaziado). Fecha a partida
-     * já, em vez de o deixar a responder sozinho contra ninguém.
-     */
-    private fun finishSoloWalkover() {
-        if (finished) return
-        finished = true
-        timerJob?.cancel()
-        val id = salaId
-        viewModelScope.launch {
-            if (id != null) {
-                runCatching { matchRepository.writeFinal(id, myUid, _uiState.value.myScore) }
-                runCatching { matchRepository.cancelDisconnect(id, myUid) }
-            }
-        }
-        _uiState.value = _uiState.value.copy(
-            phase = MultiPhase.PODIUM, walkover = true, iWon = true,
-            resultTitle = "Adversário desistiu!"
-        )
-        aggregateProfile(true)
-    }
-
-    private fun finishTeamWalkover(room: MultiRoom, leaverUid: String) {
-        if (finished) return
-        finished = true
-        timerJob?.cancel()
-        salaId?.let { matchRepository.cancelDisconnect(it, myUid) }
-        val leaverTeam = teamOf(room, leaverUid)
-        val myTeam = teamOf(room, myUid)
-        val iWon = myTeam != null && myTeam != leaverTeam
-        _uiState.value = _uiState.value.copy(
-            phase = MultiPhase.PODIUM, walkover = true, iWon = iWon,
-            resultTitle = if (iWon) "A tua equipa ganhou!" else "A tua equipa perdeu"
-        )
-        aggregateProfile(iWon)   // 2x2 walkover: present team wins by desistência
-    }
-
+    /** Sai da sala de espera ou desiste da partida. */
     fun leave() {
-        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return sairDoServidor()
-        // Lidos e limpos de forma SÍNCRONA: o `MultiMatchHost` faz `vm.leave(); restart++`, e o
-        // `start()` que se segue chamaria `resetMatchState()` antes de esta corrotina correr —
-        // a saída acabava por ser escrita com `salaId` já a null, ou seja, nunca era publicada.
-        val id = salaId
-        val lobbyId = currentLobbyId
-        val jaTerminou = finished
-        val fmt = format.id
-        val uid = myUid
-        salaId = null
-        currentLobbyId = null
-        lobbyJob?.cancel(); lobbyJob = null
-        observeJob?.cancel(); observeJob = null
-        timerJob?.cancel(); timerJob = null
-        openLobbiesJob?.cancel(); openLobbiesJob = null
-
-        viewModelScope.launch {
-            if (id != null && !jaTerminou) {
-                runCatching { matchRepository.leaveRoom(id, uid) }
-                runCatching { matchRepository.cancelDisconnect(id, uid) }
-            } else if (lobbyId != null && !jaTerminou) {
-                runCatching { matchRepository.leaveLobby(fmt, lobbyId, uid) }
-            }
-        }
+        sairDoServidor()
     }
 
     // -----------------------------------------------------------------------------------------
@@ -877,9 +285,13 @@ class MultiMatchViewModel(
         iniciarNoServidor(MatchFormat.GRUPO, "Comunidade", "classico", PedidoDeEntrada.PrivadaEntrar(codigo))
     }
 
-    /** Desafio direto: cria a sala. O `currentLobbyId` do estado é o id que vai dentro do convite. */
-    fun criarDesafio(format: MatchFormat, categoria: String, modo: String, paraUid: String) {
-        iniciarNoServidor(format, categoria, modo, PedidoDeEntrada.DesafioCriar(paraUid))
+    /**
+     * Arranca o caminho do servidor com um pedido explícito. É por aqui que o `GameViewModel`
+     * entra para criar um desafio ou uma sala privada — casos em que a sala **só existe depois**
+     * de o socket abrir, ao contrário da RTDB, onde era criada antes de se navegar.
+     */
+    fun iniciarComPedido(format: MatchFormat, categoria: String, modo: String, pedido: PedidoDeEntrada) {
+        iniciarNoServidor(format, categoria, modo, pedido)
     }
 
     private fun iniciarNoServidor(
@@ -907,6 +319,10 @@ class MultiMatchViewModel(
      * recuperar, e sai-se à primeira.
      */
     private suspend fun cicloDoSocket() {
+        // O caminho da RTDB começava por `ensureSignedIn()`. O socket precisa de um ID token, e
+        // sem sessão o `MultiSocketClient` lança — garantir a sessão aqui mantém o comportamento
+        // de sempre em vez de o deixar depender de o AuthGate ter corrido antes.
+        runCatching { authRepository.ensureSignedIn() }
         var tentativas = 0
         while (true) {
             // O mesmo `coletarListener` dos listeners da RTDB: um erro no fluxo não pode sair
@@ -954,6 +370,7 @@ class MultiMatchViewModel(
         desvioDoServidor = 0L
         respostaEnviada = false
         reconectando = false
+        convitePorEnviar = true
     }
 
     /**
@@ -979,8 +396,45 @@ class MultiMatchViewModel(
 
         _uiState.value = aplicarEvento(_uiState.value, evento)
 
+        // O convite de um desafio só pode sair depois de a sala existir — ver `deveEnviarConvite`.
+        if (evento is EventoServidor.Sala) talvezEnviarConvite()
+        // A partida começou: o convite cumpriu o que tinha a fazer e sai de `/convites`.
+        if (evento is EventoServidor.Partida) limparConvite()
+
         // Depois do estado, nunca antes: o uid do jogador vem do `sessao` e vive no `_uiState`.
         if (evento is EventoServidor.Podio) agregarPerfilDoServidor(evento)
+    }
+
+    private fun talvezEnviarConvite() {
+        val p = pedido
+        if (!deveEnviarConvite(p, _uiState.value.currentLobbyId, !convitePorEnviar)) return
+        p as PedidoDeEntrada.DesafioCriar
+        val eu = _uiState.value.myUid
+        val salaId = _uiState.value.currentLobbyId ?: return
+        if (eu.isBlank()) return
+        convitePorEnviar = false
+        viewModelScope.launch {
+            runCatching {
+                challengeRepository.send(
+                    eu, _uiState.value.myName, p.paraUid, p.paraNome,
+                    format.id, categoria, modo, salaId
+                )
+            }
+        }
+    }
+
+    /**
+     * Tira o convite de `/convites` dos dois lados. Corre quando a partida arranca (já não serve)
+     * e quando o desafiante sai da sala de espera (equivale a cancelar a procura) — sem isto o
+     * convite ficava pendurado a apontar para uma sala que o servidor já largou.
+     */
+    private fun limparConvite() {
+        val p = pedido as? PedidoDeEntrada.DesafioCriar ?: return
+        if (convitePorEnviar) return
+        convitePorEnviar = true
+        val eu = _uiState.value.myUid
+        if (eu.isBlank()) return
+        viewModelScope.launch { runCatching { challengeRepository.clear(eu, p.paraUid) } }
     }
 
     /**
@@ -1069,7 +523,11 @@ class MultiMatchViewModel(
     }
 
     private fun sairDoServidor() {
-        if (_uiState.value.phase != MultiPhase.PODIUM) socket.sair()
+        if (_uiState.value.phase != MultiPhase.PODIUM) {
+            // Sair da sala de espera de um desafio é cancelá-lo: o convite tem de ir com ele.
+            if (_uiState.value.phase == MultiPhase.SEARCHING) limparConvite()
+            socket.sair()
+        }
         resetEstadoDoServidor()
     }
 
@@ -1088,16 +546,10 @@ class MultiMatchViewModel(
 
 
     override fun onCleared() {
-        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) {
-            socketJob?.cancel()
-            cronometroServidorJob?.cancel()
-            toquesJob?.cancel()
-            socket.fechar()
-        }
-        lobbyJob?.cancel()
-        observeJob?.cancel()
-        timerJob?.cancel()
-        openLobbiesJob?.cancel()
+        socketJob?.cancel()
+        cronometroServidorJob?.cancel()
+        toquesJob?.cancel()
+        socket.fechar()
         super.onCleared()
     }
 }

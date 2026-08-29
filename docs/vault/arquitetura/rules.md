@@ -2,28 +2,37 @@
 
 ← [índice](../00-indice.md)
 
-**As rules são o único chão de validação que existe.** Não há servidor nem Cloud Functions, por
-isso tudo o que elas não travarem, não é travado. Ler
+**Para tudo o que não é a partida ao vivo, as rules são o único chão de validação.** Não há Cloud
+Functions, por isso o que elas não travarem, não é travado. Ler
 [limitacoes-conhecidas](../seguranca/limitacoes-conhecidas.md) antes de assumir que algo está
 protegido.
+
+A excepção é o multijogador: desde 29 ago 2026 a partida corre no
+[servidor próprio](servidor-partida.md), que se autentica na RTDB como `pol-servidor` — um
+utilizador **sujeito a estas rules**, não um admin que as ignora. `/lobbies`, `/multisalas`,
+`/salas_privadas` e `/matchmakingN` saíram do ficheiro nessa altura.
 
 ## Princípios em vigor
 
 1. **Nada é público.** `/categorias` e `/jogadores` exigem `auth != null` (anónimo conta). Antes eram `.read: true` e qualquer pessoa com o URL despejava as perguntas **com a resposta certa** ou a tabela inteira de jogadores.
 2. **Cada um escreve só o seu.** Todo o nó por jogador valida `auth.uid === $uid`.
 3. **Schemas fechados.** `$other: { ".validate": false }` em quase todos os nós — um campo desconhecido é rejeitado em vez de guardado.
-4. **Tectos numéricos** onde o cliente calcula o valor (pontuações), porque a pontuação é
-   client-authoritative.
-5. **Create-once** onde o dado não deve mudar depois de escrito (`meta` das salas, códigos de
-   sala privada).
+4. **Tectos numéricos** onde o cliente calcula o valor — hoje só o solo, que continua a pontuar
+   no dispositivo.
+5. **Create-once** onde o dado não deve mudar depois de escrito.
+6. **O multijogador não passa pelo cliente.** `/scores` só aceita `formato` diferente de `solo`
+   vindo de `auth.uid === 'pol-servidor'`, e só esse uid pode gravar um registo com o uid de
+   outra pessoa — é ele que apura o resultado de todos os jogadores da partida.
 
 ## Armadilhas do motor de rules (aprendidas à força)
 
 - **`.validate` não corre em apagamentos.** Um `.write` permissivo com `.validate` apertado
   deixa apagar à vontade. Foi assim que qualquer autenticado podia apagar o `/scores` de outro.
-- **`.write` cascateia para descendentes; `.validate` corre em todos.** Por isso o controlo de
-  dono em `/lobbies` é feito por `.validate`, não por `.write` — a transação do matchmaking entra
-  pelo nó do formato inteiro e regras `.write` por sala nunca chegariam a ser avaliadas.
+- **`.write` cascateia para descendentes; `.validate` corre em todos.** Era por isso que o
+  controlo de dono em `/lobbies` se fazia por `.validate` e não por `.write`: a transação do
+  matchmaking entrava pelo nó do formato inteiro e as regras `.write` por sala nunca chegavam a
+  ser avaliadas. O nó já não existe, mas a armadilha continua a valer para qualquer transação
+  sobre um ascendente.
 - **Aritmética sobre `null` invalida a expressão inteira**, mesmo do outro lado de um `||`.
   Contadores incrementais precisam de ternário:
   `data.exists() ? newData.val() === data.val() + 1 : newData.val() === 1`

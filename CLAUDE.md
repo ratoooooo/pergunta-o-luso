@@ -60,12 +60,19 @@ miss.
 
 ### Backend model — the constraint that shapes everything
 
-**Firebase Auth + Realtime Database only. No server, no Cloud Functions.** Consequences:
+**Firebase Auth + Realtime Database, plus one Node server on a VPS for the live multiplayer
+match. No Cloud Functions.** Consequences:
 
-- **Scoring is client-authoritative.** The device decides correctness and computes points. The
-  RTDB rules are the *only* validation floor, via numeric ceilings pinned to the mathematical
-  maximum (e.g. `pontuacao ≤ 4000`). They block impossible values, not implausible ones. Hiding
-  `respostaCorreta` from players is impossible in this architecture.
+- **Solo scoring is client-authoritative.** The device decides correctness and computes points,
+  and the RTDB rules are the only validation floor — numeric ceilings that block impossible
+  values, not implausible ones. This is not going to change; a server for solo isn't worth it.
+- **Multiplayer scoring is not.** Since 29 Aug 2026 the live match runs on the server
+  (`servidor/`, see `docs/vault/arquitetura/servidor-partida.md`), which decides correctness,
+  computes points and writes `/scores` as `pol-servidor`. The rules refuse any `formato` other
+  than `solo` from a client. `respostaCorreta` no longer leaves the server before a question
+  closes — the thing this file used to call impossible.
+- The server authenticates to RTDB with `databaseAuthVariableOverride`, so it is a normal user
+  **subject to the rules**, not an admin that ignores them.
 - `/jogadores/{uid}` is the **aggregate** profile, folded in by transaction after each game.
   Ranking, Profile and Achievements read from it — **never** from `/scores`, which is the raw
   per-game log and would list a player many times.
@@ -117,12 +124,15 @@ One generalized N-player system serves 1x1, 2x2 and Grupo, parametrized by `Matc
 user-facing about sizes must come from `MatchFormat.sizeLabel`, not hardcoded text — that string
 silently disagreed with the code for several phases.
 
-Matchmaking runs on `/lobbies/{format}` (`findOrCreateLobby`). **`/matchmakingN` and
-`MultiMatchRepository.createRoom` are confirmed dead code** — the rules are still deployed but
-nothing calls them.
+Matchmaking, rooms and private-code rooms all live **in the server's memory**. `/lobbies`,
+`/multisalas`, `/salas_privadas` and `/matchmakingN` were removed from the rules and the database
+on 29 Aug 2026. `MultiMatchRepository` is gone; the client talks to the server through
+`data/multi/MultiSocketClient.kt`, and `servidor/PROTOCOLO.md` is the single source for the
+message format.
 
-Question timing is lockstep: the server stamps each question's start once
-(`perguntaInicios/{index}`), and `serverTimeOffset` is re-read **per question**, not per match.
+Question timing is lockstep: the server opens each question with a deadline on its own clock, and
+the client re-reads the clock offset **per question**, not per match — a stale offset was the main
+source of drift and the lesson migrated with the rest.
 
 ### Visual system
 

@@ -12,12 +12,8 @@ Caminhos de topo **realmente existentes** (confirmável em `database.rules.json`
 | `/amigos/{uid}` | lista + pedidos enviados/recebidos |
 | `/convites/{uid}` | desafios diretos 1x1 |
 | `/presenca/{uid}` | booleano "app aberta", com `onDisconnect` |
-| `/lobbies/{formato}/{lobbyId}` | **matchmaking em uso** — salas de espera |
-| `/multisalas/{salaId}` | a partida em si (perguntas, jogadores, pontuações) |
-| `/salas_privadas/{codigo}` | tabela código de 4 dígitos → sala |
 | `/categorias_comunitarias/{id}` | quizzes criados por jogadores |
 | `/denuncias/{quizId}/{uid}` | denúncias de quizzes |
-| `/matchmakingN/...` | **código morto** — fila antiga, sem chamadores |
 
 ## `/jogadores/{uid}` — o nó central
 
@@ -58,22 +54,16 @@ a estes campos continuam legíveis; a validação só se aplica a escritas novas
 legados não têm `uid`** e por isso deixaram de ser apagáveis por ninguém — não são atribuíveis a
 nenhuma conta.
 
-## `/lobbies` e `/multisalas`
+## A partida ao vivo já não está aqui
 
-O par que faz o multijogador:
+`/lobbies`, `/multisalas`, `/salas_privadas` e `/matchmakingN` **foram removidos** a 29 ago 2026,
+com a fase 6 do [servidor da partida](servidor-partida.md). A sala de espera e a partida vivem em
+memória no servidor, que é quem decide certo/errado e a pontuação. O que sobra na RTDB é o
+resultado: o servidor escreve `/scores` com a identidade `pol-servidor`, e a app agrega o perfil.
 
-- **lobby** = sala de espera (`hostUid`, `format`, `categoria`, `modo`, `estado`, `membros`,
-  e `codigo` quando é privada). `estado`: `waiting` → `started`.
-- **multisala** = a partida. `meta` é **create-once** (host escreve `membros`, `membrosNomes`,
-  `perguntas` e fica imutável); cada jogador escreve só o seu nó em `jogadores/{uid}` e
-  `pontuacoes/{uid}`, com tectos numéricos. `perguntaInicios/{index}` é o carimbo de tempo
-  partilhado que sincroniza os relógios.
-
-Separar `meta` (imutável) das pontuações é o que permite trancar cada pontuação ao dono: em RTDB
-o `.write` **cascateia para baixo**, por isso uma permissão ao nível da sala teria anulado a
-proteção por jogador.
-
-Ver também: [rules](rules.md) · [multiplayer](../funcionalidades/multiplayer.md)
+Separar `meta` (imutável) das pontuações era o que permitia trancar cada pontuação ao dono, porque
+em RTDB o `.write` cascateia para baixo. Deixou de ser preciso: já não há caminho pelo qual um
+dispositivo declare a sua própria pontuação de multijogador.
 
 ## Sequência diária (Fase 33)
 
