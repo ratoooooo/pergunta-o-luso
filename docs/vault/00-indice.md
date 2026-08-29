@@ -58,6 +58,7 @@ categorias escondidas. Escolha múltipla e Verdadeiro/Falso.
 
 **Manutenção**
 - [Limpeza de contas e dados de teste](manutencao/limpeza-dados-teste.md) — 9 ago 2026
+- [Correções técnicas dos defeitos C, D e E](manutencao/correcoes-defeitos-c-d-e.md) — 29 ago 2026
 
 **Segurança — ler antes de mexer em rules ou dados**
 - [Histórico de vulnerabilidades](seguranca/historico-vulnerabilidades.md) ← os erros já cometidos

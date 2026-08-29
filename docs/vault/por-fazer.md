@@ -77,23 +77,20 @@ Consolidado das listas "Por fazer" espalhadas pelas fases. Ordenado por o que bl
 > (`leave()`, `onCleared()`) não passar por falha. `ColetarListenerTest` reproduz o crash antigo
 > como caso de controlo e prende os dois lados.
 
-**C. A lista do top do pódio nunca se actualiza em directo.** `sessionOnly()` limpa `topScores` e
-`loadTopScores()` corre uma vez por pódio, por isso uma pontuação nova só aparece no pódio
-seguinte. As chaves estáveis e o `animateItemPlacement` já lá estão (Fase 34) — falta a lista
-passar a observar `/scores`, se algum dia isso interessar.
+> **C (`topScores` ao vivo) — resolvido.** `ScoreRepository.observeTopScores()` observa
+> `/scores` via `callbackFlow` e `ValueEventListener`, ligado a `topScores` no `GameViewModel`
+> e religado nas mudanças de autenticação (arranque, login, registo, sign-out, eliminação).
+> `topScores` sobrevive em `sessionOnly()` e a leitura pontual `loadTopScores()` foi removida
+> do `finishGame()`.
 
-**D. Erro de transporte do Auth chega ao utilizador em inglês.**
-*"An internal error has occurred. [ unexpected end of stream on com.android.okhttp.Address@… ]"*
-apareceu no diálogo de eliminação. `friendlyAuthError` não o mapeia.
+> **D (erro de transporte no Auth) — resolvido.** `friendlyAuthError` em `GameViewModel.kt`
+> passou a mapear erros de transporte/rede ("unexpected end of stream", "failed to connect",
+> "timeout", etc.) para "Sem ligação à internet — tenta outra vez", impedindo mensagens técnicas
+> do OkHttp de escaparem para o utilizador.
 
-**E. `StatChip` corta o último dígito de números grandes, sem aviso.** O `Text` do valor (Início,
-cartão de perfil) não tem `overflow` definido; com `maxLines = 1` e um número mais largo do que o
-chip, o Compose recorta em vez de mostrar tudo — sem reticências, sem sinal de que falta algo.
-Visto com `pontos = 3894610` a mostrar `389461`. `uiautomator` confirma que o valor semântico
-está completo (é só o desenho que falha). Nunca deveria acontecer em uso normal — a pontuação por
-jogo tem tecto de 4000 nas rules — mas um jogador de longo prazo pode legitimamente acumular
-7 dígitos. Descoberto a 10 ago 2026, ver
-[ranking-historico-perfil](funcionalidades/ranking-historico-perfil.md).
+> **E (`StatChip` com overflow de números grandes) — resolvido.** `StatChip` no `StartScreen.kt`
+> passou a ter `overflow = TextOverflow.Ellipsis` no `Text` do valor e do rótulo, exibindo
+> reticências em vez de recortar silenciosamente dígitos que excedam a largura do chip.
 
 ## Verificação em falta
 

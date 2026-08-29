@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
@@ -200,7 +201,8 @@ private fun StatChip(
             text = value,
             style = MaterialTheme.typography.labelLarge,
             color = textColorFor(color),
-            maxLines = 1
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
         // A legenda é rótulo de chip, não texto corrido: a bodyLarge (16 sp) "pontos" e
         // "acertos" não cabiam na largura de um terço do cartão e partiam em duas linhas,
@@ -210,7 +212,8 @@ private fun StatChip(
             text = label,
             style = MaterialTheme.typography.bodyLarge.copy(fontSize = 13.sp, lineHeight = 16.sp),
             color = textColorFor(color),
-            maxLines = 1
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

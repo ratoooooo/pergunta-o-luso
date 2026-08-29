@@ -281,10 +281,11 @@ fun PodiumScreen(
         // Uma `Column` mede-se pelo conteúdo: não tem janela, não corta nada, e o deslize do ecrã
         // é o único que existe. Três linhas é o que basta aqui; o quadro completo vive no Ranking.
         //
-        // Custo assumido: perde-se o `animateItemPlacement`, que só existe em listas lazy. Não faz
-        // falta — a lista **nunca reordena com o ecrã à frente** (`sessionOnly()` limpa
-        // `topScores` e `loadTopScores()` corre uma vez por pódio), por isso o que ele protegia
-        // não é alcançável. A identidade estável fica no `key(...)`, que é o que a cascata precisa.
+        // Custo assumido: perde-se o `animateItemPlacement`, que só existe em listas lazy. A lista
+        // agora PODE reordenar ao vivo (`topScores` é um listener e `sessionOnly()` já não o
+        // limpa), mas a `Column` simples mantém-se de propósito — uma `LazyColumn` para 3 linhas
+        // não compensa o risco de reintroduzir o bug de scroll duplo e sombras cortadas já
+        // documentado acima. A identidade estável fica no `key(...)`, que é o que a cascata precisa.
         val linhas = topScores.take(3)
         Column(Modifier.fillMaxWidth()) {
             linhas.forEachIndexed { index, entry ->

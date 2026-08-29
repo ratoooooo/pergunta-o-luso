@@ -135,6 +135,48 @@ data class GameUiState(
         get() = Difficulty.fromId(currentQuestion?.dificuldade)
 }
 
+/**
+ * A fresh state that keeps everything belonging to the *session* rather than to one screen.
+ * The friends/invites/presence/topScores listeners only re-emit when their data changes, so a plain
+ * `GameUiState(...)` reset would silently drop a pending invite or topScores until the next RTDB change.
+ */
+internal fun GameUiState.sessionOnly() = GameUiState(
+    userInfo = userInfo,
+    profile = profile,
+    // As contagens de perguntas sobrevivem à limpeza de estado de propósito: são conteúdo
+    // estático (`/categorias` tem `.write: false`) e `loadCategories` corre a cada ida ao
+    // picker, por isso deitá-las fora significaria cinco pedidos de rede repetidos por visita.
+    categoryCounts = categoryCounts,
+    playingNow = playingNow,
+    topScores = topScores,
+    friends = friends,
+    friendProfiles = friendProfiles,
+    friendQuery = friendQuery,
+    onlineUids = onlineUids,
+    convites = convites,
+    desafioPara = desafioPara
+)
+
+internal fun friendlyAuthError(e: Exception): String {
+    val msg = e.message ?: return "Erro de autenticação"
+    return when {
+        msg.contains("email address is already", true) || msg.contains("already in use", true) ->
+            "Este e-mail já está registado"
+        msg.contains("badly formatted", true) -> "E-mail inválido"
+        msg.contains("password is invalid", true) || msg.contains("INVALID_LOGIN", true) ||
+            msg.contains("credential is incorrect", true) -> "E-mail ou palavra-passe incorretos"
+        msg.contains("no user record", true) -> "Conta não encontrada"
+        msg.contains("unexpected end of stream", true) ||
+            msg.contains("failed to connect", true) ||
+            msg.contains("timeout", true) ||
+            msg.contains("timed out", true) ||
+            msg.contains("network error", true) ||
+            msg.contains("unable to resolve host", true) ->
+            "Sem ligação à internet — tenta outra vez"
+        else -> msg
+    }
+}
+
 private const val BASE_QUESTION_MILLIS = 15_000L
 private const val FEEDBACK_DELAY_MS = 1_000L
 
@@ -183,6 +225,7 @@ class GameViewModel(
     private var prefetchJob: Job? = null
     private var presenceUid: String? = null
     private var profileJob: Job? = null
+    private var topScoresJob: Job? = null
 
     init {
         refreshProfile()
@@ -200,6 +243,7 @@ class GameViewModel(
             observeOwnProfile(uid)
             observeFriends(uid)
             observeConvites(uid)
+            observeTopScores()
         }
         viewModelScope.launch {
             runCatching {
@@ -262,6 +306,22 @@ class GameViewModel(
         }
     }
 
+    /**
+     * Liga o `/scores` vivo para manter as melhores pontuações (`topScores`) actualizadas.
+     * Chamado sempre que o uid fica disponível ou muda (arranque, login, registo, sign-out,
+     * eliminação de conta) — mesmo padrão do `observeOwnProfile` e `observeFriends`.
+     */
+    private fun observeTopScores() {
+        topScoresJob?.cancel()
+        topScoresJob = viewModelScope.launch {
+            runCatching {
+                scoreRepository.observeTopScores().collect { scores ->
+                    _uiState.value = _uiState.value.copy(topScores = scores)
+                }
+            }
+        }
+    }
+
     fun goToLogin() {
         _uiState.value = _uiState.value.copy(screen = GameScreen.LOGIN, authError = null)
     }
@@ -286,6 +346,7 @@ class GameViewModel(
                 observeOwnProfile(user.uid)
                 observeFriends(user.uid)
                 observeConvites(user.uid)
+                observeTopScores()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(authLoading = false, authError = friendlyAuthError(e))
             }
@@ -306,6 +367,7 @@ class GameViewModel(
                 observeOwnProfile(user.uid)
                 observeFriends(user.uid)
                 observeConvites(user.uid)
+                observeTopScores()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(authLoading = false, authError = friendlyAuthError(e))
             }
@@ -318,8 +380,11 @@ class GameViewModel(
             _uiState.value = _uiState.value.copy(screen = GameScreen.START, profile = null)
             refreshProfile()
             // Sem isto o listener continuava preso ao uid da conta que acabou de sair — o
-            // padrão exacto do friendsJob, aqui aplicado ao perfil.
-            novo?.uid?.let { observeOwnProfile(it) }
+            // padrão exacto do friendsJob, aqui aplicado ao perfil e scores.
+            novo?.uid?.let {
+                observeOwnProfile(it)
+                observeTopScores()
+            }
         }
     }
 
@@ -380,7 +445,10 @@ class GameViewModel(
                 userInfo = authRepository.currentUserInfo()
             )
             refreshProfile()
-            authRepository.currentUserInfo()?.uid?.let { observeOwnProfile(it) }
+            authRepository.currentUserInfo()?.uid?.let {
+                observeOwnProfile(it)
+                observeTopScores()
+            }
         }
     }
 
@@ -392,23 +460,10 @@ class GameViewModel(
         else -> null
     }
 
-    private fun friendlyAuthError(e: Exception): String {
-        val msg = e.message ?: return "Erro de autenticação"
-        return when {
-            msg.contains("email address is already", true) || msg.contains("already in use", true) ->
-                "Este e-mail já está registado"
-            msg.contains("badly formatted", true) -> "E-mail inválido"
-            msg.contains("password is invalid", true) || msg.contains("INVALID_LOGIN", true) ||
-                msg.contains("credential is incorrect", true) -> "E-mail ou palavra-passe incorretos"
-            msg.contains("no user record", true) -> "Conta não encontrada"
-            else -> msg
-        }
-    }
-
     fun goToFormatSelect() {
         stopTimer()
         val s = _uiState.value
-        _uiState.value = GameUiState(screen = GameScreen.FORMAT_SELECT, userInfo = s.userInfo, profile = s.profile)
+        _uiState.value = s.sessionOnly().copy(screen = GameScreen.FORMAT_SELECT)
     }
 
     /**
@@ -692,27 +747,6 @@ class GameViewModel(
     }
 
     // ---- Navigation ----
-
-    /**
-     * A fresh state that keeps everything belonging to the *session* rather than to one screen.
-     * The friends/invites/presence listeners only re-emit when their data changes, so a plain
-     * `GameUiState(...)` reset would silently drop a pending invite until the next RTDB change.
-     */
-    private fun GameUiState.sessionOnly() = GameUiState(
-        userInfo = userInfo,
-        profile = profile,
-        // As contagens de perguntas sobrevivem à limpeza de estado de propósito: são conteúdo
-        // estático (`/categorias` tem `.write: false`) e `loadCategories` corre a cada ida ao
-        // picker, por isso deitá-las fora significaria cinco pedidos de rede repetidos por visita.
-        categoryCounts = categoryCounts,
-        playingNow = playingNow,
-        friends = friends,
-        friendProfiles = friendProfiles,
-        friendQuery = friendQuery,
-        onlineUids = onlineUids,
-        convites = convites,
-        desafioPara = desafioPara
-    )
 
     /** Returns to Start, clearing game state but keeping auth/profile. */
     fun backToStart() {
@@ -1125,8 +1159,7 @@ class GameViewModel(
                     profileRepository.addXp(uid, reducedXp)
                 }
             }
-            val topScores = runCatching { scoreRepository.loadTopScores() }.getOrDefault(emptyList())
-            _uiState.value = _uiState.value.copy(topScores = topScores, isLoading = false)
+            _uiState.value = _uiState.value.copy(isLoading = false)
 
             // O perfil é recarregado aqui (em vez de `refreshProfile()`, que não devolve nada)
             // para se poder comparar com [perfilAntes]. Nível e conquistas são ambos **derivados**
