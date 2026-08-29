@@ -40,6 +40,14 @@ private const val TICK_MS = 100L
 private const val MATCHED_REVEAL_MS = 2_500L
 
 /**
+ * Reconexão: 4 tentativas de 2 em 2 segundos = 8 s, dentro da carência de 10 s que o servidor dá
+ * antes de contar a queda como desistência. Passar disso seria ficar a tentar entrar numa partida
+ * que já foi decidida por walkover do outro lado.
+ */
+private const val RECONEXAO_TENTATIVAS = 4
+private const val RECONEXAO_ESPERA_MS = 2_000L
+
+/**
  * Título do pódio para um lugar em Grupo (1x1 tem a sua própria formulação de Vitória/Derrota).
  *
  * Era um `when (myRank) { 0 -> ...; 1 -> ...; 2 -> ...; else -> "4.º lugar" }` que prendia toda
@@ -115,6 +123,27 @@ internal suspend fun executarAcao(onFalha: (Throwable) -> Unit, acao: suspend ()
     }
 }
 
+/**
+ * O que se pede ao servidor **assim que o socket abre**.
+ *
+ * Existe porque a ligação e o pedido são coisas separadas: numa reconexão o socket reabre e não
+ * se pede nada — o servidor devolve-nos sozinho à partida que ficou a decorrer. Sem esta
+ * distinção, voltar de uma queda punha o jogador em matchmaking novo em vez de o pôr de volta no
+ * duelo que estava a meio.
+ */
+internal sealed interface PedidoDeEntrada {
+    /** Matchmaking normal, por categoria e modo. */
+    data object Aleatoria : PedidoDeEntrada
+    /** Sala privada com um quiz da comunidade; o servidor devolve o código. */
+    data class PrivadaCriar(val quizId: String) : PedidoDeEntrada
+    /** Entrar numa sala privada com os 4 dígitos. O formato só se sabe quando o `sala` chegar. */
+    data class PrivadaEntrar(val codigo: String) : PedidoDeEntrada
+    /** Desafio direto: cria a sala para o id poder viajar dentro do convite. */
+    data class DesafioCriar(val paraUid: String) : PedidoDeEntrada
+    /** Aceitar um desafio. Só o convidado entra — o servidor guarda a lista de permitidos. */
+    data class DesafioEntrar(val salaId: String) : PedidoDeEntrada
+}
+
 data class PlayerLive(
     val uid: String,
     val nome: String,
@@ -156,6 +185,13 @@ data class MultiUiState(
     val walkover: Boolean = false,
     val teams: List<TeamResult> = emptyList(),
     val ranking: List<RankResult> = emptyList(),
+    /**
+     * Caiu a ligação a meio da partida e estamos dentro da carência do servidor. O lugar ainda é
+     * nosso; só deixa de ser se a carência esgotar. Só o caminho do servidor põe isto a `true`.
+     */
+    val aReconectar: Boolean = false,
+    /** O servidor está a drenar para actualizar e recusa partidas novas. Caminho do servidor. */
+    val emManutencao: Boolean = false,
     val error: String? = null
 ) {
     val currentQuestion: Question? get() = perguntas.getOrNull(currentIndex)
@@ -222,6 +258,9 @@ class MultiMatchViewModel(
     private var desvioDoServidor: Long = 0L
     /** Trava um segundo envio enquanto o veredicto da mesma pergunta não chega. */
     private var respostaEnviada = false
+    private var pedido: PedidoDeEntrada = PedidoDeEntrada.Aleatoria
+    /** Na reabertura do socket depois de uma queda não se pede entrada nenhuma. */
+    private var reconectando = false
 
     private val isCaotico get() = modo == "caotico"
 
@@ -263,7 +302,7 @@ class MultiMatchViewModel(
     }
 
     fun start(format: MatchFormat, categoria: String, modo: String) {
-        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return iniciarNoServidor(format, categoria, modo)
+        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return iniciarNoServidor(format, categoria, modo, PedidoDeEntrada.Aleatoria)
         resetMatchState()
         this.format = format
         this.categoria = categoria
@@ -418,7 +457,7 @@ class MultiMatchViewModel(
      * random matchmaking.
      */
     fun startExisting(format: MatchFormat, categoria: String, modo: String, salaId: String) {
-        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return desafioAindaNaoMigrado()
+        if (FeatureFlags.MULTIJOGADOR_SERVIDOR) return iniciarNoServidor(format, categoria, modo, PedidoDeEntrada.DesafioEntrar(salaId))
         resetMatchState()
         this.format = format
         this.categoria = categoria
@@ -822,20 +861,88 @@ class MultiMatchViewModel(
     // NUNCA exercido contra o servidor a sério: isso é a fase 4, com dispositivos reais.
     // -----------------------------------------------------------------------------------------
 
-    private fun iniciarNoServidor(format: MatchFormat, categoria: String, modo: String) {
+    /** Sala privada com um quiz da comunidade. O código chega no `sala` que o servidor devolve. */
+    fun criarSalaPrivada(format: MatchFormat, quizId: String, titulo: String) {
+        iniciarNoServidor(format, titulo, "classico", PedidoDeEntrada.PrivadaCriar(quizId))
+    }
+
+    /**
+     * Entrar numa sala privada com os 4 dígitos.
+     *
+     * O formato entra como [MatchFormat.GRUPO] só para o estado inicial ter alguma coisa: quem o
+     * decide é o servidor, e o `sala` que responde ao código traz o verdadeiro. O cliente não o
+     * pode saber de antemão — do código não se deduz se aquilo é um 1x1 ou um Grupo.
+     */
+    fun entrarPorCodigo(codigo: String) {
+        iniciarNoServidor(MatchFormat.GRUPO, "Comunidade", "classico", PedidoDeEntrada.PrivadaEntrar(codigo))
+    }
+
+    /** Desafio direto: cria a sala. O `currentLobbyId` do estado é o id que vai dentro do convite. */
+    fun criarDesafio(format: MatchFormat, categoria: String, modo: String, paraUid: String) {
+        iniciarNoServidor(format, categoria, modo, PedidoDeEntrada.DesafioCriar(paraUid))
+    }
+
+    private fun iniciarNoServidor(
+        format: MatchFormat,
+        categoria: String,
+        modo: String,
+        pedido: PedidoDeEntrada
+    ) {
         resetMatchState()
         resetEstadoDoServidor()
         this.format = format
         this.categoria = categoria
         this.modo = modo
+        this.pedido = pedido
         _uiState.value = MultiUiState(format = format, categoria = categoria, modo = modo)
-        socketJob = viewModelScope.launch {
+        socketJob = viewModelScope.launch { cicloDoSocket() }
+    }
+
+    /**
+     * Mantém a ligação enquanto houver partida para salvar.
+     *
+     * O fluxo do socket termina sozinho quando a ligação cai (`Desligado` e fecha). Se nessa
+     * altura havia uma partida a decorrer, o redutor põe `aReconectar` e volta-se a ligar — o
+     * servidor guardou o lugar durante a carência. À espera de adversário não há nada a
+     * recuperar, e sai-se à primeira.
+     */
+    private suspend fun cicloDoSocket() {
+        var tentativas = 0
+        while (true) {
             // O mesmo `coletarListener` dos listeners da RTDB: um erro no fluxo não pode sair
             // pelo `viewModelScope` e virar `FATAL EXCEPTION: main` (defeitos B/B2/B3).
             coletarListener(
                 fluxo = socket.ligar(),
                 onFalha = { falhaDoServidor() }
             ) { evento -> aoReceberDoServidor(evento) }
+
+            if (!_uiState.value.aReconectar) return
+            if (++tentativas > RECONEXAO_TENTATIVAS) return desistirDaReconexao()
+            reconectando = true
+            delay(RECONEXAO_ESPERA_MS)
+        }
+    }
+
+    /**
+     * A carência esgotou-se. Do outro lado a partida já foi decidida por walkover, por isso não
+     * há para onde voltar — e dizê-lo é melhor do que deixar o ecrã a tentar para sempre.
+     */
+    private fun desistirDaReconexao() {
+        _uiState.value = _uiState.value.copy(
+            phase = MultiPhase.ERROR,
+            aReconectar = false,
+            error = "Perdeste a ligação ao servidor."
+        )
+    }
+
+    /** O que se pede assim que o socket abre — excepto numa reconexão, em que não se pede nada. */
+    private fun pedirEntrada() {
+        when (val p = pedido) {
+            PedidoDeEntrada.Aleatoria -> socket.procurar(format.id, categoria, modo)
+            is PedidoDeEntrada.PrivadaCriar -> socket.privadaCriar(format.id, p.quizId)
+            is PedidoDeEntrada.PrivadaEntrar -> socket.privadaEntrar(p.codigo)
+            is PedidoDeEntrada.DesafioCriar -> socket.desafioCriar(format.id, categoria, modo, p.paraUid)
+            is PedidoDeEntrada.DesafioEntrar -> socket.desafioEntrar(p.salaId)
         }
     }
 
@@ -846,6 +953,7 @@ class MultiMatchViewModel(
         socket.fechar()
         desvioDoServidor = 0L
         respostaEnviada = false
+        reconectando = false
     }
 
     /**
@@ -854,7 +962,7 @@ class MultiMatchViewModel(
      */
     private suspend fun aoReceberDoServidor(evento: EventoServidor) {
         when (evento) {
-            EventoServidor.Ligado -> socket.procurar(format.id, categoria, modo)
+            EventoServidor.Ligado -> if (reconectando) reconectando = false else pedirEntrada()
             is EventoServidor.Sonda -> socket.sondaOk(evento.s)
             is EventoServidor.Pong -> ajustarRelogio(evento)
             is EventoServidor.Pergunta -> {
@@ -978,17 +1086,6 @@ class MultiMatchViewModel(
         )
     }
 
-    /**
-     * Os desafios diretos ainda não passaram para o servidor: a sala é criada pelo `GameViewModel`
-     * **antes** do convite, para o id viajar dentro dele, e isso é da fase 5. Falhar com uma
-     * mensagem clara é melhor do que um ecrã parado à espera de uma sala que ninguém criou.
-     */
-    private fun desafioAindaNaoMigrado() {
-        _uiState.value = _uiState.value.copy(
-            phase = MultiPhase.ERROR,
-            error = "Os desafios de amigos ainda não passaram para o servidor."
-        )
-    }
 
     override fun onCleared() {
         if (FeatureFlags.MULTIJOGADOR_SERVIDOR) {

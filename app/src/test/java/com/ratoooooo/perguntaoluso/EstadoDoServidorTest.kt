@@ -10,6 +10,7 @@ import com.ratoooooo.perguntaoluso.game.multi.MultiPhase
 import com.ratoooooo.perguntaoluso.game.multi.MultiUiState
 import com.ratoooooo.perguntaoluso.game.multi.PlayerLive
 import com.ratoooooo.perguntaoluso.game.multi.agregacaoDoServidor
+import com.ratoooooo.perguntaoluso.game.multi.erroEhFatal
 import com.ratoooooo.perguntaoluso.game.multi.aplicarEvento
 import com.ratoooooo.perguntaoluso.game.multi.tituloDoPodio
 import org.junit.Assert.assertEquals
@@ -44,7 +45,8 @@ class EstadoDoServidorTest {
     fun `sala marca-me a mim entre os membros`() {
         val depois = aplicarEvento(
             base,
-            EventoServidor.Sala("L1", "História", "classico", null, listOf(membro("outro"), membro(eu)), souAnfitriao = true)
+            EventoServidor.Sala("L1", MatchFormat.ONE_V_ONE, "História", "classico", null,
+                listOf(membro("outro"), membro(eu)), souAnfitriao = true)
         )
         assertEquals(MultiPhase.SEARCHING, depois.phase)
         assertEquals("L1", depois.currentLobbyId)
@@ -59,14 +61,14 @@ class EstadoDoServidorTest {
     fun `partida abre a lista com o tamanho final, nao a crescer`() {
         // MultiMatchScreen mostra "Pergunta X de ${perguntas.size}" e o pódio conta pelo mesmo
         // size. Uma lista a crescer daria "1 de 1", "2 de 2", e um total errado no fim.
-        val depois = aplicarEvento(base, EventoServidor.Partida("S1", listOf(membro(eu), membro("outro")), 10))
+        val depois = aplicarEvento(base, EventoServidor.Partida("S1", MatchFormat.ONE_V_ONE, listOf(membro(eu), membro("outro")), 10))
         assertEquals(MultiPhase.MATCHED, depois.phase)
         assertEquals(10, depois.perguntas.size)
     }
 
     @Test
     fun `pergunta so preenche a sua posicao e o total nao muda`() {
-        val comPartida = aplicarEvento(base, EventoServidor.Partida("S1", listOf(membro(eu)), 10))
+        val comPartida = aplicarEvento(base, EventoServidor.Partida("S1", MatchFormat.ONE_V_ONE, listOf(membro(eu)), 10))
         val depois = aplicarEvento(comPartida, pergunta(indice = 3))
         assertEquals(10, depois.perguntas.size)
         assertEquals(3, depois.currentIndex)
@@ -87,7 +89,7 @@ class EstadoDoServidorTest {
 
     @Test
     fun `a pergunta chega SEM a resposta certa`() {
-        val comPartida = aplicarEvento(base, EventoServidor.Partida("S1", listOf(membro(eu)), 10))
+        val comPartida = aplicarEvento(base, EventoServidor.Partida("S1", MatchFormat.ONE_V_ONE, listOf(membro(eu)), 10))
         val depois = aplicarEvento(comPartida, pergunta(indice = 0))
         assertEquals("", depois.perguntas[0].respostaCorreta)
         assertFalse(depois.isAnswered)
@@ -98,7 +100,7 @@ class EstadoDoServidorTest {
     fun `so o veredicto revela a resposta e marca respondido`() {
         // Marcar `isAnswered` ao toque fazia o ecrã tocar o som de errado e pintar a opção certa
         // de vermelho durante o tempo de ida e volta, porque `respostaCorreta` ainda era "".
-        val comPartida = aplicarEvento(base, EventoServidor.Partida("S1", listOf(membro(eu)), 10))
+        val comPartida = aplicarEvento(base, EventoServidor.Partida("S1", MatchFormat.ONE_V_ONE, listOf(membro(eu)), 10))
         val comPergunta = aplicarEvento(comPartida, pergunta(indice = 0))
         val depois = aplicarEvento(
             comPergunta,
@@ -213,8 +215,8 @@ class EstadoDoServidorTest {
     // --- robustez ---
 
     @Test
-    fun `erro do servidor manda para o ecra de erro com texto`() {
-        val depois = aplicarEvento(base, EventoServidor.Erro("em_manutencao", null))
+    fun `erro de entrada manda para o ecra de erro com texto`() {
+        val depois = aplicarEvento(base, EventoServidor.Erro("codigo_invalido", null))
         assertEquals(MultiPhase.ERROR, depois.phase)
         assertTrue(depois.error!!.isNotBlank())
     }
@@ -295,5 +297,185 @@ class AgregacaoDoServidorTest {
         org.junit.Assert.assertTrue(r.won)
         org.junit.Assert.assertEquals("1x1", r.formato)
         org.junit.Assert.assertEquals("Cultura Geral", r.categoria)
+    }
+}
+
+/**
+ * O que a fase 5 acrescenta: os formatos que faltavam, as entradas por código e por desafio, e os
+ * dois estados que só o servidor tem (reconexão e manutenção).
+ */
+class FormatosEEstadosDoServidorTest {
+
+    private val eu = "uid-eu"
+    private val base = MultiUiState(myUid = eu)
+    private fun membro(uid: String, equipa: String? = null) = MembroDaSala(uid, "Nome $uid", equipa)
+
+    // --- 2x2 ---
+
+    @Test
+    fun `2x2 recebe as equipas do servidor, nao as inventa`() {
+        val depois = aplicarEvento(
+            base,
+            EventoServidor.Partida(
+                "S1", MatchFormat.TWO_V_TWO,
+                listOf(membro("a1", "A"), membro(eu, "A"), membro("b1", "B"), membro("b2", "B")), 10
+            )
+        )
+        assertEquals(MatchFormat.TWO_V_TWO, depois.format)
+        assertEquals(listOf("A", "A", "B", "B"), depois.players.map { it.team })
+        assertEquals("A", depois.players.first { it.isMe }.team)
+    }
+
+    @Test
+    fun `2x2 walkover - quem sai leva a equipa dele abaixo, mesmo com mais pontos`() {
+        // O critério de docs/vault/decisoes/criterio-vitoria.md: num walkover ganha a equipa que
+        // ficou, e não a que tem mais pontos. Quem decide é o servidor; aqui prende-se que o
+        // cliente mostra o que ele decidiu em vez de recalcular pelo total.
+        val comEquipas = aplicarEvento(
+            base,
+            EventoServidor.Partida("S1", MatchFormat.TWO_V_TWO,
+                listOf(membro("a1", "A"), membro("a2", "A"), membro(eu, "B"), membro("b2", "B")), 10)
+        )
+        val depois = aplicarEvento(
+            comEquipas,
+            EventoServidor.Podio(
+                walkover = true, ganhei = true, meuScore = 40, minhasCertas = 1, maxSequencia = 1,
+                totalPerguntas = 10, ranking = emptyList(),
+                equipas = listOf(
+                    EquipaNoPodio("A", 900, venceu = false, jogadores = emptyList()),
+                    EquipaNoPodio("B", 40, venceu = true, jogadores = emptyList())
+                )
+            )
+        )
+        val a = depois.teams.first { it.name == "Equipa A" }
+        val b = depois.teams.first { it.name == "Equipa B" }
+        assertTrue("a equipa A tinha muito mais pontos", a.total > b.total)
+        assertTrue("e mesmo assim perde — saiu um dos seus", b.isWinner)
+        assertFalse(a.isWinner)
+        assertTrue(b.isMine)
+        assertEquals("A tua equipa ganhou!", depois.resultTitle)
+    }
+
+    // --- Grupo ---
+
+    @Test
+    fun `Grupo aceita de 4 a 10 e conta os que la estao`() {
+        val membros = (1..7).map { membro("j$it") } + membro(eu)
+        val depois = aplicarEvento(
+            base,
+            EventoServidor.Sala("L1", MatchFormat.GRUPO, "História", "classico", null, membros, souAnfitriao = false)
+        )
+        assertEquals(MatchFormat.GRUPO, depois.format)
+        assertEquals(8, depois.joinedCount)
+        assertEquals(4, depois.format.minPlayers)
+        assertEquals(10, depois.format.players)
+    }
+
+    @Test
+    fun `Grupo com 10 no podio mostra os 10 pela ordem do servidor`() {
+        val ranking = (1..10).map { LugarNoPodio("j$it", "Jogador $it", 1000 - it * 10, false) }
+        val depois = aplicarEvento(
+            base.copy(format = MatchFormat.GRUPO, myUid = "j7"),
+            EventoServidor.Podio(false, false, 930, 5, 2, 10, ranking, emptyList())
+        )
+        assertEquals(10, depois.ranking.size)
+        assertEquals("a ordem é a do servidor", ranking.map { it.nome }, depois.ranking.map { it.nome })
+        assertEquals("7.º lugar", depois.resultTitle)
+    }
+
+    // --- sala privada por código ---
+
+    @Test
+    fun `entrar por codigo aprende o formato com o servidor`() {
+        // Do código de 4 dígitos não se deduz o formato. O cliente arranca em Grupo por omissão e
+        // é o `sala` que corrige — sem isto, um 1x1 por código era pontuado como Grupo no pódio.
+        val depois = aplicarEvento(
+            base.copy(format = MatchFormat.GRUPO),
+            EventoServidor.Sala("L9", MatchFormat.ONE_V_ONE, "Quiz do Zé", "classico", "4242",
+                listOf(membro(eu)), souAnfitriao = true)
+        )
+        assertEquals(MatchFormat.ONE_V_ONE, depois.format)
+        assertEquals("Quiz do Zé", depois.categoria)
+    }
+
+    // --- triagem de erros ---
+
+    @Test
+    fun `nao_pode_comecar NAO derruba a partida`() {
+        // O temporizador de auto-arranque vive na composição e dispara `iniciar` aos 60 s mesmo
+        // quando o servidor já arrancou sozinho. Com o erro a ser fatal, uma sala de Grupo que
+        // enchesse atirava toda a gente para o ecrã de erro logo a seguir a começar.
+        assertFalse(erroEhFatal("nao_pode_comecar", MultiPhase.SEARCHING))
+        val depois = aplicarEvento(base, EventoServidor.Erro("nao_pode_comecar", null))
+        assertEquals(MultiPhase.SEARCHING, depois.phase)
+    }
+
+    @Test
+    fun `recusas normais a meio do jogo nao trocam a partida por um erro`() {
+        val aJogar = base.copy(phase = MultiPhase.IN_GAME, myScore = 120)
+        for (codigo in listOf("tarde_demais", "ja_respondeu", "pergunta_errada", "opcao_invalida")) {
+            val depois = aplicarEvento(aJogar, EventoServidor.Erro(codigo, null))
+            assertEquals("$codigo derrubou a partida", MultiPhase.IN_GAME, depois.phase)
+            assertEquals(120, depois.myScore)
+        }
+    }
+
+    @Test
+    fun `erros de entrada continuam a ser fatais, mas so a procurar sala`() {
+        for (codigo in listOf("codigo_invalido", "sala_cheia", "quiz_invalido", "desafio_expirado")) {
+            assertTrue(codigo, erroEhFatal(codigo, MultiPhase.SEARCHING))
+            assertFalse("$codigo a meio do jogo", erroEhFatal(codigo, MultiPhase.IN_GAME))
+        }
+    }
+
+    @Test
+    fun `nada derruba o podio ja mostrado`() {
+        val podio = base.copy(phase = MultiPhase.PODIUM, resultTitle = "Vitória!")
+        assertEquals(podio, aplicarEvento(podio, EventoServidor.Erro("falha_interna", null)))
+        assertEquals(podio, aplicarEvento(podio, EventoServidor.Desligado("1006")))
+    }
+
+    // --- manutenção ---
+
+    @Test
+    fun `manutencao tem estado proprio, nao e o ecra de erro`() {
+        val depois = aplicarEvento(base, EventoServidor.Erro("em_manutencao", null))
+        assertTrue(depois.emManutencao)
+        assertEquals("não é erro — é uma janela de menos de um minuto", MultiPhase.SEARCHING, depois.phase)
+    }
+
+    @Test
+    fun `entrar numa sala limpa a manutencao`() {
+        val emManutencao = base.copy(emManutencao = true)
+        val depois = aplicarEvento(
+            emManutencao,
+            EventoServidor.Sala("L1", MatchFormat.ONE_V_ONE, "H", "classico", null, listOf(membro(eu)), true)
+        )
+        assertFalse(depois.emManutencao)
+    }
+
+    // --- reconexão ---
+
+    @Test
+    fun `cair a meio do jogo pede reconexao em vez de deitar a partida fora`() {
+        val aJogar = base.copy(phase = MultiPhase.IN_GAME, myScore = 340)
+        val depois = aplicarEvento(aJogar, EventoServidor.Desligado("1006"))
+        assertTrue(depois.aReconectar)
+        assertEquals("a partida continua no ecrã por baixo da faixa", MultiPhase.IN_GAME, depois.phase)
+        assertEquals(340, depois.myScore)
+    }
+
+    @Test
+    fun `cair a procura de adversario nao tem nada a salvar`() {
+        val depois = aplicarEvento(base.copy(phase = MultiPhase.SEARCHING), EventoServidor.Desligado("401"))
+        assertEquals(MultiPhase.ERROR, depois.phase)
+        assertFalse(depois.aReconectar)
+    }
+
+    @Test
+    fun `voltar limpa a faixa de reconexao`() {
+        val caido = base.copy(phase = MultiPhase.IN_GAME, aReconectar = true)
+        assertFalse(aplicarEvento(caido, EventoServidor.Ligado).aReconectar)
+        assertFalse(aplicarEvento(caido, EventoServidor.Aviso("reentraste")).aReconectar)
     }
 }

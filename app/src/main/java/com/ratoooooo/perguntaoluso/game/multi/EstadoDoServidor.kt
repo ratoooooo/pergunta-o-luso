@@ -19,8 +19,9 @@ import com.ratoooooo.perguntaoluso.game.ChaoticEvent
  */
 internal fun aplicarEvento(estado: MultiUiState, evento: EventoServidor): MultiUiState = when (evento) {
 
-    // Sem estado a mudar: o socket abriu, e é o ViewModel que decide o que pedir a seguir.
-    EventoServidor.Ligado -> estado
+    // O socket abriu — é o ViewModel que decide o que pedir a seguir. Se vínhamos de uma queda,
+    // o aviso de reconexão sai do ecrã aqui.
+    EventoServidor.Ligado -> estado.copy(aReconectar = false)
 
     is EventoServidor.Sessao -> estado.copy(myUid = evento.uid, myName = evento.nome)
 
@@ -28,7 +29,12 @@ internal fun aplicarEvento(estado: MultiUiState, evento: EventoServidor): MultiU
 
     is EventoServidor.Sala -> estado.copy(
         phase = MultiPhase.SEARCHING,
+        // O formato vem do servidor e não do que o cliente julgava: numa sala por código só se
+        // conhecem os 4 dígitos, e é o `sala` que diz se aquilo é um 1x1, um 2x2 ou um Grupo.
+        format = evento.formato,
         currentLobbyId = evento.lobbyId,
+        emManutencao = false,
+        aReconectar = false,
         categoria = evento.categoria,
         modo = evento.modo,
         isHost = evento.souAnfitriao,
@@ -48,6 +54,8 @@ internal fun aplicarEvento(estado: MultiUiState, evento: EventoServidor): MultiU
      */
     is EventoServidor.Partida -> estado.copy(
         phase = MultiPhase.MATCHED,
+        format = evento.formato,
+        aReconectar = false,
         joinedCount = evento.membros.size,
         perguntas = List(evento.totalPerguntas) { Question() },
         players = evento.membros.map { m ->
@@ -116,17 +124,26 @@ internal fun aplicarEvento(estado: MultiUiState, evento: EventoServidor): MultiU
     // Efeitos puros do lado do ViewModel: responder à sonda, acertar o relógio.
     is EventoServidor.Sonda, is EventoServidor.Pong -> estado
 
-    is EventoServidor.Aviso -> estado
+    // `reentraste` é a confirmação de que o servidor nos devolveu à partida que estava a decorrer.
+    is EventoServidor.Aviso -> if (evento.codigo == "reentraste") estado.copy(aReconectar = false) else estado
 
-    is EventoServidor.Erro -> estado.copy(
-        phase = MultiPhase.ERROR,
-        error = evento.msg ?: mensagemDeErro(evento.codigo)
-    )
+    is EventoServidor.Erro -> when {
+        evento.codigo == "em_manutencao" -> estado.copy(emManutencao = true)
+        erroEhFatal(evento.codigo, estado.phase) ->
+            estado.copy(phase = MultiPhase.ERROR, error = evento.msg ?: mensagemDeErro(evento.codigo))
+        else -> estado
+    }
 
-    is EventoServidor.Desligado -> estado.copy(
-        phase = MultiPhase.ERROR,
-        error = "Perdeste a ligação ao servidor."
-    )
+    /**
+     * Caiu a ligação. Com uma partida a decorrer **não** se deita nada fora: o servidor guarda o
+     * lugar durante a carência, por isso mostra-se "a reconectar…" e o ViewModel volta a ligar.
+     * À espera de adversário não há nada a salvar, e aí sim vale o ecrã de erro.
+     */
+    is EventoServidor.Desligado -> when (estado.phase) {
+        MultiPhase.IN_GAME, MultiPhase.MATCHED -> estado.copy(aReconectar = true)
+        MultiPhase.PODIUM -> estado
+        else -> estado.copy(phase = MultiPhase.ERROR, error = "Perdeste a ligação ao servidor.")
+    }
 
     // Servidor mais recente do que a app. Ignorar é melhor do que rebentar: as mensagens que
     // interessam a esta versão continuam a chegar.
@@ -257,3 +274,30 @@ internal fun agregacaoDoServidor(
         categoria = categoria
     )
 }
+
+/**
+ * Códigos que só aparecem à entrada de uma sala e que não deixam nada por onde continuar.
+ * Repare-se em quem **não** está aqui: `nao_pode_comecar`.
+ */
+private val ERROS_DE_ENTRADA = setOf(
+    "codigo_invalido", "sala_cheia", "quiz_invalido",
+    "desafio_expirado", "convidado_invalido", "arranque_falhou"
+)
+
+/**
+ * Um erro do servidor derruba a partida?
+ *
+ * Quase nunca. O servidor recusa acções a toda a hora por motivos perfeitamente normais — responder
+ * a uma pergunta que já fechou (`tarde_demais`), responder duas vezes (`ja_respondeu`), pedir
+ * INICIAR antes do mínimo (`nao_pode_comecar`). Tratar isso como falha trocava uma partida a correr
+ * por um ecrã de erro.
+ *
+ * O `nao_pode_comecar` é o caso concreto que obrigou a esta triagem: o temporizador de auto-arranque
+ * vive na composição do ecrã e dispara `iniciar` aos 60 s **mesmo quando o servidor já arrancou a
+ * partida sozinho**. Com o erro a ser fatal, uma sala de Grupo que enchesse atirava toda a gente
+ * para o ecrã de erro logo a seguir a começar.
+ *
+ * Só à procura de sala é que um erro é terminal, e só os que impedem mesmo a entrada.
+ */
+internal fun erroEhFatal(codigo: String, fase: MultiPhase): Boolean =
+    fase == MultiPhase.SEARCHING && codigo in ERROS_DE_ENTRADA

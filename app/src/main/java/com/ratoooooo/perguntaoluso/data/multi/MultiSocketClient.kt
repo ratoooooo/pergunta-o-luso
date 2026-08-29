@@ -44,6 +44,11 @@ sealed interface EventoServidor {
 
     data class Sala(
         val lobbyId: String,
+        /**
+         * Quem manda no formato é o servidor. Numa sala por código o cliente não o pode saber
+         * antes de entrar — só conhece os 4 dígitos.
+         */
+        val formato: MatchFormat,
         val categoria: String,
         val modo: String,
         val codigo: String?,
@@ -53,6 +58,7 @@ sealed interface EventoServidor {
 
     data class Partida(
         val salaId: String,
+        val formato: MatchFormat,
         val membros: List<MembroDaSala>,
         val totalPerguntas: Int
     ) : EventoServidor
@@ -189,8 +195,7 @@ class MultiSocketClient(
     //
     // Um método por mensagem, em vez de um `enviar(JSONObject)` genérico: os nomes do protocolo
     // ficam todos neste ficheiro, e um erro de escrita passa a ser um erro de compilação.
-    // `privada_criar`, `privada_entrar`, `desafio_criar` e `desafio_entrar` ainda não estão aqui
-    // — são da fase 5, e a fase 4 só exercita o 1x1 do matchmaking aleatório.
+    // Cobrem a tabela "Cliente → servidor" do PROTOCOLO.md por inteiro.
 
     fun procurar(formato: String, categoria: String, modo: String) = enviar("procurar") {
         put("formato", formato); put("categoria", categoria); put("modo", modo)
@@ -212,6 +217,25 @@ class MultiSocketClient(
     fun responder(indice: Int, opcao: String?, tCliente: Long) = enviar("responder") {
         put("indice", indice); put("opcao", opcao ?: JSONObject.NULL); put("tCliente", tCliente)
     }
+
+    /** Sala privada com um quiz da comunidade. O servidor devolve `sala` já com o código. */
+    fun privadaCriar(formato: String, quizId: String) = enviar("privada_criar") {
+        put("formato", formato); put("quizId", quizId)
+    }
+
+    fun privadaEntrar(codigo: String) = enviar("privada_entrar") { put("codigo", codigo) }
+
+    /**
+     * Cria a sala de um desafio direto. Só o convidado lá entra — o servidor guarda a lista de
+     * permitidos, por isso conhecer o id da sala não chega para se meter no duelo de outra pessoa.
+     */
+    fun desafioCriar(formato: String, categoria: String, modo: String, paraUid: String) =
+        enviar("desafio_criar") {
+            put("formato", formato); put("categoria", categoria)
+            put("modo", modo); put("paraUid", paraUid)
+        }
+
+    fun desafioEntrar(salaId: String) = enviar("desafio_entrar") { put("salaId", salaId) }
 
     fun ping(t0: Long) = enviar("ping") { put("t0", t0) }
 
@@ -281,6 +305,7 @@ internal fun interpretar(texto: String): EventoServidor = runCatching {
 
         "sala" -> EventoServidor.Sala(
             lobbyId = j.optString("lobbyId"),
+            formato = MatchFormat.fromId(j.optString("formato")),
             categoria = j.optString("categoria"),
             modo = j.optString("modo"),
             codigo = j.optString("codigo").ifBlank { null },
@@ -290,6 +315,7 @@ internal fun interpretar(texto: String): EventoServidor = runCatching {
 
         "partida" -> EventoServidor.Partida(
             salaId = j.optString("salaId"),
+            formato = MatchFormat.fromId(j.optString("formato")),
             membros = j.optJSONArray("membros").membros(),
             totalPerguntas = j.optInt("totalPerguntas")
         )

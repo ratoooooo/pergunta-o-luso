@@ -88,17 +88,71 @@ fun MultiMatchScreen(
     onForceStart: () -> Unit = {},
     onSwitchLobby: (LobbyData) -> Unit = {}
 ) {
-    when (state.phase) {
-        MultiPhase.SEARCHING -> WaitingRoom(
-            state = state,
-            onCancel = onLeave,
-            onForceStart = onForceStart,
-            onSwitchLobby = onSwitchLobby
+    // Os dois estados que só o servidor da partida introduz. A manutenção substitui o ecrã — não
+    // há partida nenhuma para mostrar por baixo. A reconexão é uma faixa POR CIMA do jogo, de
+    // propósito: o lugar ainda é nosso durante a carência, e trocar a partida por um ecrã de
+    // espera seria deitar fora o que ainda dá para recuperar.
+    if (state.emManutencao) {
+        ManutencaoView(onHome)
+        return
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        when (state.phase) {
+            MultiPhase.SEARCHING -> WaitingRoom(
+                state = state,
+                onCancel = onLeave,
+                onForceStart = onForceStart,
+                onSwitchLobby = onSwitchLobby
+            )
+            MultiPhase.MATCHED -> Matched(state)
+            MultiPhase.ERROR -> ErrorView(state.error, onHome)
+            MultiPhase.PODIUM -> Podium(state, onPlayAgain, onHome)
+            MultiPhase.IN_GAME -> QuestionView(state, onSelectAnswer)
+        }
+        if (state.aReconectar) FaixaDeReconexao(Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+/**
+ * O servidor está a drenar para actualizar: recusa partidas novas e deixa acabar as que estão a
+ * correr. Não é erro — é uma janela de menos de um minuto —, por isso não usa o vermelho do
+ * [ErrorView].
+ */
+@Composable
+private fun ManutencaoView(onHome: () -> Unit) {
+    Box(Modifier.fillMaxSize().background(Cream), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
+            Text(
+                "O servidor está a actualizar.",
+                style = MaterialTheme.typography.headlineSmall, color = Ink, textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.size(8.dp))
+            Text(
+                "As partidas a decorrer acabam primeiro. Tenta daqui a um minuto.",
+                style = MaterialTheme.typography.bodyLarge, color = Ink, textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.size(24.dp))
+            StickerButton("VOLTAR", Icons.Rounded.Home, onHome)
+        }
+    }
+}
+
+/** Caiu a ligação com a partida a decorrer. O lugar fica guardado enquanto a carência durar. */
+@Composable
+private fun FaixaDeReconexao(modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .stickerBlock(fillColor = Gold, cornerRadius = 20.dp)
+            .padding(vertical = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            "A reconectar…  o teu lugar está guardado",
+            style = MaterialTheme.typography.labelLarge, color = Ink, textAlign = TextAlign.Center
         )
-        MultiPhase.MATCHED -> Matched(state)
-        MultiPhase.ERROR -> ErrorView(state.error, onHome)
-        MultiPhase.PODIUM -> Podium(state, onPlayAgain, onHome)
-        MultiPhase.IN_GAME -> QuestionView(state, onSelectAnswer)
     }
 }
 
