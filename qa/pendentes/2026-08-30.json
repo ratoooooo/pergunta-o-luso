@@ -1,0 +1,24 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {"pergunta": "Em que cidade portuguesa se realiza a mais tradicional Queima das Fitas do país, associada à sua universidade centenária?", "opcoes": ["Coimbra", "Porto", "Lisboa", "Braga"], "respostaCorreta": "Coimbra", "dificuldade": "facil"},
+      {"pergunta": "Como se chama o doce conventual típico de Aveiro, feito de gemas de ovo envolvidas em hóstia com formas marinhas?", "opcoes": ["Ovos-moles", "Pastéis de nata", "Fatias de Tomar", "Toucinho-do-céu"], "respostaCorreta": "Ovos-moles", "dificuldade": "medio"}
+    ],
+    "Desporto": [
+      {"pergunta": "Em que autódromo se realizou o Grande Prémio de Portugal de Fórmula 1 entre 1984 e 1996?", "opcoes": ["Autódromo do Estoril", "Autódromo Internacional do Algarve", "Circuito da Boavista", "Autódromo de Vila Real"], "respostaCorreta": "Autódromo do Estoril", "dificuldade": "medio"},
+      {"pergunta": "Qual é o clube de golfe mais antigo de Portugal, fundado em 1890 perto de Espinho?", "opcoes": ["Oporto Golf Club", "Golfe do Estoril", "Golfe de Vilamoura", "Golfe da Quinta do Lago"], "respostaCorreta": "Oporto Golf Club", "dificuldade": "dificil"}
+    ],
+    "Gentílicos": [
+      {"pergunta": "Como se chama quem nasce na ilha Terceira, nos Açores?", "opcoes": ["Terceirense", "Micaelense", "Faialense", "Picoense"], "respostaCorreta": "Terceirense", "dificuldade": "medio"},
+      {"pergunta": "Qual é o gentílico dos naturais da ilha de Santa Maria, nos Açores?", "opcoes": ["Mariense", "Angrense", "Graciosense", "Corvino"], "respostaCorreta": "Mariense", "dificuldade": "dificil"}
+    ],
+    "Geografia": [
+      {"pergunta": "Como é conhecido o sistema lagunar da costa de Aveiro, por vezes apelidado de 'Veneza portuguesa'?", "opcoes": ["Ria de Aveiro", "Ria Formosa", "Lagoa de Óbidos", "Albufeira do Alqueva"], "respostaCorreta": "Ria de Aveiro", "dificuldade": "medio"},
+      {"pergunta": "Qual é o ponto mais a sul de todo o território português, situado no arquipélago da Madeira?", "opcoes": ["Ilhas Selvagens", "Ilhas Desertas", "Cabo de Santa Maria", "Ilha do Porto Santo"], "respostaCorreta": "Ilhas Selvagens", "dificuldade": "dificil"}
+    ],
+    "História": [
+      {"pergunta": "Qual é a alcunha atribuída a D. Isabel de Aragão, rainha de Portugal canonizada pela Igreja Católica em 1625?", "opcoes": ["Rainha Santa", "Rainha Beata", "Rainha Mártir", "Rainha Perfeita"], "respostaCorreta": "Rainha Santa", "dificuldade": "medio"},
+      {"pergunta": "Como ficou conhecido o sistema de fortificações construído para deter o avanço das tropas francesas durante a terceira invasão de Portugal, em 1810?", "opcoes": ["Linhas de Torres Vedras", "Muralhas de Elvas", "Linha Maginot", "Cerca Fernandina"], "respostaCorreta": "Linhas de Torres Vedras", "dificuldade": "dificil"}
+    ]
+  }
+}
