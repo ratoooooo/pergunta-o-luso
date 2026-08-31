@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Qual destas designações corresponde a uma Denominação de Origem Protegida (DOP) portuguesa para azeite?",
+        "opcoes": ["Azeite de Trás-os-Montes", "Azeite da Toscana", "Azeite de Creta", "Azeite de Jaén"],
+        "respostaCorreta": "Azeite de Trás-os-Montes",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Segundo a lenda do Galo de Barcelos, o peregrino injustamente acusado seguia romaria em direção a que importante santuário?",
+        "opcoes": ["Santiago de Compostela", "Fátima", "Roma", "Jerusalém"],
+        "respostaCorreta": "Santiago de Compostela",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Que clube português foi o primeiro a vencer a Taça Intercontinental de futebol, em 1987?",
+        "opcoes": ["FC Porto", "Benfica", "Sporting CP", "Vitória de Guimarães"],
+        "respostaCorreta": "FC Porto",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que atleta português conquistou a medalha de ouro no triplo salto nos Jogos Olímpicos de Pequim 2008?",
+        "opcoes": ["Nélson Évora", "Pedro Pichardo", "Francis Obikwelu", "Rui Silva"],
+        "respostaCorreta": "Nélson Évora",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Qual é o gentílico erudito associado à cidade do Porto, usado a par de \"portuense\"?",
+        "opcoes": ["Portucalense", "Portuguense", "Portucalês", "Portugalense"],
+        "respostaCorreta": "Portucalense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o gentílico erudito associado a Coimbra, derivado do nome da antiga cidade romana de Conimbriga?",
+        "opcoes": ["Conimbricense", "Coimbricense", "Conimbriguense", "Conímbrico"],
+        "respostaCorreta": "Conimbricense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "A Ilha Deserta (ou Ilha da Barreta), situada na Ria Formosa, é considerada o quê em Portugal continental?",
+        "opcoes": ["O ponto mais a sul", "O ponto mais a norte", "O ponto mais a leste", "O ponto mais alto"],
+        "respostaCorreta": "O ponto mais a sul",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que ilha da Ria Formosa, no Algarve, é conhecida pela ausência de trânsito automóvel e por uma comunidade piscatória tradicional?",
+        "opcoes": ["Culatra", "Armona", "Farol", "Barreta"],
+        "respostaCorreta": "Culatra",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Que sistema de fortificações, construído sob orientação do general britânico Wellington, impediu o avanço do exército francês sobre Lisboa em 1810?",
+        "opcoes": ["Linhas de Torres Vedras", "Muralhas de Elvas", "Forte de São Julião da Barra", "Cerco de Almeida"],
+        "respostaCorreta": "Linhas de Torres Vedras",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que ano se terá travado, segundo a tradição, a lendária Batalha de Ourique, na qual D. Afonso Henriques foi aclamado rei pelos seus soldados?",
+        "opcoes": ["1139", "1128", "1147", "1179"],
+        "respostaCorreta": "1139",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
