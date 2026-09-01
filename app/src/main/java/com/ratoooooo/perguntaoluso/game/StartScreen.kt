@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.scale
 import com.ratoooooo.perguntaoluso.data.Profile
 import com.ratoooooo.perguntaoluso.data.StreakDiario
 import com.ratoooooo.perguntaoluso.data.UserInfo
+import com.ratoooooo.perguntaoluso.game.avatar.AvatarView
 import com.ratoooooo.perguntaoluso.ui.FeatureFlags
 import com.ratoooooo.perguntaoluso.ui.theme.Coral
 import com.ratoooooo.perguntaoluso.ui.theme.Cream
@@ -49,7 +50,6 @@ import com.ratoooooo.perguntaoluso.ui.theme.Teal
 import com.ratoooooo.perguntaoluso.ui.theme.rememberPulse
 import com.ratoooooo.perguntaoluso.ui.theme.XpBar
 import com.ratoooooo.perguntaoluso.ui.theme.stickerBlock
-import com.ratoooooo.perguntaoluso.ui.theme.stickerCircle
 import com.ratoooooo.perguntaoluso.ui.theme.textColorFor
 
 @Composable
@@ -129,12 +129,7 @@ private fun ProfileCard(profile: Profile?, onClick: () -> Unit) {
             .padding(18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.size(64.dp).stickerCircle(fillColor = Purple, shadowOffset = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = iniciais, style = MaterialTheme.typography.titleLarge, color = Cream)
-        }
+        AvatarView(avatarId = profile?.avatar, iniciais = iniciais, modifier = Modifier.size(64.dp))
         Spacer(Modifier.size(16.dp))
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
