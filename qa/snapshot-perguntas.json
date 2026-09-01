@@ -3573,6 +3573,72 @@
       ],
       "respostaCorreta": ".pt",
       "dificuldade": "facil"
+    },
+    {
+      "pergunta": "Em que cidade portuguesa se realiza a mais tradicional Queima das Fitas do país, associada à sua universidade centenária?",
+      "opcoes": [
+        "Coimbra",
+        "Porto",
+        "Lisboa",
+        "Braga"
+      ],
+      "respostaCorreta": "Coimbra",
+      "dificuldade": "facil"
+    },
+    {
+      "pergunta": "Como se chama o doce conventual típico de Aveiro, feito de gemas de ovo envolvidas em hóstia com formas marinhas?",
+      "opcoes": [
+        "Ovos-moles",
+        "Pastéis de nata",
+        "Fatias de Tomar",
+        "Toucinho-do-céu"
+      ],
+      "respostaCorreta": "Ovos-moles",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Qual destas designações corresponde a uma Denominação de Origem Protegida (DOP) portuguesa para azeite?",
+      "opcoes": [
+        "Azeite de Trás-os-Montes",
+        "Azeite da Toscana",
+        "Azeite de Creta",
+        "Azeite de Jaén"
+      ],
+      "respostaCorreta": "Azeite de Trás-os-Montes",
+      "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "Segundo a lenda do Galo de Barcelos, o peregrino injustamente acusado seguia romaria em direção a que importante santuário?",
+      "opcoes": [
+        "Santiago de Compostela",
+        "Fátima",
+        "Roma",
+        "Jerusalém"
+      ],
+      "respostaCorreta": "Santiago de Compostela",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "O quadro \"O Fado\" (1910), que retrata um casal em ambiente boémio de Lisboa, é obra de que pintor português?",
+      "opcoes": [
+        "José Malhoa",
+        "Columbano Bordalo Pinheiro",
+        "Almada Negreiros",
+        "Amadeo de Souza-Cardoso"
+      ],
+      "respostaCorreta": "José Malhoa",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "O cante alentejano, canto coletivo a capella típico do Baixo Alentejo, foi inscrito em 2014 na lista da UNESCO como quê?",
+      "opcoes": [
+        "Património Cultural Imaterial da Humanidade",
+        "Património Mundial da Humanidade",
+        "Reserva da Biosfera",
+        "Monumento Nacional"
+      ],
+      "respostaCorreta": "Património Cultural Imaterial da Humanidade",
+      "dificuldade": "medio"
     }
   ],
   "Desporto": [
@@ -7155,6 +7221,72 @@
       ],
       "respostaCorreta": "África do Sul",
       "dificuldade": "facil"
+    },
+    {
+      "pergunta": "Em que autódromo se realizou o Grande Prémio de Portugal de Fórmula 1 entre 1984 e 1996?",
+      "opcoes": [
+        "Autódromo do Estoril",
+        "Autódromo Internacional do Algarve",
+        "Circuito da Boavista",
+        "Autódromo de Vila Real"
+      ],
+      "respostaCorreta": "Autódromo do Estoril",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Qual é o clube de golfe mais antigo de Portugal, fundado em 1890 perto de Espinho?",
+      "opcoes": [
+        "Oporto Golf Club",
+        "Golfe do Estoril",
+        "Golfe de Vilamoura",
+        "Golfe da Quinta do Lago"
+      ],
+      "respostaCorreta": "Oporto Golf Club",
+      "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "Que clube português foi o primeiro a vencer a Taça Intercontinental de futebol, em 1987?",
+      "opcoes": [
+        "FC Porto",
+        "Benfica",
+        "Sporting CP",
+        "Vitória de Guimarães"
+      ],
+      "respostaCorreta": "FC Porto",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Que atleta português conquistou a medalha de ouro no triplo salto nos Jogos Olímpicos de Pequim 2008?",
+      "opcoes": [
+        "Nélson Évora",
+        "Pedro Pichardo",
+        "Francis Obikwelu",
+        "Rui Silva"
+      ],
+      "respostaCorreta": "Nélson Évora",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Que praia portuguesa ficou mundialmente famosa pelas ondas gigantes surfadas pelo havaiano Garrett McNamara?",
+      "opcoes": [
+        "Praia do Norte, Nazaré",
+        "Praia do Guincho",
+        "Praia de Carcavelos",
+        "Praia da Ericeira"
+      ],
+      "respostaCorreta": "Praia do Norte, Nazaré",
+      "dificuldade": "facil"
+    },
+    {
+      "pergunta": "Como se chama o prémio atribuído anualmente em Portugal ao melhor marcador da Primeira Liga de futebol?",
+      "opcoes": [
+        "Bola de Prata",
+        "Bola de Ouro",
+        "Luva de Ouro",
+        "Chuteira de Ouro"
+      ],
+      "respostaCorreta": "Bola de Prata",
+      "dificuldade": "medio"
     }
   ],
   "Gentílicos": [
@@ -10739,6 +10871,61 @@
       ],
       "respostaCorreta": "Polaco",
       "dificuldade": "facil"
+    },
+    {
+      "pergunta": "Como se chama quem nasce na ilha Terceira, nos Açores?",
+      "opcoes": [
+        "Terceirense",
+        "Micaelense",
+        "Faialense",
+        "Picoense"
+      ],
+      "respostaCorreta": "Terceirense",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Qual é o gentílico dos naturais da ilha de Santa Maria, nos Açores?",
+      "opcoes": [
+        "Mariense",
+        "Angrense",
+        "Graciosense",
+        "Corvino"
+      ],
+      "respostaCorreta": "Mariense",
+      "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "Qual é o gentílico erudito associado à cidade do Porto, usado a par de \"portuense\"?",
+      "opcoes": [
+        "Portucalense",
+        "Portuguense",
+        "Portucalês",
+        "Portugalense"
+      ],
+      "respostaCorreta": "Portucalense",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Qual é o gentílico erudito associado a Coimbra, derivado do nome da antiga cidade romana de Conimbriga?",
+      "opcoes": [
+        "Conimbricense",
+        "Coimbricense",
+        "Conimbriguense",
+        "Conímbrico"
+      ],
+      "respostaCorreta": "Conimbricense",
+      "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "Qual é o gentílico de quem nasce na ilha de São Jorge, nos Açores?",
+      "opcoes": [
+        "Jorgense",
+        "Graciosense",
+        "Corvino",
+        "Florentino"
+      ],
+      "respostaCorreta": "Jorgense",
+      "dificuldade": "dificil"
     }
   ],
   "Geografia": [
@@ -14321,6 +14508,72 @@
       ],
       "respostaCorreta": "Sarajevo",
       "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Como é conhecido o sistema lagunar da costa de Aveiro, por vezes apelidado de 'Veneza portuguesa'?",
+      "opcoes": [
+        "Ria de Aveiro",
+        "Ria Formosa",
+        "Lagoa de Óbidos",
+        "Albufeira do Alqueva"
+      ],
+      "respostaCorreta": "Ria de Aveiro",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Qual é o ponto mais a sul de todo o território português, situado no arquipélago da Madeira?",
+      "opcoes": [
+        "Ilhas Selvagens",
+        "Ilhas Desertas",
+        "Cabo de Santa Maria",
+        "Ilha do Porto Santo"
+      ],
+      "respostaCorreta": "Ilhas Selvagens",
+      "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "A Ilha Deserta (ou Ilha da Barreta), situada na Ria Formosa, é considerada o quê em Portugal continental?",
+      "opcoes": [
+        "O ponto mais a sul",
+        "O ponto mais a norte",
+        "O ponto mais a leste",
+        "O ponto mais alto"
+      ],
+      "respostaCorreta": "O ponto mais a sul",
+      "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "Que ilha da Ria Formosa, no Algarve, é conhecida pela ausência de trânsito automóvel e por uma comunidade piscatória tradicional?",
+      "opcoes": [
+        "Culatra",
+        "Armona",
+        "Farol",
+        "Barreta"
+      ],
+      "respostaCorreta": "Culatra",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "A fronteira entre Portugal e Espanha, uma das mais antigas do mundo ainda em vigor, remonta em grande parte a que tratado medieval de 1297?",
+      "opcoes": [
+        "Tratado de Alcanizes",
+        "Tratado de Tordesilhas",
+        "Tratado de Windsor",
+        "Tratado de Zamora"
+      ],
+      "respostaCorreta": "Tratado de Alcanizes",
+      "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "A Ponte 516 Arouca, uma das pontes suspensas pedonais mais longas do mundo, atravessa o rio Paiva em que concelho português?",
+      "opcoes": [
+        "Arouca",
+        "Castelo de Paiva",
+        "Cinfães",
+        "Resende"
+      ],
+      "respostaCorreta": "Arouca",
+      "dificuldade": "medio"
     }
   ],
   "História": [
@@ -17867,6 +18120,72 @@
       ],
       "respostaCorreta": "Verdadeiro",
       "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "Qual é a alcunha atribuída a D. Isabel de Aragão, rainha de Portugal canonizada pela Igreja Católica em 1625?",
+      "opcoes": [
+        "Rainha Santa",
+        "Rainha Beata",
+        "Rainha Mártir",
+        "Rainha Perfeita"
+      ],
+      "respostaCorreta": "Rainha Santa",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Como ficou conhecido o sistema de fortificações construído para deter o avanço das tropas francesas durante a terceira invasão de Portugal, em 1810?",
+      "opcoes": [
+        "Linhas de Torres Vedras",
+        "Muralhas de Elvas",
+        "Linha Maginot",
+        "Cerca Fernandina"
+      ],
+      "respostaCorreta": "Linhas de Torres Vedras",
+      "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "Que sistema de fortificações, construído sob orientação do general britânico Wellington, impediu o avanço do exército francês sobre Lisboa em 1810?",
+      "opcoes": [
+        "Linhas de Torres Vedras",
+        "Muralhas de Elvas",
+        "Forte de São Julião da Barra",
+        "Cerco de Almeida"
+      ],
+      "respostaCorreta": "Linhas de Torres Vedras",
+      "dificuldade": "dificil"
+    },
+    {
+      "pergunta": "Em que ano se terá travado, segundo a tradição, a lendária Batalha de Ourique, na qual D. Afonso Henriques foi aclamado rei pelos seus soldados?",
+      "opcoes": [
+        "1139",
+        "1128",
+        "1147",
+        "1179"
+      ],
+      "respostaCorreta": "1139",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "As Linhas de Torres Vedras, construídas por ordem do general britânico Wellington durante as Invasões Napoleónicas, tinham como principal função proteger que cidade de um cerco francês?",
+      "opcoes": [
+        "Lisboa",
+        "Porto",
+        "Coimbra",
+        "Évora"
+      ],
+      "respostaCorreta": "Lisboa",
+      "dificuldade": "medio"
+    },
+    {
+      "pergunta": "Que canção de José \"Zeca\" Afonso foi transmitida pela Rádio Renascença na madrugada de 25 de abril de 1974, servindo de segundo sinal para o início do golpe militar?",
+      "opcoes": [
+        "Grândola, Vila Morena",
+        "E Depois do Adeus",
+        "Cantigas do Maio",
+        "Venham Mais Cinco"
+      ],
+      "respostaCorreta": "Grândola, Vila Morena",
+      "dificuldade": "medio"
     }
   ]
 }
