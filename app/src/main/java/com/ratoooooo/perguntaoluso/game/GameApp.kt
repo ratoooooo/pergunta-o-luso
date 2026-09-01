@@ -22,7 +22,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
     BackHandler(enabled = state.screen != GameScreen.START && state.screen != GameScreen.MULTI_MATCH && state.screen != GameScreen.QUESTION) {
         when (state.screen) {
             GameScreen.FORMAT_SELECT -> viewModel.backToStart()
-            GameScreen.CATEGORY_SELECT -> viewModel.goToFormatSelect()
+            GameScreen.CATEGORY_SELECT -> viewModel.backFromCategorySelect()
             GameScreen.MODE_SELECT -> viewModel.backToCategoryFromMode()
             GameScreen.CUSTOM_CATEGORIES -> viewModel.backToStart()
             GameScreen.HISTORY -> viewModel.backToStart()
@@ -181,7 +181,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
             questionCounts = state.categoryCounts,
             formato = state.pendingMultiFormat,
             onCategorySelected = viewModel::selectCategory,
-            onBack = viewModel::goToFormatSelect
+            onBack = viewModel::backFromCategorySelect
         )
 
         state.screen == GameScreen.CUSTOM_CATEGORIES -> CustomCategoriesScreen(

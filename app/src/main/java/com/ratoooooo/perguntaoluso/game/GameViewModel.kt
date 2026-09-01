@@ -157,6 +157,13 @@ internal fun GameUiState.sessionOnly() = GameUiState(
     desafioPara = desafioPara
 )
 
+/**
+ * Para onde leva o "voltar" do picker de categoria. Função à parte para ser testável: a decisão
+ * é pura, o `GameViewModel` não é (leva o Firebase no construtor).
+ */
+internal fun destinoAoVoltarDoPicker(temDesafioPendente: Boolean): GameScreen =
+    if (temDesafioPendente) GameScreen.FRIENDS else GameScreen.FORMAT_SELECT
+
 internal fun friendlyAuthError(e: Exception): String {
     val msg = e.message ?: return "Erro de autenticação"
     return when {
@@ -458,6 +465,28 @@ class GameViewModel(
         password.length < 8 -> "A palavra-passe deve ter pelo menos 8 caracteres"
         password != confirm -> "As palavras-passe não coincidem"
         else -> null
+    }
+
+    /**
+     * Voltar do picker de categoria.
+     *
+     * Não há um destino só porque não há uma entrada só. Vindo do Início escolhe-se o formato
+     * primeiro, e o sítio de onde se veio é mesmo o FormatScreen. Mas o `startChallenge` entra
+     * aqui **a partir de Amigos**, com o formato já fixado em 1x1 e um amigo escolhido.
+     *
+     * Aí o FormatScreen não é o sítio de onde se veio — e há pior: `desafioPara` sobrevive ao
+     * `sessionOnly()`, por isso sair do picker sem o limpar deixa o desafio armado. O primeiro
+     * ramo do `onModeChosen` é `desafio != null`, portanto um jogo **Solo** começado a seguir
+     * envia um convite de 1x1 a esse amigo em vez de jogar sozinho.
+     *
+     * O `backToStart()` que aqui estava antes tinha o mesmo buraco: também preserva o
+     * `desafioPara`. O que mudou foi a porta ficar mais à mão, com o gesto do sistema.
+     */
+    fun backFromCategorySelect() {
+        when (destinoAoVoltarDoPicker(_uiState.value.desafioPara != null)) {
+            GameScreen.FRIENDS -> { cancelChallenge(); goToFriends() }
+            else -> goToFormatSelect()
+        }
     }
 
     fun goToFormatSelect() {
