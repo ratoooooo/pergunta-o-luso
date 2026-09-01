@@ -21,6 +21,16 @@ import {
 export const REVELACAO_MS = 2_500;
 
 /**
+ * Tempo a mostrar o resultado de uma pergunta antes de abrir a seguinte (ou o pódio).
+ *
+ * Antes: `#fechar()` mandava o placar final e já abria a pergunta seguinte na mesma chamada. Quem
+ * respondia por último via o próprio `resposta` (certo/errado) e a pergunta nova quase ao mesmo
+ * tempo — sem tempo nenhum para ver o resultado. Mesmo defeito na última pergunta, a caminho do
+ * pódio.
+ */
+export const REVELACAO_RESPOSTA_MS = 3_000;
+
+/**
  * Carência antes de uma ligação perdida contar como desistência.
  *
  * Na RTDB o `onDisconnect` disparava em ~2 s e era logo walkover. Numa rede móvel isso pune um
@@ -199,8 +209,16 @@ export class Partida {
     this.#placar();
 
     const seguinte = this.indice + 1;
-    if (seguinte < this.perguntas.length) this.#abrir(seguinte);
-    else this.#terminar({ walkover: false });
+    // Reaproveita `_fecho` para o atraso de revelação — dá jeito porque `#terminar` já o cancela
+    // se a partida acabar por outra via (ex.: desistência) enquanto se espera. Chamar `#fechar`
+    // de novo durante a revelação (ex.: alguém desiste e `#talvezFechar` vê os outros já
+    // responderam) reagenda o mesmo `seguinte` — reinicia a contagem, não é bonito mas é inofensivo.
+    this._fecho = this.relogio.agendar(() => {
+      this._fecho = null;
+      if (this.terminada) return;
+      if (seguinte < this.perguntas.length) this.#abrir(seguinte);
+      else this.#terminar({ walkover: false });
+    }, REVELACAO_RESPOSTA_MS);
   }
 
   /**

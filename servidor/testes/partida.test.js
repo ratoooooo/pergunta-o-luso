@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { Partida, REVELACAO_MS, CARENCIA_RECONEXAO_MS } from '../src/partida.js';
+import { Partida, REVELACAO_MS, REVELACAO_RESPOSTA_MS, CARENCIA_RECONEXAO_MS } from '../src/partida.js';
 import { DURACAO_BASE_MS } from '../src/pontuacao.js';
 import { relogioFalso, perguntasDeTeste } from './ajuda.js';
 
@@ -63,12 +63,14 @@ test('é o servidor que decide certo/errado e quanto vale', () => {
 });
 
 test('a sequência acumula e reinicia com um erro', () => {
-  const { partida, ultima } = montar({ nPerguntas: 3 });
+  const { partida, relogio, ultima } = montar({ nPerguntas: 3 });
   responder(partida, 'ana', 0, 'certa-0');
   responder(partida, 'bea', 0, 'errada-0');
+  relogio.avancar(REVELACAO_RESPOSTA_MS);       // espera a revelação antes da pergunta abrir
   responder(partida, 'ana', 1, 'certa-1');
   assert.equal(ultima('ana', 'resposta').total, 150 + 200, 'a 2.ª certa devia trazer +50 de sequência');
   responder(partida, 'bea', 1, 'errada-1');
+  relogio.avancar(REVELACAO_RESPOSTA_MS);
   responder(partida, 'ana', 2, 'errada-2');
   assert.equal(ultima('ana', 'resposta').total, 350, 'errar não tira pontos no Clássico');
 });
@@ -81,7 +83,8 @@ test('recusa: pergunta errada, resposta repetida, opção inventada, fora do tem
   assert.deepEqual(responder(partida, 'ana', 0, 'certa-0'), { erro: 'ja_respondeu' });
   assert.deepEqual(responder(partida, 'zé', 0, 'certa-0'), { erro: 'fora_da_partida' });
 
-  relogio.avancar(DURACAO_BASE_MS + 1);         // a pergunta fechou e abriu a seguinte
+  // bea nunca respondeu — a pergunta fecha por tempo esgotado, e só depois da revelação abre a seguinte
+  relogio.avancar(DURACAO_BASE_MS + 1 + REVELACAO_RESPOSTA_MS);
   assert.deepEqual(responder(partida, 'bea', 0, 'certa-0'), { erro: 'pergunta_errada' });
 });
 
@@ -98,20 +101,23 @@ test('mentir no instante da resposta só devolve o rtt real, não mais', () => {
 test('quem não responde leva tempo esgotado, e a partida avança na mesma', () => {
   const { partida, relogio, ultima, difundidas } = montar({ nPerguntas: 2 });
   responder(partida, 'ana', 0, 'certa-0');
-  relogio.avancar(DURACAO_BASE_MS);
+  relogio.avancar(DURACAO_BASE_MS + REVELACAO_RESPOSTA_MS);
   assert.equal(difundidas.filter((m) => m.t === 'pergunta').length, 2, 'não passou à pergunta seguinte');
   responder(partida, 'ana', 1, 'certa-1');
   responder(partida, 'bea', 1, 'certa-1');
+  relogio.avancar(REVELACAO_RESPOSTA_MS);
   assert.equal(ultima('bea', 'podio').meuScore, 150, 'a bea só devia ter a 2.ª pergunta');
 });
 
-test('respondendo todos, avança já — não espera pelo cronómetro', () => {
-  const { partida, difundidas } = montar({ nPerguntas: 2 });
+test('respondendo todos, avança depois da revelação — não espera pelo cronómetro', () => {
+  const { partida, relogio, difundidas } = montar({ nPerguntas: 2 });
   assert.equal(difundidas.filter((m) => m.t === 'pergunta').length, 1);
   responder(partida, 'ana', 0, 'certa-0');
   assert.equal(difundidas.filter((m) => m.t === 'pergunta').length, 1, 'avançou com um só a responder');
   responder(partida, 'bea', 0, 'errada-0');
-  assert.equal(difundidas.filter((m) => m.t === 'pergunta').length, 2);
+  assert.equal(difundidas.filter((m) => m.t === 'pergunta').length, 1, 'ainda em revelação, não abriu logo');
+  relogio.avancar(REVELACAO_RESPOSTA_MS);
+  assert.equal(difundidas.filter((m) => m.t === 'pergunta').length, 2, 'passada a revelação, abriu — sem esperar pelo cronómetro dos 15 s');
 });
 
 test('Caótico: Tudo ou Nada penaliza, e o total nunca desce abaixo de zero', () => {
@@ -120,7 +126,7 @@ test('Caótico: Tudo ou Nada penaliza, e o total nunca desce abaixo de zero', ()
   for (const i of [0, 1, 2]) {
     responder(partida, 'ana', i, `errada-${i}`);
     responder(partida, 'bea', i, `errada-${i}`);
-    relogio.avancar(1);
+    relogio.avancar(REVELACAO_RESPOSTA_MS);
   }
   assert.equal(ultima('ana', 'resposta').total, 0);
   responder(partida, 'ana', 3, 'errada-3');
@@ -166,6 +172,7 @@ test('empate não é vitória — em 1x1 e em 2x2', () => {
   const solo = montar({ nPerguntas: 1 });
   responder(solo.partida, 'ana', 0, 'certa-0');
   responder(solo.partida, 'bea', 0, 'certa-0');
+  solo.relogio.avancar(REVELACAO_RESPOSTA_MS);
   assert.deepEqual(solo.terminos[0].vencedores, []);
   assert.equal(solo.ultima('ana', 'podio').ganhei, false);
 
@@ -174,6 +181,7 @@ test('empate não é vitória — em 1x1 e em 2x2', () => {
   responder(duplas.partida, 'b1', 0, 'certa-0');
   responder(duplas.partida, 'a2', 0, 'errada-0');
   responder(duplas.partida, 'b2', 0, 'errada-0');
+  duplas.relogio.avancar(REVELACAO_RESPOSTA_MS);
   assert.deepEqual(duplas.terminos[0].vencedores, []);
 });
 
@@ -212,8 +220,10 @@ test('o relatório final leva o que o perfil precisa, por jogador', () => {
   const { partida, terminos, relogio } = montar({ nPerguntas: 2 });
   responder(partida, 'ana', 0, 'certa-0');
   responder(partida, 'bea', 0, 'errada-0');
+  relogio.avancar(REVELACAO_RESPOSTA_MS);
   responder(partida, 'ana', 1, 'certa-1');
   responder(partida, 'bea', 1, 'certa-1');
+  relogio.avancar(REVELACAO_RESPOSTA_MS);
 
   const r = terminos[0];
   assert.equal(r.formato, '1x1');
@@ -229,9 +239,10 @@ test('o relatório final leva o que o perfil precisa, por jogador', () => {
 });
 
 test('depois do pódio, nada mais mexe no resultado', () => {
-  const { partida, terminos } = montar({ nPerguntas: 1 });
+  const { partida, relogio, terminos } = montar({ nPerguntas: 1 });
   responder(partida, 'ana', 0, 'certa-0');
   responder(partida, 'bea', 0, 'errada-0');
+  relogio.avancar(REVELACAO_RESPOSTA_MS);
   assert.equal(terminos.length, 1);
   assert.deepEqual(responder(partida, 'ana', 0, 'certa-0'), { erro: 'fora_da_partida' });
   partida.desistiu('bea');

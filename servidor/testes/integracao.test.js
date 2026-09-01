@@ -62,7 +62,9 @@ async function montarServidor({ quiz = null } = {}) {
        * Aceita vários tipos de propósito: com um `Promise.race` de duas esperas, a que perde
        * fica registada e engole a mensagem seguinte — foi assim que este teste bloqueou.
        */
-      espera(tipos, ms = 3000) {
+      // Margem acima de `REVELACAO_RESPOSTA_MS` (3 s) — a pergunta seguinte ou o pódio só chegam
+      // depois desse atraso de revelação, por isso 3000 ms de folga aqui corria à justa com ele.
+      espera(tipos, ms = 5000) {
         const lista = Array.isArray(tipos) ? tipos : [tipos];
         const i = buffer.findIndex((m) => lista.includes(m.t));
         if (i >= 0) return Promise.resolve(buffer.splice(i, 1)[0]);
