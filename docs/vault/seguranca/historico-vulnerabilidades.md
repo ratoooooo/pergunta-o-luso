@@ -121,5 +121,61 @@ por `[não documentada aqui por segurança]`) e as contas desativadas no Firebas
 a CLI do Firebase não tem `auth:delete` e a via administrativa exigia extrair o refresh token do
 config store, o que foi recusado por parecer exfiltração de credenciais. São 4 cliques na consola.
 
+---
+
+*Os achados seguintes são do pentest de 31 ago 2026 (ronda 2).*
+
+## 9. Leitura pública de `/presenca`
+
+`.read: true` — qualquer pessoa com o URL da RTDB via os UIDs online naquele instante, sem
+credencial nenhuma. Verificado ao vivo: um GET sem token devolveu o UID de um jogador real.
+
+**Corrigido:** `.read: "auth != null"`. Todos os consumidores reais passam pelo AuthGate antes de
+ver o ecrã que mostra este dado.
+
+## 10. `/jogadores` sem tectos numéricos
+
+Os `.validate` de campos como `xpTotal`, `pontos`, `jogos`, `vitorias`, etc. só exigiam
+`newData.isNumber()` — sem chão (`>= 0`) nem tecto. Verificado ao vivo: uma conta de teste
+escreveu `xpTotal: 999 999 999 999`, `pontos: 123 456 789 012` e `jogos: -9999` — aceites
+sem erro. A conta ficou no topo do ranking.
+
+**Corrigido:** todos os campos numéricos de `/jogadores/$uid` e sub-nós (`modos`, `categorias`,
+`multiVitorias`, `multiJogos`) têm agora `>= 0` e um tecto generoso que bloqueia valores
+impossíveis sem estorvar anos de jogo real.
+
+## 11. Dono de `/scores/$scoreId` podia alterar score e formato pós-jogo
+
+O `.write` permitia ao dono de um registo existente qualquer operação (PATCH, PUT), não só apagar.
+**Confirmado ao vivo com um jogo 1x1 real:**
+
+1. Duas contas jogaram uma partida 1x1 no servidor de produção.
+2. O dono fez `PATCH {"score": 5999}` no seu registo `formato: "1x1"` — **aceite**. O score real
+   era 365.
+3. O dono fez `PUT` com `formato: "solo"` e `score: 6000` — **aceite**. Recategorizou o registo
+   de multijogador como solo, apagando a evidência de que era um 1x1.
+
+**Corrigido:** a regra agora permite exactamente três caminhos: (1) `pol-servidor` pode tudo,
+(2) criar um registo novo com o próprio uid, (3) **apagar** um registo que já é meu. Alterar
+(`data.exists() && newData.exists()`) por um jogador é bloqueado.
+
+## 12. Convites — resposta reescreve campos imutáveis
+
+`convites/$uid/enviados/$outro` deixava o convidado (`$outro`) reescrever **todos** os campos do
+convite (nome, salaId, formato, categoria, modo, ts) desde que tivesse um `recebidos` pendente.
+O convidado só deveria poder mudar `estado` (de `pendente` para `aceite`/`recusado`).
+
+**Corrigido:** quando `$outro` escreve com `newData`, os 6 campos imutáveis têm de manter o
+valor que já está na base de dados. Só `estado` pode mudar.
+
+## 13. `android:allowBackup="true"` no AndroidManifest
+
+O backup automático do Android incluía o armazenamento local da app, que contém tokens de sessão
+do Firebase Auth. Um `adb backup` seguido de `adb restore` noutro dispositivo poderia reutilizar
+a sessão sem re-autenticação.
+
+**Corrigido:** `android:allowBackup="false"`. Nenhuma funcionalidade da app depende de restauro
+de backup.
+
 Ver também: [rules](../arquitetura/rules.md) ·
 [limitacoes-conhecidas](limitacoes-conhecidas.md) · [segredos-e-assinatura](segredos-e-assinatura.md)

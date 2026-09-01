@@ -26,25 +26,19 @@
       ".read": "auth != null",
       ".indexOn": "score",
       "$scoreId": {
-        /* Fase 24: era `auth != null` — qualquer autenticado apagava o registo de qualquer
-           outro jogador (o `.validate` não corre em apagamentos, por isso não travava nada).
-           Agora só duas escritas passam:
-             - CRIAR um registo novo que traga o próprio uid (`!data.exists()`);
-             - alterar ou APAGAR um registo que já é meu (`data.child('uid')` === auth.uid).
-           A eliminação de conta (Fase 23) continua a funcionar: só apaga os próprios registos.
-           Os 12 registos legados sem `uid` deixam de ser apagáveis por ninguém — não são
-           atribuíveis a nenhuma conta, por isso ficam só de leitura. */
-        /* Fase 2 do servidor da partida: acrescenta-se a via do `pol-servidor` À FRENTE da
-           condição do jogador, que fica intacta — a segunda metade é palavra por palavra a de
-           antes, e é ela que continua a permitir a eliminação de conta apagar os próprios
-           registos.
+        /* Pentest ago-2026: a regra anterior permitia ao dono ALTERAR campos de um registo
+           existente (PATCH score, PUT com formato mudado). Confirmado ao vivo: score de 1x1
+           alterado de 365 para 5999 por PATCH, e formato mudado de '1x1' para 'solo' por PUT.
 
-           `pol-servidor` não é o admin do Firebase: é a identidade que o servidor assume com
-           `databaseAuthVariableOverride` (ver servidor/src/firebase.js), e por isso passa por
-           estas rules como qualquer outro autenticado. Precisa de duas coisas que um jogador
-           não pode ter — gravar um registo com o uid de OUTRA pessoa (é ele que apura o
-           resultado de todos os jogadores da partida) e usar um `formato` de multijogador. */
-        ".write": "auth != null && (auth.uid === 'pol-servidor' || ((!data.exists() && newData.child('uid').val() === auth.uid) || (data.exists() && data.child('uid').val() === auth.uid)))",
+           A regra agora permite exactamente três caminhos:
+             1. `pol-servidor` — pode tudo (cria registos de todos os jogadores da partida).
+             2. CRIAR um registo novo que traga o próprio uid (`!data.exists()`).
+             3. APAGAR um registo que já é meu (`!newData.exists()`) — para eliminação de conta.
+           ALTERAR (data.exists() && newData.exists()) por um jogador é BLOQUEADO.
+
+           Os 12 registos legados sem `uid` continuam só de leitura: não são atribuíveis a
+           nenhuma conta, por isso ninguém os consegue apagar — comportamento intencional. */
+        ".write": "auth != null && (auth.uid === 'pol-servidor' || (!data.exists() && newData.child('uid').val() === auth.uid) || (data.exists() && data.child('uid').val() === auth.uid && !newData.exists()))",
         ".validate": "newData.hasChildren(['uid', 'modo', 'categoria', 'score', 'correctCount', 'total', 'timestamp'])",
         "uid": { ".validate": "auth != null && (newData.val() === auth.uid || auth.uid === 'pol-servidor')" },
         "modo": { ".validate": "newData.isString()" },
@@ -78,16 +72,20 @@
         "nome": { ".validate": "newData.isString() && newData.val().length <= 40" },
         "nomeBusca": { ".validate": "newData.isString() && newData.val().length <= 40" },
         "atualizadoEm": { ".validate": "newData.isNumber()" },
-        "jogos": { ".validate": "newData.isNumber()" },
-        "pontos": { ".validate": "newData.isNumber()" },
-        "respostasCertas": { ".validate": "newData.isNumber()" },
-        "respostasTotais": { ".validate": "newData.isNumber()" },
-        "vitorias": { ".validate": "newData.isNumber()" },
-        "recorde": { ".validate": "newData.isNumber()" },
-        "maxStreak": { ".validate": "newData.isNumber()" },
-        "xpTotal": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        /* Pentest ago-2026: sem tectos, qualquer autenticado punha xpTotal em 999 999 999 999
+           e aparecia no topo do ranking. Os tectos são generosos (cobrem anos de jogo intenso)
+           mas bloqueiam valores impossíveis. `>= 0` impede negativos (confirmado: jogos=-9999
+           passava antes desta correcção). */
+        "jogos": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
+        "pontos": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000000" },
+        "respostasCertas": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
+        "respostasTotais": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
+        "vitorias": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
+        "recorde": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
+        "maxStreak": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000" },
+        "xpTotal": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
         "avatar": { ".validate": "newData.isString()" },
-        "partidasPerfeitas": { ".validate": "newData.isNumber()" },
+        "partidasPerfeitas": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
 
         /* Fase 33 — sequência de DIAS seguidos a jogar. Não confundir com `maxStreak`, que é a
            melhor sequência de respostas certas dentro de uma partida.
@@ -104,26 +102,26 @@
         "protecaoUsadaEm": { ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)" },
 
         "multiVitorias": {
-          "$fmt": { ".validate": "newData.isNumber()" }
+          "$fmt": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" }
         },
         "multiJogos": {
-          "$fmt": { ".validate": "newData.isNumber()" }
+          "$fmt": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" }
         },
         "categorias": {
           "$cat": {
-            "jogos": { ".validate": "newData.isNumber()" },
-            "vitorias": { ".validate": "newData.isNumber()" },
+            "jogos": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
+            "vitorias": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
             "$other": { ".validate": false }
           }
         },
         "modos": {
           "$modo": {
-            "jogos": { ".validate": "newData.isNumber()" },
-            "pontos": { ".validate": "newData.isNumber()" },
-            "respostasCertas": { ".validate": "newData.isNumber()" },
-            "respostasTotais": { ".validate": "newData.isNumber()" },
-            "vitorias": { ".validate": "newData.isNumber()" },
-            "recorde": { ".validate": "newData.isNumber()" },
+            "jogos": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
+            "pontos": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000000" },
+            "respostasCertas": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
+            "respostasTotais": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
+            "vitorias": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
+            "recorde": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
             "$other": { ".validate": false }
           }
         },
@@ -177,8 +175,13 @@
         "enviados": {
           "$outro": {
             /* The challenger owns this entry. The invited player may only answer it (set
-               `estado`) while the matching inbox entry still exists, or delete it. */
-            ".write": "auth != null && (auth.uid === $uid || (auth.uid === $outro && (!newData.exists() || root.child('convites').child($outro).child('recebidos').child($uid).exists())))",
+               `estado`) while the matching inbox entry still exists, or delete it.
+
+               Pentest ago-2026: a regra anterior deixava $outro reescrever TODOS os campos
+               (nome, salaId, formato…) desde que tivesse um `recebidos` pendente. Agora,
+               quando $outro escreve com newData, os campos imutáveis têm de manter o valor
+               que já está na base de dados — $outro só pode mudar `estado`. */
+            ".write": "auth != null && (auth.uid === $uid || (auth.uid === $outro && (!newData.exists() || (root.child('convites').child($outro).child('recebidos').child($uid).exists() && newData.child('nome').val() === data.child('nome').val() && newData.child('formato').val() === data.child('formato').val() && newData.child('categoria').val() === data.child('categoria').val() && newData.child('modo').val() === data.child('modo').val() && newData.child('salaId').val() === data.child('salaId').val() && newData.child('ts').val() === data.child('ts').val()))))",
             ".validate": "newData.hasChildren(['nome', 'formato', 'categoria', 'modo', 'salaId', 'ts', 'estado'])",
             "nome": { ".validate": "newData.isString()" },
             "formato": { ".validate": "newData.isString()" },
@@ -209,9 +212,13 @@
       }
     },
     "presenca": {
-      /* Online-presence counter for "A JOGAR AGORA". Public read (only the child count is
-         used); each client may write only its own boolean, auto-removed via onDisconnect. */
-      ".read": true,
+      /* Online-presence counter for "A JOGAR AGORA". Every real reader is already authenticated
+         (AuthGate runs before any screen that shows this), and there is no public/unauthenticated
+         consumer (checked: no gh-pages widget, nothing outside the app reads this path) — so a
+         fully public `.read: true` only gave away, to anyone on the internet with zero credentials,
+         the live set of uids currently online. Pentest 2026-08-30: confirmed by an unauthenticated
+         GET dumping a real online uid. Tightened to match every other node in this file. */
+      ".read": "auth != null",
       "$uid": {
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "newData.isBoolean()"
