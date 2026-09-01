@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "O quadro \"O Fado\" (1910), que retrata um casal em ambiente boémio de Lisboa, é obra de que pintor português?",
+        "opcoes": [
+          "José Malhoa",
+          "Columbano Bordalo Pinheiro",
+          "Almada Negreiros",
+          "Amadeo de Souza-Cardoso"
+        ],
+        "respostaCorreta": "José Malhoa",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "O cante alentejano, canto coletivo a capella típico do Baixo Alentejo, foi inscrito em 2014 na lista da UNESCO como quê?",
+        "opcoes": [
+          "Património Cultural Imaterial da Humanidade",
+          "Património Mundial da Humanidade",
+          "Reserva da Biosfera",
+          "Monumento Nacional"
+        ],
+        "respostaCorreta": "Património Cultural Imaterial da Humanidade",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Que praia portuguesa ficou mundialmente famosa pelas ondas gigantes surfadas pelo havaiano Garrett McNamara?",
+        "opcoes": [
+          "Praia do Norte, Nazaré",
+          "Praia do Guincho",
+          "Praia de Carcavelos",
+          "Praia da Ericeira"
+        ],
+        "respostaCorreta": "Praia do Norte, Nazaré",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Como se chama o prémio atribuído anualmente em Portugal ao melhor marcador da Primeira Liga de futebol?",
+        "opcoes": [
+          "Bola de Prata",
+          "Bola de Ouro",
+          "Luva de Ouro",
+          "Chuteira de Ouro"
+        ],
+        "respostaCorreta": "Bola de Prata",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce na ilha Terceira, nos Açores?",
+        "opcoes": [
+          "Terceirense",
+          "Micaelense",
+          "Faialense",
+          "Picoense"
+        ],
+        "respostaCorreta": "Terceirense",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce na ilha de São Jorge, nos Açores?",
+        "opcoes": [
+          "Jorgense",
+          "Graciosense",
+          "Corvino",
+          "Florentino"
+        ],
+        "respostaCorreta": "Jorgense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "A fronteira entre Portugal e Espanha, uma das mais antigas do mundo ainda em vigor, remonta em grande parte a que tratado medieval de 1297?",
+        "opcoes": [
+          "Tratado de Alcanizes",
+          "Tratado de Tordesilhas",
+          "Tratado de Windsor",
+          "Tratado de Zamora"
+        ],
+        "respostaCorreta": "Tratado de Alcanizes",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "A Ponte 516 Arouca, uma das pontes suspensas pedonais mais longas do mundo, atravessa o rio Paiva em que concelho português?",
+        "opcoes": [
+          "Arouca",
+          "Castelo de Paiva",
+          "Cinfães",
+          "Resende"
+        ],
+        "respostaCorreta": "Arouca",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "As Linhas de Torres Vedras, construídas por ordem do general britânico Wellington durante as Invasões Napoleónicas, tinham como principal função proteger que cidade de um cerco francês?",
+        "opcoes": [
+          "Lisboa",
+          "Porto",
+          "Coimbra",
+          "Évora"
+        ],
+        "respostaCorreta": "Lisboa",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que canção de José \"Zeca\" Afonso foi transmitida pela Rádio Renascença na madrugada de 25 de abril de 1974, servindo de segundo sinal para o início do golpe militar?",
+        "opcoes": [
+          "Grândola, Vila Morena",
+          "E Depois do Adeus",
+          "Cantigas do Maio",
+          "Venham Mais Cinco"
+        ],
+        "respostaCorreta": "Grândola, Vila Morena",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
