@@ -52,7 +52,7 @@ fun FriendSearchScreen(
     onBack: () -> Unit
 ) {
     Column(Modifier.fillMaxSize().background(Cream).padding(horizontal = 24.dp).padding(top = 24.dp, bottom = 20.dp)) {
-        ScreenHeader(title = "Procurar jogadores", subtitle = "Pesquisa pelo nome", onBack = onBack)
+        ScreenHeader(title = "Procurar jogadores", onBack = onBack)
         Spacer(Modifier.size(18.dp))
 
         StickerTextField(

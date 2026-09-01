@@ -83,7 +83,6 @@ fun FormatScreen(
     ) {
         ScreenHeader(
             title = "Sozinho ou à batalha?",
-            subtitle = "Escolhe o formato de jogo",
             onBack = onBack,
             onInfo = { ajudaAberta = true }
         )

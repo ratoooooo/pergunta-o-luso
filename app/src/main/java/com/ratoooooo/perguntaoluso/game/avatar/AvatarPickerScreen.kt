@@ -46,7 +46,7 @@ fun AvatarPickerScreen(
     onBack: () -> Unit
 ) {
     Column(Modifier.fillMaxSize().background(Cream).padding(horizontal = 24.dp).padding(top = 24.dp)) {
-        ScreenHeader(title = "Escolhe o teu avatar", subtitle = "Símbolos de Portugal", onBack = onBack)
+        ScreenHeader(title = "Escolhe o teu avatar", onBack = onBack)
         Spacer(Modifier.size(18.dp))
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),

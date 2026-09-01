@@ -80,7 +80,6 @@ fun CategoryScreen(
     ) {
         ScreenHeader(
             title = "Que tema te apetece?",
-            subtitle = "Escolhe uma categoria para jogar",
             onBack = onBack,
             onInfo = { ajudaAberta = true }
         )

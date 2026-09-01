@@ -61,7 +61,6 @@ fun RegisterScreen(
     ) {
         ScreenHeader(
             title = "Cria a tua conta",
-            subtitle = if (isAnonymous) "Guarda o progresso que já fizeste!" else "Junta-te à batalha do conhecimento!",
             onBack = onBack
         )
 

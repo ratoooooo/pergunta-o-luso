@@ -55,6 +55,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ratoooooo.perguntaoluso.game.ScreenHeader
 import com.ratoooooo.perguntaoluso.ui.theme.AnswerPalette
@@ -204,7 +205,7 @@ private fun MatchedTeam(name: String, players: List<PlayerLive>, color: Color, m
         Text(name, style = MaterialTheme.typography.titleLarge, color = textColorFor(color))
         Spacer(Modifier.size(8.dp))
         players.forEach { p ->
-            Text(if (p.isMe) "${p.nome} (tu)" else p.nome, style = MaterialTheme.typography.bodyLarge, color = textColorFor(color), maxLines = 1)
+            Text(if (p.isMe) "${p.nome} (tu)" else p.nome, style = MaterialTheme.typography.bodyLarge, color = textColorFor(color), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -473,7 +474,7 @@ private fun SeatRow(p: PlayerLive?, emptyLabel: String) {
             }
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(if (p.isMe) "${p.nome} (tu)" else p.nome, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = Ink, maxLines = 1)
+                Text(if (p.isMe) "${p.nome} (tu)" else p.nome, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 // "Na sala", não "Pronto": não há ready-up nenhum nesta app — a partida
                 // arranca sozinha quando a sala enche. Dizer "Pronto" sugeria um passo
                 // que o jogador teria de dar e que não existe.
@@ -542,7 +543,7 @@ private fun CompactSeat(p: PlayerLive?) {
                 .padding(vertical = 10.dp, horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(if (p.isMe) "${p.nome} (tu)" else p.nome, style = MaterialTheme.typography.bodyLarge, color = Ink, maxLines = 1, modifier = Modifier.weight(1f))
+            Text(if (p.isMe) "${p.nome} (tu)" else p.nome, style = MaterialTheme.typography.bodyLarge, color = Ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             Spacer(Modifier.size(6.dp))
             // Um único significado: verde = este lugar está ocupado.
             Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Teal, modifier = Modifier.size(18.dp))
@@ -647,7 +648,7 @@ private fun Scoreboard(state: MultiUiState) {
                         .padding(vertical = 8.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(if (p.isMe) "Tu" else p.nome.take(6), style = MaterialTheme.typography.bodyLarge, color = Ink, maxLines = 1)
+                    Text(if (p.isMe) "Tu" else p.nome.take(6), style = MaterialTheme.typography.bodyLarge, color = Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text("${p.score}", style = MaterialTheme.typography.labelLarge, color = Ink)
                 }
             }
@@ -661,7 +662,7 @@ private fun TeamPill(name: String, total: Int, mine: Boolean, color: Color, modi
         modifier.stickerBlock(fillColor = color, cornerRadius = 18.dp, shadowOffset = 4.dp).padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(if (mine) "$name (tu)" else name, style = MaterialTheme.typography.labelLarge, color = textColorFor(color), maxLines = 1)
+        Text(if (mine) "$name (tu)" else name, style = MaterialTheme.typography.labelLarge, color = textColorFor(color), maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text("$total", style = MaterialTheme.typography.titleLarge, color = textColorFor(color))
     }
 }
@@ -758,11 +759,11 @@ private fun TeamCard(t: TeamResult, modifier: Modifier = Modifier) {
             Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = Ink, modifier = Modifier.size(28.dp).scale(pulso))
             Spacer(Modifier.size(4.dp))
         }
-        Text(if (t.isMine) "${t.name} (tu)" else t.name, style = MaterialTheme.typography.labelLarge, color = textColorFor(color), maxLines = 1)
+        Text(if (t.isMine) "${t.name} (tu)" else t.name, style = MaterialTheme.typography.labelLarge, color = textColorFor(color), maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text("${t.total}", style = MaterialTheme.typography.headlineLarge, color = textColorFor(color))
         Spacer(Modifier.size(6.dp))
         t.players.forEach { (nome, sc) ->
-            Text("$nome · $sc", style = MaterialTheme.typography.bodyLarge, color = textColorFor(color), maxLines = 1)
+            Text("$nome · $sc", style = MaterialTheme.typography.bodyLarge, color = textColorFor(color), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -791,8 +792,11 @@ private fun RankRow(rank: Int, r: RankResult, index: Int) {
     ) {
         Text(
             "#$rank  ${if (r.isMe) "${r.nome} (tu)" else r.nome}${if (r.left) " — saiu" else ""}",
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = textColorFor(color), maxLines = 1
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = textColorFor(color), maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
         )
+        Spacer(Modifier.size(8.dp))
         Text("${r.score}", style = MaterialTheme.typography.labelLarge, color = textColorFor(color))
     }
 }

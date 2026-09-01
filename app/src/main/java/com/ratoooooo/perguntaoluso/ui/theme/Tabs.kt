@@ -122,6 +122,7 @@ fun UnderlineTabs(
                     ),
                     color = if (activo) Purple else Ink,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
                 )
                 Spacer(Modifier.size(5.dp))

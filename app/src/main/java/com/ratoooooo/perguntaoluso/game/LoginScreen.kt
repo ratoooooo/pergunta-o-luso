@@ -78,7 +78,7 @@ fun LoginScreen(
 
         Spacer(Modifier.size(22.dp))
 
-        ScreenHeader(title = "Entrar", subtitle = "Continua a tua batalha de conhecimento.", onBack = onBack)
+        ScreenHeader(title = "Entrar", onBack = onBack)
 
         Spacer(Modifier.size(28.dp))
 

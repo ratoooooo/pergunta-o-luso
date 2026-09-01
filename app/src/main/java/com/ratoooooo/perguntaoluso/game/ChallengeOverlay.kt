@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ratoooooo.perguntaoluso.data.Convite
 import com.ratoooooo.perguntaoluso.ui.theme.Coral
@@ -78,6 +79,6 @@ private fun Pill(text: String, color: Color) {
         Modifier.stickerBlock(fillColor = color, cornerRadius = 14.dp, shadowOffset = 3.dp, borderWidth = 2.dp)
             .padding(horizontal = 14.dp, vertical = 7.dp)
     ) {
-        Text(text, style = MaterialTheme.typography.labelLarge, color = textColorFor(color), maxLines = 1)
+        Text(text, style = MaterialTheme.typography.labelLarge, color = textColorFor(color), maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

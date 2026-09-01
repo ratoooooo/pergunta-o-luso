@@ -38,11 +38,8 @@ Consolidado das listas "Por fazer" espalhadas pelas fases. Ordenado por o que bl
 10. ~~**Fase 5 do servidor da partida: o `saveScore` do multijogador já foi removido.**~~
     Resolvido. O `ScoreRepository` continua intocado e o solo continua a usá-lo; no multijogador
     quem grava `/scores` é o servidor.
-11. **Contagem decrescente do desafio no `FriendsScreen` ficou inalcançável.** `desafioPara` e
-    `desafioSegundos` alimentam o cartão "À espera de X… expira em Ns", que existia porque o
-    desafiante ficava no ecrã Amigos. Com o servidor ele entra já na sala de espera, por isso
-    esse cartão nunca aparece. Não foi removido na fase 6 para não mexer na área de amigos —
-    é limpeza de UI, sem urgência.
+11. ~~**Contagem decrescente do desafio no `FriendsScreen` ficou inalcançável.**~~ Removido
+    o cartão inalcançável do `FriendsScreen.kt` a 31 ago 2026.
 
 ## Defeitos abertos
 

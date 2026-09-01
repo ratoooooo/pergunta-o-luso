@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ratoooooo.perguntaoluso.data.FriendRef
 import com.ratoooooo.perguntaoluso.data.FriendsState
@@ -75,21 +76,6 @@ fun FriendsScreen(
         StickerButton("PROCURAR JOGADORES", Icons.Rounded.PersonSearch, onSearch, fillColor = Gold, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.size(14.dp))
 
-        if (desafioPara != null) {
-            Row(
-                Modifier.fillMaxWidth().stickerBlock(fillColor = Purple, cornerRadius = 18.dp, shadowOffset = 4.dp)
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("À espera de ${desafioPara.nome}...", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = Cream, maxLines = 1)
-                    Text("O desafio expira em ${desafioSegundos}s", style = MaterialTheme.typography.labelLarge, color = Cream)
-                }
-                Spacer(Modifier.size(8.dp))
-                ActionCircle(Icons.Rounded.Close, "Cancelar desafio", Coral, onCancelChallenge)
-            }
-            Spacer(Modifier.size(14.dp))
-        }
 
         if (desafioAviso != null) {
             Row(
@@ -205,10 +191,19 @@ internal fun PlayerRow(
         )
         Spacer(Modifier.size(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(nome, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = Ink, maxLines = 1)
+            Text(
+                nome,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                color = Ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
             Text(
                 subtitleOverride ?: "Nível ${profile?.nivel ?: 1}",
-                style = MaterialTheme.typography.labelLarge, color = Ink.copy(alpha = 0.7f), maxLines = 1
+                style = MaterialTheme.typography.labelLarge,
+                color = Ink.copy(alpha = 0.7f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
         Spacer(Modifier.size(8.dp))

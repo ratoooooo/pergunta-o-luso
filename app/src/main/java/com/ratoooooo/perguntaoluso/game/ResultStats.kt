@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ratoooooo.perguntaoluso.data.Progressao
 import com.ratoooooo.perguntaoluso.ui.theme.Cream
@@ -62,8 +63,8 @@ private fun StatTile(value: String, label: String, valueColor: Color, index: Int
             .padding(vertical = 14.dp, horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(value, style = MaterialTheme.typography.titleLarge, color = valueColor, maxLines = 1)
+        Text(value, style = MaterialTheme.typography.titleLarge, color = valueColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.size(2.dp))
-        Text(label, style = MaterialTheme.typography.bodyLarge, color = Ink, maxLines = 1, textAlign = TextAlign.Center)
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = Ink, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
     }
 }

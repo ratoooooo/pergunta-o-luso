@@ -1,5 +1,6 @@
 package com.ratoooooo.perguntaoluso.game
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,26 @@ import com.ratoooooo.perguntaoluso.ui.theme.Ink
 @Composable
 fun GameApp(viewModel: GameViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsState()
+
+    BackHandler(enabled = state.screen != GameScreen.START && state.screen != GameScreen.MULTI_MATCH && state.screen != GameScreen.QUESTION) {
+        when (state.screen) {
+            GameScreen.FORMAT_SELECT -> viewModel.backToStart()
+            GameScreen.CATEGORY_SELECT -> viewModel.goToFormatSelect()
+            GameScreen.MODE_SELECT -> viewModel.backToCategoryFromMode()
+            GameScreen.CUSTOM_CATEGORIES -> viewModel.backToStart()
+            GameScreen.HISTORY -> viewModel.backToStart()
+            GameScreen.PROFILE -> viewModel.backToStart()
+            GameScreen.AVATAR -> viewModel.goToProfile()
+            GameScreen.ACHIEVEMENTS -> viewModel.goToProfile()
+            GameScreen.FRIENDS -> viewModel.backToStart()
+            GameScreen.FRIEND_SEARCH -> viewModel.goToFriends()
+            GameScreen.LOGIN -> viewModel.backToStart()
+            GameScreen.REGISTER -> viewModel.goToLogin()
+            GameScreen.RANKING -> viewModel.backToStart()
+            GameScreen.PODIUM -> viewModel.backToStart()
+            else -> {}
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
     when {
@@ -160,7 +181,7 @@ fun GameApp(viewModel: GameViewModel = viewModel()) {
             questionCounts = state.categoryCounts,
             formato = state.pendingMultiFormat,
             onCategorySelected = viewModel::selectCategory,
-            onBack = viewModel::backToStart
+            onBack = viewModel::goToFormatSelect
         )
 
         state.screen == GameScreen.CUSTOM_CATEGORIES -> CustomCategoriesScreen(

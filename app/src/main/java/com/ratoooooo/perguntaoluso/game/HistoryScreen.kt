@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ratoooooo.perguntaoluso.data.ScoreEntry
 import com.ratoooooo.perguntaoluso.ui.theme.Ink
@@ -47,7 +48,7 @@ fun HistoryScreen(
         active = com.ratoooooo.perguntaoluso.ui.theme.NavTab.NONE,
         onHome = onHome, onRanking = onRanking, onFriends = onFriends, onProfile = onProfile
     ) {
-        ScreenHeader(title = "Histórico", subtitle = "As tuas últimas partidas", onBack = onBack)
+        ScreenHeader(title = "Histórico", onBack = onBack)
         Spacer(Modifier.size(18.dp))
 
         var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
@@ -98,11 +99,11 @@ private fun HistoryRow(e: ScoreEntry) {
             Text(
                 "[$fmtLabel] ${e.categoria.ifBlank { "—" }} · ${GameMode.displayNameForId(e.modo)}",
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = textColorFor(color), maxLines = 1
+                color = textColorFor(color), maxLines = 1, overflow = TextOverflow.Ellipsis
             )
             Text(
                 "${e.correctCount}/${e.total} certas · ${if (e.timestamp > 0) dateFmt.format(Date(e.timestamp)) else ""}",
-                style = MaterialTheme.typography.labelLarge, color = textColorFor(color), maxLines = 1
+                style = MaterialTheme.typography.labelLarge, color = textColorFor(color), maxLines = 1, overflow = TextOverflow.Ellipsis
             )
         }
         Spacer(Modifier.size(10.dp))

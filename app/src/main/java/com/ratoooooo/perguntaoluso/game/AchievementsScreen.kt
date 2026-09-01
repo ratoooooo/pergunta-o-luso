@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ratoooooo.perguntaoluso.data.Profile
 import com.ratoooooo.perguntaoluso.game.avatar.SymbolIcon
@@ -178,7 +179,8 @@ private fun AchievementCard(a: Achievement, p: Profile, index: Int) {
                     style = MaterialTheme.typography.bodyLarge.copy(fontSize = 13.sp, lineHeight = 16.sp),
                     color = LockedTint,
                     textAlign = TextAlign.Center,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(Modifier.size(5.dp))
                 val fracao by animateFloatAsState(

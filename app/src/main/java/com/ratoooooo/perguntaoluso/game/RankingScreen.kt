@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ratoooooo.perguntaoluso.data.ModeStats
 import com.ratoooooo.perguntaoluso.data.Profile
@@ -143,7 +144,6 @@ fun RankingScreen(
     ) {
         ScreenHeader(
             title = "Ranking",
-            subtitle = if (dimension == RankDimension.MODO) "Quem manda em cada modo" else "Quem manda em cada formato",
             onBack = onBack
         )
 
@@ -283,7 +283,8 @@ private fun RankingSection(
                         text = if (sou) "${profile.nomeVisivel} (tu)" else profile.nomeVisivel,
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                         color = textColorFor(rowColor),
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Spacer(Modifier.size(3.dp))
                     LevelPill(nivel = profile.nivel, patente = profile.patente.titulo)
