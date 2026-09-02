@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que cidade portuguesa se encontra o Palácio da Bolsa, célebre pelo seu Salão Árabe?",
+        "opcoes": [
+          "Porto",
+          "Lisboa",
+          "Coimbra",
+          "Braga"
+        ],
+        "respostaCorreta": "Porto",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "A Capela dos Ossos, revestida por ossos e caveiras humanas, situa-se em que cidade portuguesa?",
+        "opcoes": [
+          "Évora",
+          "Faro",
+          "Guimarães",
+          "Viseu"
+        ],
+        "respostaCorreta": "Évora",
+        "dificuldade": "facil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "O Museu CR7, dedicado à carreira de Cristiano Ronaldo, situa-se em que cidade portuguesa?",
+        "opcoes": [
+          "Funchal",
+          "Lisboa",
+          "Porto",
+          "Sintra"
+        ],
+        "respostaCorreta": "Funchal",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Em que modalidade Patrícia Mamona conquistou a medalha de prata olímpica, nos Jogos de Tóquio 2020?",
+        "opcoes": [
+          "Triplo salto",
+          "Salto em altura",
+          "Lançamento do dardo",
+          "Salto em comprimento"
+        ],
+        "respostaCorreta": "Triplo salto",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Fátima?",
+        "opcoes": [
+          "Fatimense",
+          "Ourenense",
+          "Tomarense",
+          "Leiriense"
+        ],
+        "respostaCorreta": "Fatimense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce na ilha das Flores, nos Açores?",
+        "opcoes": [
+          "Florentino",
+          "Corvino",
+          "Graciosense",
+          "Faialense"
+        ],
+        "respostaCorreta": "Florentino",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "A Fóia, ponto mais alto do Algarve, situa-se em que serra?",
+        "opcoes": [
+          "Serra de Monchique",
+          "Serra do Caldeirão",
+          "Serra de Espinhaço de Cão",
+          "Serra da Estrela"
+        ],
+        "respostaCorreta": "Serra de Monchique",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "O arquipélago das Desertas, junto à Madeira, é um habitat protegido de que espécie ameaçada?",
+        "opcoes": [
+          "Lobo-marinho (foca-monge)",
+          "Lince-ibérico",
+          "Águia-de-Bonelli",
+          "Lontra"
+        ],
+        "respostaCorreta": "Lobo-marinho (foca-monge)",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "A Convenção de Évoramonte, assinada em 1834, pôs fim a que conflito português?",
+        "opcoes": [
+          "Guerra Civil Portuguesa (Guerra dos Dois Irmãos)",
+          "Guerra Peninsular",
+          "Guerra da Restauração",
+          "Guerra Colonial"
+        ],
+        "respostaCorreta": "Guerra Civil Portuguesa (Guerra dos Dois Irmãos)",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "O Padrão dos Descobrimentos, em Lisboa, foi erguido em pedra, em 1960, para assinalar que efeméride?",
+        "opcoes": [
+          "Os 500 anos da morte do Infante D. Henrique",
+          "Os 500 anos do nascimento de D. Afonso Henriques",
+          "A Restauração da Independência",
+          "A Revolução dos Cravos"
+        ],
+        "respostaCorreta": "Os 500 anos da morte do Infante D. Henrique",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
