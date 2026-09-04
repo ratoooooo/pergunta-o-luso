@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "O Santuário do Bom Jesus do Monte, com a sua célebre escadaria barroca em ziguezague, situa-se em que cidade portuguesa?",
+        "opcoes": ["Braga", "Guimarães", "Viana do Castelo", "Chaves"],
+        "respostaCorreta": "Braga",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "O Convento dos Capuchos, também conhecido como Convento da Cortiça pelo revestimento das suas celas, situa-se em que vila portuguesa?",
+        "opcoes": ["Sintra", "Óbidos", "Mafra", "Sesimbra"],
+        "respostaCorreta": "Sintra",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "João Sousa, o primeiro tenista português a vencer um título de singulares no circuito ATP, conquistou esse troféu em 2013 em que cidade?",
+        "opcoes": ["Kuala Lumpur", "Xangai", "Tóquio", "Banguecoque"],
+        "respostaCorreta": "Kuala Lumpur",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o estádio de futebol com maior capacidade em Portugal, casa do Sport Lisboa e Benfica?",
+        "opcoes": ["Estádio da Luz", "Estádio do Dragão", "Estádio José Alvalade", "Estádio Municipal de Braga"],
+        "respostaCorreta": "Estádio da Luz",
+        "dificuldade": "facil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Ferreira do Zêzere?",
+        "opcoes": ["Ferreirense", "Zezerense", "Tomarense", "Abrantino"],
+        "respostaCorreta": "Ferreirense",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Oliveira do Bairro?",
+        "opcoes": ["Oliveirense", "Bairradino", "Aveirense", "Anadiense"],
+        "respostaCorreta": "Oliveirense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "As Salinas de Rio Maior, um caso único em Portugal por serem salinas de interior alimentadas por uma nascente de água salgada subterrânea, situam-se em que distrito?",
+        "opcoes": ["Santarém", "Leiria", "Lisboa", "Coimbra"],
+        "respostaCorreta": "Santarém",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "O Farol da Barra, com cerca de 62 metros de altura, é o farol mais alto de Portugal e situa-se em que cidade?",
+        "opcoes": ["Aveiro", "Peniche", "Sines", "Matosinhos"],
+        "respostaCorreta": "Aveiro",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "A Convenção de Sintra, assinada em 1808 após a derrota francesa na Batalha do Vimeiro, pôs fim a qual das invasões napoleónicas de Portugal?",
+        "opcoes": ["Primeira invasão francesa", "Segunda invasão francesa", "Terceira invasão francesa", "Quarta invasão francesa"],
+        "respostaCorreta": "Primeira invasão francesa",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Na Batalha de Toro (1476), D. Afonso V de Portugal foi derrotado por Fernando de Aragão durante a guerra de sucessão de que reino?",
+        "opcoes": ["Castela", "Aragão", "Navarra", "Leão"],
+        "respostaCorreta": "Castela",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
