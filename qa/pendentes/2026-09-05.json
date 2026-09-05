@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Como se designa o estilo arquitetónico português do século XVI, caracterizado por motivos decorativos marítimos e bem visível no Mosteiro dos Jerónimos?",
+        "opcoes": [
+          "Manuelino",
+          "Barroco",
+          "Pombalino",
+          "Gótico"
+        ],
+        "respostaCorreta": "Manuelino",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Como se designa o tradicional tapete de lã bordado, produzido na vila alentejana de Arraiolos desde o século XVI?",
+        "opcoes": [
+          "Tapete de Arraiolos",
+          "Manta de Burel",
+          "Bordado de Castelo Branco",
+          "Renda de Bilros"
+        ],
+        "respostaCorreta": "Tapete de Arraiolos",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Como se chama o prémio atribuído pelo jornal 'A Bola' ao melhor futebolista do campeonato português?",
+        "opcoes": [
+          "Bola de Prata",
+          "Bota de Ouro",
+          "Bola de Ouro",
+          "Luva de Ouro"
+        ],
+        "respostaCorreta": "Bola de Prata",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que guarda-redes português foi titular na conquista da Liga dos Campeões pelo FC Porto, em 2004, sob o comando de José Mourinho?",
+        "opcoes": [
+          "Vítor Baía",
+          "Nuno Espírito Santo",
+          "Quim",
+          "Beto"
+        ],
+        "respostaCorreta": "Vítor Baía",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Santa Maria da Feira?",
+        "opcoes": [
+          "Feirense",
+          "Feirano",
+          "Feirinho",
+          "Feirota"
+        ],
+        "respostaCorreta": "Feirense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem vem da região do Douro?",
+        "opcoes": [
+          "Duriense",
+          "Douroense",
+          "Dourense",
+          "Douriano"
+        ],
+        "respostaCorreta": "Duriense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "A Ponte 25 de Abril, que liga Lisboa a Almada sobre o rio Tejo, tinha antes da Revolução de 1974 que outro nome?",
+        "opcoes": [
+          "Ponte Salazar",
+          "Ponte da Ditadura",
+          "Ponte Nova do Tejo",
+          "Ponte do Ultramar"
+        ],
+        "respostaCorreta": "Ponte Salazar",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual é o rio que serve de fronteira natural entre Portugal e Espanha no extremo norte do país, dando nome à região do Minho?",
+        "opcoes": [
+          "Rio Minho",
+          "Rio Douro",
+          "Rio Lima",
+          "Rio Cávado"
+        ],
+        "respostaCorreta": "Rio Minho",
+        "dificuldade": "facil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano o Marquês de Pombal decretou a expulsão dos jesuítas de Portugal e dos seus domínios?",
+        "opcoes": [
+          "1759",
+          "1755",
+          "1640",
+          "1834"
+        ],
+        "respostaCorreta": "1759",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que rei português, apoiante do absolutismo, foi deposto após a Guerra Civil de 1828-1834, também conhecida como Guerras Liberais?",
+        "opcoes": [
+          "D. Miguel I",
+          "D. Pedro IV",
+          "D. João VI",
+          "D. Fernando II"
+        ],
+        "respostaCorreta": "D. Miguel I",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
