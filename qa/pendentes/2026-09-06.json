@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que ano foi o Cante Alentejano classificado pela UNESCO como Património Cultural Imaterial da Humanidade?",
+        "opcoes": [
+          "2014",
+          "2011",
+          "2016",
+          "2009"
+        ],
+        "respostaCorreta": "2014",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como é conhecido o tradicional pingente em filigrana de ouro, em forma de coração, associado ao traje típico da região de Viana do Castelo?",
+        "opcoes": [
+          "Coração de Viana",
+          "Brincos de Viana",
+          "Laço Minhoto",
+          "Coração de Ouro do Minho"
+        ],
+        "respostaCorreta": "Coração de Viana",
+        "dificuldade": "facil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que ano Portugal conquistou pela primeira vez a Liga das Nações da UEFA?",
+        "opcoes": [
+          "2019",
+          "2017",
+          "2021",
+          "2023"
+        ],
+        "respostaCorreta": "2019",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Em que edição dos Jogos Olímpicos Patrícia Mamona conquistou a medalha de prata no triplo salto?",
+        "opcoes": [
+          "Tóquio 2020",
+          "Rio 2016",
+          "Londres 2012",
+          "Paris 2024"
+        ],
+        "respostaCorreta": "Tóquio 2020",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se designam os naturais da região tradicional do Alentejo?",
+        "opcoes": [
+          "Alentejanos",
+          "Alentejinos",
+          "Alentejeiros",
+          "Alentejenses"
+        ],
+        "respostaCorreta": "Alentejanos",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Como se designam os naturais da região tradicional do Minho?",
+        "opcoes": [
+          "Minhotos",
+          "Minhenses",
+          "Minheiros",
+          "Minhóis"
+        ],
+        "respostaCorreta": "Minhotos",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Que ilha dos Açores é tradicionalmente conhecida como a \"Ilha Branca\", devido às suas casas caiadas e ao solo vulcânico claro?",
+        "opcoes": [
+          "Graciosa",
+          "Faial",
+          "Pico",
+          "Corvo"
+        ],
+        "respostaCorreta": "Graciosa",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que tratado, assinado em 1297 entre Portugal e Castela, fixou grande parte da fronteira terrestre luso-espanhola, considerada uma das mais antigas fronteiras estáveis da Europa?",
+        "opcoes": [
+          "Tratado de Alcanices",
+          "Tratado de Tordesilhas",
+          "Tratado de Zamora",
+          "Tratado de Badajoz"
+        ],
+        "respostaCorreta": "Tratado de Alcanices",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Como se designa a estrutura de madeira antissísmica, desenvolvida após o terramoto de 1755, usada nos edifícios da Baixa Pombalina de Lisboa?",
+        "opcoes": [
+          "Gaiola pombalina",
+          "Armação sísmica",
+          "Estrutura de ferro pombalina",
+          "Coluna antissísmica"
+        ],
+        "respostaCorreta": "Gaiola pombalina",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que ordem militar e religiosa, sediada em Tomar, sucedeu à Ordem do Templo em Portugal e financiou parte dos Descobrimentos?",
+        "opcoes": [
+          "Ordem de Cristo",
+          "Ordem de Avis",
+          "Ordem de Santiago",
+          "Ordem do Hospital"
+        ],
+        "respostaCorreta": "Ordem de Cristo",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
