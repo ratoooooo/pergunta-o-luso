@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Que museu de Lisboa alberga uma das maiores coleções do mundo de carruagens reais históricas?",
+        "opcoes": ["Museu Nacional dos Coches", "Museu Nacional de Arte Antiga", "Museu Calouste Gulbenkian", "Museu do Oriente"],
+        "respostaCorreta": "Museu Nacional dos Coches",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Que realizador português, natural do Porto, é considerado o cineasta mais longevo da história do cinema, tendo continuado a dirigir filmes depois dos 100 anos de idade?",
+        "opcoes": ["Manoel de Oliveira", "João César Monteiro", "Paulo Rocha", "Pedro Costa"],
+        "respostaCorreta": "Manoel de Oliveira",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Como é conhecida, pela sua alcunha, a seleção nacional portuguesa de râguebi?",
+        "opcoes": ["Os Lobos", "Os Navegadores", "Os Leões", "Os Dragões"],
+        "respostaCorreta": "Os Lobos",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Em que ano a seleção portuguesa feminina de futebol se qualificou, pela primeira vez na sua história, para um Campeonato do Mundo?",
+        "opcoes": ["2023", "2019", "2015", "2011"],
+        "respostaCorreta": "2023",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se designam os naturais da região histórica da Beira, em Portugal?",
+        "opcoes": ["Beirões", "Minhotos", "Estremenhos", "Ribatejanos"],
+        "respostaCorreta": "Beirões",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Como se designam os naturais da antiga província histórica da Estremadura, onde se insere Lisboa?",
+        "opcoes": ["Estremenhos", "Ribatejanos", "Alentejanos", "Beirões"],
+        "respostaCorreta": "Estremenhos",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "O Cabo Carvoeiro, com as suas arribas calcárias e farol, é um ponto emblemático de que cidade portuguesa, ponto de partida habitual para o arquipélago das Berlengas?",
+        "opcoes": ["Peniche", "Nazaré", "Ericeira", "Sesimbra"],
+        "respostaCorreta": "Peniche",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "O Parque Natural do Alvão, o mais pequeno parque natural de Portugal continental, situa-se principalmente em que distrito?",
+        "opcoes": ["Vila Real", "Bragança", "Viseu", "Porto"],
+        "respostaCorreta": "Vila Real",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Que navegador português foi o primeiro europeu a chegar à foz do rio Congo, em 1482, durante o reinado de D. João II?",
+        "opcoes": ["Diogo Cão", "Bartolomeu Dias", "Vasco da Gama", "Gil Eanes"],
+        "respostaCorreta": "Diogo Cão",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como ficou conhecido o movimento de oficiais das Forças Armadas portuguesas que organizou o golpe militar de 25 de abril de 1974?",
+        "opcoes": ["Movimento das Forças Armadas (MFA)", "Partido Comunista Português (PCP)", "Junta de Salvação Nacional", "Movimento Popular de Libertação"],
+        "respostaCorreta": "Movimento das Forças Armadas (MFA)",
+        "dificuldade": "facil"
+      }
+    ]
+  }
+}
