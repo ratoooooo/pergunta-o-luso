@@ -1,0 +1,24 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {"pergunta": "Qual é a alcunha pela qual a fadista Amália Rodrigues ficou mundialmente conhecida?", "opcoes": ["Rainha do Fado", "Diva da Guitarra", "Voz de Portugal", "Senhora de Alfama"], "respostaCorreta": "Rainha do Fado", "dificuldade": "facil"},
+      {"pergunta": "Como se chama o prato tradicional português feito com bacalhau desfiado, batata frita em palha, ovos mexidos e azeitonas?", "opcoes": ["Bacalhau à Brás", "Bacalhau à Gomes de Sá", "Bacalhau com Natas", "Bacalhau à Lagareiro"], "respostaCorreta": "Bacalhau à Brás", "dificuldade": "medio"}
+    ],
+    "Desporto": [
+      {"pergunta": "Quantos golos marcou Eusébio no Campeonato do Mundo de 1966, sagrando-se o melhor marcador do torneio?", "opcoes": ["9", "6", "7", "11"], "respostaCorreta": "9", "dificuldade": "medio"},
+      {"pergunta": "Quem foi a primeira mulher portuguesa a conquistar uma medalha de ouro olímpica?", "opcoes": ["Rosa Mota", "Vanessa Fernandes", "Naide Gomes", "Irene Rocha"], "respostaCorreta": "Rosa Mota", "dificuldade": "medio"}
+    ],
+    "Gentílicos": [
+      {"pergunta": "Qual é o gentílico alternativo de quem nasce em Setúbal, usado a par de \"setubalense\"?", "opcoes": ["Sadino", "Sadense", "Setubalino", "Sadeiro"], "respostaCorreta": "Sadino", "dificuldade": "dificil"},
+      {"pergunta": "Como se designa tradicionalmente quem é natural da zona rural em torno de Lisboa, como Mafra ou Sintra?", "opcoes": ["Saloio", "Ribatejano", "Estremenho", "Alfacinha"], "respostaCorreta": "Saloio", "dificuldade": "medio"}
+    ],
+    "Geografia": [
+      {"pergunta": "Qual é o rio mais longo que nasce e desagua inteiramente em território português, sem atravessar Espanha?", "opcoes": ["Rio Mondego", "Rio Tejo", "Rio Douro", "Rio Vouga"], "respostaCorreta": "Rio Mondego", "dificuldade": "medio"},
+      {"pergunta": "Qual é o ponto mais a sul de Portugal continental?", "opcoes": ["Cabo de Santa Maria", "Cabo de São Vicente", "Cabo da Roca", "Ponta de Sagres"], "respostaCorreta": "Cabo de Santa Maria", "dificuldade": "dificil"}
+    ],
+    "História": [
+      {"pergunta": "Em que ano foi assinado o Tratado de Tordesilhas entre Portugal e Castela?", "opcoes": ["1494", "1481", "1500", "1479"], "respostaCorreta": "1494", "dificuldade": "medio"},
+      {"pergunta": "Que estadista português ficou responsável pela reconstrução de Lisboa após o terramoto de 1755?", "opcoes": ["Marquês de Pombal", "Duque de Saldanha", "Marquês de Sá da Bandeira", "Conde de Óbidos"], "respostaCorreta": "Marquês de Pombal", "dificuldade": "facil"}
+    ]
+  }
+}
