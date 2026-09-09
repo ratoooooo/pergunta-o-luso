@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Que peça de artesanato tradicional, feita à mão com bilros, é uma das mais conhecidas da cidade de Peniche?",
+        "opcoes": [
+          "Renda de bilros",
+          "Bordado de Viana",
+          "Filigrana",
+          "Olaria de Barcelos"
+        ],
+        "respostaCorreta": "Renda de bilros",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que cidade portuguesa se situa o Coliseu dos Recreios, uma das mais importantes salas de espetáculos do país?",
+        "opcoes": [
+          "Lisboa",
+          "Porto",
+          "Coimbra",
+          "Braga"
+        ],
+        "respostaCorreta": "Lisboa",
+        "dificuldade": "facil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "A tradicional Meia Maratona de Lisboa atravessa que ponte icónica sobre o rio Tejo?",
+        "opcoes": [
+          "Ponte 25 de Abril",
+          "Ponte Vasco da Gama",
+          "Ponte de Dom Luís I",
+          "Ponte Maria Pia"
+        ],
+        "respostaCorreta": "Ponte 25 de Abril",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que atleta portuguesa conquistou a medalha de ouro nos 10.000 metros nos Jogos Olímpicos de Atlanta, em 1996?",
+        "opcoes": [
+          "Fernanda Ribeiro",
+          "Rosa Mota",
+          "Naide Gomes",
+          "Vanessa Fernandes"
+        ],
+        "respostaCorreta": "Fernanda Ribeiro",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce na Ericeira?",
+        "opcoes": [
+          "Ericeirense",
+          "Ericeirano",
+          "Ericeirês",
+          "Ericeirinho"
+        ],
+        "respostaCorreta": "Ericeirense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama quem nasce na Costa da Caparica?",
+        "opcoes": [
+          "Caparicense",
+          "Caparicano",
+          "Capariquense",
+          "Caparicês"
+        ],
+        "respostaCorreta": "Caparicense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "A Estrada Nacional 2 (EN2), uma das estradas mais longas da Europa a atravessar um só país, liga a cidade de Chaves a que cidade no extremo sul de Portugal?",
+        "opcoes": [
+          "Faro",
+          "Lagos",
+          "Tavira",
+          "Vila Real de Santo António"
+        ],
+        "respostaCorreta": "Faro",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama o túnel rodoviário mais longo de Portugal, que atravessa a Serra do Marão na autoestrada A4?",
+        "opcoes": [
+          "Túnel do Marão",
+          "Túnel do Gerês",
+          "Túnel da Serra da Estrela",
+          "Túnel do Marquês"
+        ],
+        "respostaCorreta": "Túnel do Marão",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Que navegador português foi o primeiro europeu a dobrar o Cabo Bojador, em 1434, até então considerado uma barreira intransponível?",
+        "opcoes": [
+          "Gil Eanes",
+          "Bartolomeu Dias",
+          "Diogo Cão",
+          "Nuno Tristão"
+        ],
+        "respostaCorreta": "Gil Eanes",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que navegador e escritor português, autor da obra 'Esmeraldo de Situ Orbis', defendeu heroicamente a fortaleza de Cochim, na Índia, em 1504?",
+        "opcoes": [
+          "Duarte Pacheco Pereira",
+          "Afonso de Albuquerque",
+          "Francisco de Almeida",
+          "Vasco da Gama"
+        ],
+        "respostaCorreta": "Duarte Pacheco Pereira",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
