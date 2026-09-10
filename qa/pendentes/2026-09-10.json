@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Qual é o bairro mais antigo de Lisboa, que sobreviveu praticamente intacto ao terramoto de 1755 por estar assente em rocha sólida?",
+        "opcoes": ["Alfama", "Chiado", "Baixa", "Belém"],
+        "respostaCorreta": "Alfama",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o nome do teatro de ópera de Lisboa, inaugurado em 1793 e situado no Chiado?",
+        "opcoes": ["Teatro Nacional de São Carlos", "Teatro Nacional D. Maria II", "Coliseu dos Recreios", "Teatro Tivoli"],
+        "respostaCorreta": "Teatro Nacional de São Carlos",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que ano foi inaugurado o Estádio do Dragão, casa do FC Porto, construído propositadamente para o Euro 2004?",
+        "opcoes": ["2003", "2001", "2004", "2000"],
+        "respostaCorreta": "2003",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o nome do estádio situado no Complexo Desportivo do Jamor, em Oeiras, que durante décadas acolheu a final da Taça de Portugal em futebol?",
+        "opcoes": ["Estádio Nacional do Jamor", "Estádio José Alvalade", "Estádio da Luz", "Estádio do Bessa"],
+        "respostaCorreta": "Estádio Nacional do Jamor",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Qual é o gentílico de quem nasce na vila da Ericeira, no concelho de Mafra?",
+        "opcoes": ["Ericeirense", "Mafraense", "Ericeirota", "Ericeirinho"],
+        "respostaCorreta": "Ericeirense",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Fátima, freguesia do concelho de Ourém famosa pelo Santuário Mariano?",
+        "opcoes": ["Fatimense", "Ouriense", "Fatimeiro", "Marianense"],
+        "respostaCorreta": "Fatimense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é o maior lago artificial da Europa Ocidental, criado pela barragem do Alqueva no rio Guadiana?",
+        "opcoes": ["Lago de Alqueva", "Lago da Aguieira", "Albufeira do Caia", "Albufeira de Castelo de Bode"],
+        "respostaCorreta": "Lago de Alqueva",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é a região vinícola demarcada mais antiga do mundo, criada em 1756 por iniciativa do Marquês de Pombal, no vale do rio Douro?",
+        "opcoes": ["Região Demarcada do Douro", "Região dos Vinhos Verdes", "Região do Dão", "Região da Bairrada"],
+        "respostaCorreta": "Região Demarcada do Douro",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano chegaram os portugueses ao Japão, tornando-se os primeiros europeus a desembarcar nesse país?",
+        "opcoes": ["1543", "1498", "1517", "1600"],
+        "respostaCorreta": "1543",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que ano se estabeleceram os portugueses em Macau, iniciando um domínio que se prolongaria até 1999?",
+        "opcoes": ["1557", "1511", "1415", "1640"],
+        "respostaCorreta": "1557",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
