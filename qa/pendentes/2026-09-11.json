@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Como se chama o doce tradicional de Sintra, em forma de almofada de massa folhada com recheio de ovos e amêndoa?",
+        "opcoes": [
+          "Travesseiro",
+          "Queijada",
+          "Pastel de nata",
+          "Fatia de Tomar"
+        ],
+        "respostaCorreta": "Travesseiro",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Como se chama o traje tradicional usado pelos estudantes da Universidade de Coimbra, composto por capa preta e batina?",
+        "opcoes": [
+          "Capa e batina",
+          "Toga académica",
+          "Beca",
+          "Manto doutoral"
+        ],
+        "respostaCorreta": "Capa e batina",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Com quatro golos, que jogador protagonizou a reviravolta de Portugal, que venceu a Coreia do Norte por 5-3 nos quartos de final do Mundial de 1966, depois de perder por 3-0?",
+        "opcoes": [
+          "Eusébio",
+          "Mário Coluna",
+          "José Torres",
+          "Vicente"
+        ],
+        "respostaCorreta": "Eusébio",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que ano a Seleção Portuguesa de Futsal conquistou o seu primeiro título de Campeã do Mundo, ao vencer a Argentina na final?",
+        "opcoes": [
+          "2021",
+          "2016",
+          "2012",
+          "2018"
+        ],
+        "respostaCorreta": "2021",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Amarante?",
+        "opcoes": [
+          "Amarantino",
+          "Amarantense",
+          "Amarantês",
+          "Amarantano"
+        ],
+        "respostaCorreta": "Amarantino",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Grândola?",
+        "opcoes": [
+          "Grandolense",
+          "Grandolano",
+          "Grandolês",
+          "Grandolino"
+        ],
+        "respostaCorreta": "Grandolense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Em que concelho se situa a praia de Supertubos, mundialmente conhecida pelas suas ondas e por integrar o calendário do World Surf League (WSL)?",
+        "opcoes": [
+          "Peniche",
+          "Ericeira",
+          "Nazaré",
+          "Sesimbra"
+        ],
+        "respostaCorreta": "Peniche",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama o parque natural do distrito de Bragança, um dos maiores de Portugal continental, que faz fronteira com Espanha?",
+        "opcoes": [
+          "Parque Natural de Montesinho",
+          "Parque Natural do Douro Internacional",
+          "Parque Natural da Serra da Estrela",
+          "Parque Natural do Alvão"
+        ],
+        "respostaCorreta": "Parque Natural de Montesinho",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano entraram em circulação as notas e moedas de euro em Portugal, substituindo definitivamente o escudo?",
+        "opcoes": [
+          "2002",
+          "1999",
+          "1986",
+          "2004"
+        ],
+        "respostaCorreta": "2002",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Quem foi o Presidente da República Portuguesa entre 1996 e 2006, sucessor de Mário Soares no cargo?",
+        "opcoes": [
+          "Jorge Sampaio",
+          "Ramalho Eanes",
+          "Aníbal Cavaco Silva",
+          "Marcelo Rebelo de Sousa"
+        ],
+        "respostaCorreta": "Jorge Sampaio",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
