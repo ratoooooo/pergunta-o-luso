@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que ano Egas Moniz recebeu o Prémio Nobel da Medicina?",
+        "opcoes": [
+          "1949",
+          "1953",
+          "1945",
+          "1961"
+        ],
+        "respostaCorreta": "1949",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que dia se realizam tradicionalmente as Marchas Populares de Lisboa, associadas à noite de Santo António?",
+        "opcoes": [
+          "12 de junho",
+          "24 de junho",
+          "29 de junho",
+          "15 de agosto"
+        ],
+        "respostaCorreta": "12 de junho",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que ano a Seleção Portuguesa de futsal conquistou o seu primeiro título de Campeão do Mundo?",
+        "opcoes": [
+          "2021",
+          "2016",
+          "2018",
+          "2012"
+        ],
+        "respostaCorreta": "2021",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que jogador português de futsal foi eleito por várias vezes o melhor do mundo na modalidade?",
+        "opcoes": [
+          "Ricardinho",
+          "Pauleta",
+          "Deco",
+          "Simão Sabrosa"
+        ],
+        "respostaCorreta": "Ricardinho",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como é conhecido, de forma popular, quem nasce na cidade de Lisboa, para além do gentílico oficial \"lisboeta\"?",
+        "opcoes": [
+          "Alfacinha",
+          "Tripeiro",
+          "Beirão",
+          "Saloio"
+        ],
+        "respostaCorreta": "Alfacinha",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como é tradicionalmente conhecido, de forma informal, quem nasce na cidade do Porto?",
+        "opcoes": [
+          "Tripeiro",
+          "Alfacinha",
+          "Beirão",
+          "Saloio"
+        ],
+        "respostaCorreta": "Tripeiro",
+        "dificuldade": "facil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Localizada na Serra do Alvão, no distrito de Vila Real, qual é geralmente considerada a queda de água mais alta de Portugal continental?",
+        "opcoes": [
+          "Fisgas de Ermelo",
+          "Frecha da Mizarela",
+          "Cascata do Arado",
+          "Poço Azul"
+        ],
+        "respostaCorreta": "Fisgas de Ermelo",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que serra se encontra a única estância de esqui de Portugal continental?",
+        "opcoes": [
+          "Serra da Estrela",
+          "Serra do Marão",
+          "Serra de Montesinho",
+          "Serra do Caldeirão"
+        ],
+        "respostaCorreta": "Serra da Estrela",
+        "dificuldade": "facil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano ocorreu o contragolpe militar conhecido como \"25 de Novembro\", que pôs fim ao período revolucionário (PREC) depois da Revolução de 25 de Abril?",
+        "opcoes": [
+          "1975",
+          "1976",
+          "1974",
+          "1980"
+        ],
+        "respostaCorreta": "1975",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Quem foi o navegador geralmente apontado como o descobridor da ilha da Madeira, em 1419?",
+        "opcoes": [
+          "João Gonçalves Zarco",
+          "Gil Eanes",
+          "Diogo Cão",
+          "Gonçalo Velho Cabral"
+        ],
+        "respostaCorreta": "João Gonçalves Zarco",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
