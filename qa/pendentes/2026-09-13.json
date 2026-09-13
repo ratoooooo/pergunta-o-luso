@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Quem é o pintor a quem tradicionalmente se atribuem os Painéis de São Vicente, expostos no Museu Nacional de Arte Antiga?",
+        "opcoes": [
+          "Nuno Gonçalves",
+          "Josefa de Óbidos",
+          "Columbano Bordalo Pinheiro",
+          "Grão Vasco"
+        ],
+        "respostaCorreta": "Nuno Gonçalves",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que cidade portuguesa se realiza a tradicional Festa dos Tabuleiros, ligada ao culto do Espírito Santo?",
+        "opcoes": [
+          "Tomar",
+          "Óbidos",
+          "Santarém",
+          "Viana do Castelo"
+        ],
+        "respostaCorreta": "Tomar",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Que praia portuguesa é mundialmente famosa pelas ondas gigantes de surf e por vários recordes mundiais de altura?",
+        "opcoes": [
+          "Nazaré",
+          "Peniche",
+          "Ericeira",
+          "Carcavelos"
+        ],
+        "respostaCorreta": "Nazaré",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual foi o primeiro clube português a vencer a Taça dos Campeões Europeus de futebol, em 1961?",
+        "opcoes": [
+          "Benfica",
+          "FC Porto",
+          "Sporting CP",
+          "Vitória de Guimarães"
+        ],
+        "respostaCorreta": "Benfica",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Qual é o gentílico de quem nasce na ilha das Flores, nos Açores?",
+        "opcoes": [
+          "Florentino",
+          "Florense",
+          "Florano",
+          "Floreano"
+        ],
+        "respostaCorreta": "Florentino",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem é natural da região do Douro?",
+        "opcoes": [
+          "Duriense",
+          "Douriano",
+          "Dourense",
+          "Dourano"
+        ],
+        "respostaCorreta": "Duriense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é o ponto mais alto do Algarve, situado na Serra de Monchique?",
+        "opcoes": [
+          "Fóia",
+          "Picota",
+          "Malhão",
+          "Caldeirão"
+        ],
+        "respostaCorreta": "Fóia",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o maior rio que nasce e desagua inteiramente em território português?",
+        "opcoes": [
+          "Mondego",
+          "Tejo",
+          "Douro",
+          "Guadiana"
+        ],
+        "respostaCorreta": "Mondego",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano foi assinado o Tratado de Methuen entre Portugal e a Inglaterra?",
+        "opcoes": [
+          "1703",
+          "1668",
+          "1755",
+          "1640"
+        ],
+        "respostaCorreta": "1703",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Quem liderou o Estado Novo em Portugal entre 1932 e 1968?",
+        "opcoes": [
+          "António de Oliveira Salazar",
+          "Marcelo Caetano",
+          "General Óscar Carmona",
+          "Humberto Delgado"
+        ],
+        "respostaCorreta": "António de Oliveira Salazar",
+        "dificuldade": "facil"
+      }
+    ]
+  }
+}
