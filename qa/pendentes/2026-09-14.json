@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em 2015, que saber-fazer tradicional português relacionado com sinos para gado foi inscrito na Lista Representativa do Património Cultural Imaterial da Humanidade da UNESCO?",
+        "opcoes": [
+          "Fabrico de chocalhos",
+          "Renda de bilros de Peniche",
+          "Cante Alentejano",
+          "Festa dos Tabuleiros"
+        ],
+        "respostaCorreta": "Fabrico de chocalhos",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "A pintora barroca Josefa de Óbidos, uma das poucas mulheres artistas reconhecidas em Portugal no século XVII, é celebrizada sobretudo pelas suas pinturas de que género?",
+        "opcoes": [
+          "Naturezas-mortas",
+          "Paisagens marítimas",
+          "Retratos de reis",
+          "Cenas de guerra"
+        ],
+        "respostaCorreta": "Naturezas-mortas",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Como é conhecida a seleção nacional de râguebi de Portugal, que se apurou para o Campeonato do Mundo de 2023, disputado em França?",
+        "opcoes": [
+          "Os Lobos",
+          "Os Navegadores",
+          "Os Leões",
+          "Os Dragões"
+        ],
+        "respostaCorreta": "Os Lobos",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que judoca português se tornou campeão do mundo na categoria de -100 kg no Campeonato Mundial de Judo de 2019, disputado em Tóquio?",
+        "opcoes": [
+          "Jorge Fonseca",
+          "Telma Monteiro",
+          "Nelson Évora",
+          "Pedro Pichardo"
+        ],
+        "respostaCorreta": "Jorge Fonseca",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce na Ericeira, vila piscatória e de surf no concelho de Mafra?",
+        "opcoes": [
+          "Ericeirense",
+          "Mafrense",
+          "Ericeirano",
+          "Ericeirês"
+        ],
+        "respostaCorreta": "Ericeirense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Fátima, freguesia do concelho de Ourém conhecida pelo santuário mariano?",
+        "opcoes": [
+          "Fatimense",
+          "Ourenense",
+          "Fatimano",
+          "Fatimês"
+        ],
+        "respostaCorreta": "Fatimense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Onde se situa a única estância de esqui de Portugal continental?",
+        "opcoes": [
+          "Serra da Estrela",
+          "Serra do Marão",
+          "Serra de Montesinho",
+          "Serra do Caldeirão"
+        ],
+        "respostaCorreta": "Serra da Estrela",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é a barragem mais alta de Portugal, construída no rio Zêzere?",
+        "opcoes": [
+          "Barragem do Cabril",
+          "Barragem de Alqueva",
+          "Barragem do Castelo de Bode",
+          "Barragem da Aguieira"
+        ],
+        "respostaCorreta": "Barragem do Cabril",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Como ficou conhecido o grupo de fidalgos que, a 1 de dezembro de 1640, assaltou o Paço da Ribeira e proclamou D. João IV rei de Portugal, pondo fim à União Ibérica?",
+        "opcoes": [
+          "Conjuração dos Quarenta",
+          "Conselho da Restauração",
+          "Junta dos Três Estados",
+          "Irmandade de Aljubarrota"
+        ],
+        "respostaCorreta": "Conjuração dos Quarenta",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que batalha de 1665, vencida pelas tropas portuguesas, é considerada a mais decisiva vitória da Guerra da Restauração, praticamente pondo fim às tentativas espanholas de reconquistar Portugal?",
+        "opcoes": [
+          "Batalha de Montes Claros",
+          "Batalha do Ameixial",
+          "Batalha de Aljubarrota",
+          "Batalha de Alcácer Quibir"
+        ],
+        "respostaCorreta": "Batalha de Montes Claros",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
