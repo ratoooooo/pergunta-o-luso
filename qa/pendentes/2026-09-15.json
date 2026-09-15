@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Como se chama o doce típico de Sintra, feito de massa folhada com recheio de amêndoa e ovos, que se tornou famoso pela pastelaria Piriquita?",
+        "opcoes": [
+          "Travesseiro de Sintra",
+          "Queijada de Sintra",
+          "Pastel de nata",
+          "Fatia de Tomar"
+        ],
+        "respostaCorreta": "Travesseiro de Sintra",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama o bordado tradicional português, feito artesanalmente à mão, que é uma das principais exportações artesanais da ilha da Madeira desde o século XIX?",
+        "opcoes": [
+          "Bordado da Madeira",
+          "Renda de bilros",
+          "Tapete de Arraiolos",
+          "Filigrana de Gondomar"
+        ],
+        "respostaCorreta": "Bordado da Madeira",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Qual clube português foi o primeiro a vencer a Taça dos Clubes Campeões Europeus (atual Liga dos Campeões), em 1961?",
+        "opcoes": [
+          "Benfica",
+          "FC Porto",
+          "Sporting CP",
+          "Vitória de Guimarães"
+        ],
+        "respostaCorreta": "Benfica",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que ano o judoca português Jorge Fonseca se sagrou campeão do mundo na categoria de -100 kg?",
+        "opcoes": [
+          "2019",
+          "2017",
+          "2021",
+          "2015"
+        ],
+        "respostaCorreta": "2019",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Vila do Porto, na ilha de Santa Maria (Açores)?",
+        "opcoes": [
+          "Mariense",
+          "Portuense",
+          "Sanmariense",
+          "Vilaportense"
+        ],
+        "respostaCorreta": "Mariense",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Como se chama quem nasce na Ericeira?",
+        "opcoes": [
+          "Ericeirense",
+          "Ericeirano",
+          "Mafrense",
+          "Ericeiro"
+        ],
+        "respostaCorreta": "Ericeirense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Em que ano a Região Vinhateira do Alto Douro foi classificada pela UNESCO como Património Mundial?",
+        "opcoes": [
+          "2001",
+          "1998",
+          "2004",
+          "1996"
+        ],
+        "respostaCorreta": "2001",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o comprimento aproximado da fronteira terrestre entre Portugal e Espanha, uma das mais antigas fronteiras estáveis da Europa?",
+        "opcoes": [
+          "Cerca de 1214 km",
+          "Cerca de 800 km",
+          "Cerca de 1600 km",
+          "Cerca de 600 km"
+        ],
+        "respostaCorreta": "Cerca de 1214 km",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano Vasco da Gama chegou a Calicute, na Índia, completando a primeira viagem marítima europeia até lá?",
+        "opcoes": [
+          "1498",
+          "1500",
+          "1492",
+          "1488"
+        ],
+        "respostaCorreta": "1498",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que ano o Marquês de Pombal expulsou os jesuítas de Portugal e dos seus domínios?",
+        "opcoes": [
+          "1759",
+          "1755",
+          "1773",
+          "1750"
+        ],
+        "respostaCorreta": "1759",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
