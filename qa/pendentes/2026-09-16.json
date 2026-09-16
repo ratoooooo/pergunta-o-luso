@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Que instrumento musical é indissociável do Fado?",
+        "opcoes": [
+          "Guitarra portuguesa",
+          "Viola de arame",
+          "Bandolim",
+          "Acordeão"
+        ],
+        "respostaCorreta": "Guitarra portuguesa",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Em que concelho nasceu José Saramago, o único escritor português a vencer o Prémio Nobel da Literatura?",
+        "opcoes": [
+          "Golegã",
+          "Santarém",
+          "Tomar",
+          "Abrantes"
+        ],
+        "respostaCorreta": "Golegã",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Quem foi o primeiro jogador português a atuar num jogo da NBA?",
+        "opcoes": [
+          "Neemias Queta",
+          "Miguel Gonçalves",
+          "João Gomes",
+          "Diogo Ventura"
+        ],
+        "respostaCorreta": "Neemias Queta",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que atleta português venceu a medalha de ouro no triplo salto nos Jogos Olímpicos de Tóquio 2020?",
+        "opcoes": [
+          "Pedro Pichardo",
+          "Nelson Évora",
+          "Naide Gomes",
+          "Fernando Mamede"
+        ],
+        "respostaCorreta": "Pedro Pichardo",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Qual é o gentílico de quem é natural da região histórica da Estremadura portuguesa?",
+        "opcoes": [
+          "Estremenho",
+          "Estremense",
+          "Ribatejano",
+          "Saloio"
+        ],
+        "respostaCorreta": "Estremenho",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o gentílico associado à região do Douro, sobretudo à área vinhateira do Alto Douro?",
+        "opcoes": [
+          "Duriense",
+          "Transmontano",
+          "Beirão",
+          "Minhoto"
+        ],
+        "respostaCorreta": "Duriense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é o rio mais extenso da Península Ibérica, que nasce em Espanha e desagua em Lisboa?",
+        "opcoes": [
+          "Tejo",
+          "Douro",
+          "Guadiana",
+          "Ebro"
+        ],
+        "respostaCorreta": "Tejo",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o maior lago artificial da Europa Ocidental, formado pela barragem no rio Guadiana, no Alentejo?",
+        "opcoes": [
+          "Alqueva",
+          "Castelo de Bode",
+          "Cabril",
+          "Aguieira"
+        ],
+        "respostaCorreta": "Alqueva",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Quem foi o navegador português que, em 1434, dobrou pela primeira vez o Cabo Bojador, superando um dos grandes obstáculos psicológicos dos Descobrimentos?",
+        "opcoes": [
+          "Gil Eanes",
+          "Bartolomeu Dias",
+          "Diogo Cão",
+          "Nuno Tristão"
+        ],
+        "respostaCorreta": "Gil Eanes",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que navegador português alcançou a foz do rio Congo em 1482, durante a exploração da costa africana?",
+        "opcoes": [
+          "Diogo Cão",
+          "Bartolomeu Dias",
+          "Gil Eanes",
+          "Vasco da Gama"
+        ],
+        "respostaCorreta": "Diogo Cão",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
