@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que cidade portuguesa se acredita que o fado tenha nascido, no início do século XIX?",
+        "opcoes": ["Lisboa", "Coimbra", "Porto", "Évora"],
+        "respostaCorreta": "Lisboa",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Em que região demarcada de Portugal é produzido o Vinho do Porto?",
+        "opcoes": ["Douro", "Alentejo", "Dão", "Vinhos Verdes"],
+        "respostaCorreta": "Douro",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Qual clube português venceu a primeira edição da Taça dos Clubes Campeões Europeus, em 1961?",
+        "opcoes": ["Benfica", "Sporting CP", "FC Porto", "Vitória de Guimarães"],
+        "respostaCorreta": "Benfica",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Quem foi o selecionador nacional que conduziu Portugal ao título de campeão europeu de futebol em 2016?",
+        "opcoes": ["Fernando Santos", "Carlos Queiroz", "Paulo Bento", "Luiz Felipe Scolari"],
+        "respostaCorreta": "Fernando Santos",
+        "dificuldade": "facil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Qual é o gentílico dos naturais de Bragança?",
+        "opcoes": ["Brigantino", "Bragancês", "Transmontano", "Duriense"],
+        "respostaCorreta": "Brigantino",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual é o gentílico dos naturais de Setúbal?",
+        "opcoes": ["Setubalense", "Sadino", "Palmelense", "Sesimbrense"],
+        "respostaCorreta": "Setubalense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é o maior lago artificial da Europa Ocidental, formado pela barragem do rio Guadiana, em Portugal?",
+        "opcoes": ["Alqueva", "Castelo de Bode", "Aguieira", "Cabril"],
+        "respostaCorreta": "Alqueva",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é a maior ilha do arquipélago da Madeira?",
+        "opcoes": ["Madeira", "Porto Santo", "Deserta Grande", "Ilhas Selvagens"],
+        "respostaCorreta": "Madeira",
+        "dificuldade": "facil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano Vasco da Gama chegou a Calecute, na Índia, completando a primeira viagem marítima europeia até lá?",
+        "opcoes": ["1498", "1488", "1500", "1510"],
+        "respostaCorreta": "1498",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que ano a Índia anexou militarmente o território de Goa, pondo fim à presença portuguesa nesse enclave asiático?",
+        "opcoes": ["1961", "1974", "1949", "1975"],
+        "respostaCorreta": "1961",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
