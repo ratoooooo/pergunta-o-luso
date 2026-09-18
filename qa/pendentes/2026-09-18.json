@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "A palavra portuguesa \"azulejo\" tem origem numa palavra árabe que significa aproximadamente:",
+        "opcoes": [
+          "Pedra polida",
+          "Cor azul",
+          "Argila cozida",
+          "Vidro colorido"
+        ],
+        "respostaCorreta": "Pedra polida",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que cidade portuguesa se situa a Livraria Lello, uma das livrarias mais visitadas do mundo?",
+        "opcoes": [
+          "Porto",
+          "Lisboa",
+          "Coimbra",
+          "Braga"
+        ],
+        "respostaCorreta": "Porto",
+        "dificuldade": "facil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Vanessa Fernandes conquistou uma medalha de prata olímpica em Pequim 2008, em que modalidade?",
+        "opcoes": [
+          "Triatlo",
+          "Natação",
+          "Atletismo",
+          "Ciclismo"
+        ],
+        "respostaCorreta": "Triatlo",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Fernanda Ribeiro conquistou a medalha de ouro olímpica em Atlanta 1996, em que distância do atletismo?",
+        "opcoes": [
+          "10.000 metros",
+          "5.000 metros",
+          "Maratona",
+          "1.500 metros"
+        ],
+        "respostaCorreta": "10.000 metros",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se designam os naturais da ilha das Flores, nos Açores?",
+        "opcoes": [
+          "Florentino",
+          "Floreense",
+          "Florense",
+          "Florino"
+        ],
+        "respostaCorreta": "Florentino",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Como se designam os naturais da Ericeira, vila do concelho de Mafra?",
+        "opcoes": [
+          "Ericeirense",
+          "Ericeirano",
+          "Ericeiral",
+          "Ericeirês"
+        ],
+        "respostaCorreta": "Ericeirense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é o rio mais longo que nasce e desagua inteiramente em território português?",
+        "opcoes": [
+          "Rio Mondego",
+          "Rio Tejo",
+          "Rio Douro",
+          "Rio Guadiana"
+        ],
+        "respostaCorreta": "Rio Mondego",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é a maior barragem de Portugal em volume de armazenamento de água, situada no rio Guadiana?",
+        "opcoes": [
+          "Barragem do Alqueva",
+          "Barragem do Cabril",
+          "Barragem da Aguieira",
+          "Barragem de Castelo do Bode"
+        ],
+        "respostaCorreta": "Barragem do Alqueva",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano Portugal perdeu a independência para Filipe II de Espanha, dando início ao período da União Ibérica?",
+        "opcoes": [
+          "1580",
+          "1640",
+          "1495",
+          "1512"
+        ],
+        "respostaCorreta": "1580",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que ano foi fundada a Ordem de Cristo, que sucedeu em Portugal à extinta Ordem do Templo?",
+        "opcoes": [
+          "1319",
+          "1290",
+          "1147",
+          "1385"
+        ],
+        "respostaCorreta": "1319",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
