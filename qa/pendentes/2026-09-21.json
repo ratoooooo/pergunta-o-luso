@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Como se chama o prato típico do Porto feito com pão de forma, várias carnes e enchidos, coberto de queijo derretido e molho picante, normalmente servido com batatas fritas?",
+        "opcoes": ["Francesinha", "Leitão", "Cavacas", "Sardinha assada"],
+        "respostaCorreta": "Francesinha",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Que figura histórica surge na proa do Padrão dos Descobrimentos, em Lisboa, segurando uma caravela?",
+        "opcoes": ["Infante D. Henrique", "Vasco da Gama", "D. Manuel I", "Fernão de Magalhães"],
+        "respostaCorreta": "Infante D. Henrique",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Que atleta português de boccia se tornou o mais medalhado da história dos Jogos Paralímpicos nesta modalidade?",
+        "opcoes": ["António Marques", "Cristina Gonçalves", "Fernanda Ribeiro", "Nelson Évora"],
+        "respostaCorreta": "António Marques",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que ano a seleção portuguesa de hóquei em patins conquistou o título mundial diante da Argentina, no desempate por grandes penalidades, pondo fim a um interregno de 16 anos?",
+        "opcoes": ["2019", "2015", "2011", "2023"],
+        "respostaCorreta": "2019",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce na ilha das Flores, nos Açores?",
+        "opcoes": ["Florentino", "Terceirense", "Corvino", "Florense"],
+        "respostaCorreta": "Florentino",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Como se chama quem nasce na vila de Óbidos, no distrito de Leiria?",
+        "opcoes": ["Obidense", "Leiriense", "Óbidiano", "Bidense"],
+        "respostaCorreta": "Obidense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é a cidade portuguesa situada à maior altitude?",
+        "opcoes": ["Guarda", "Bragança", "Covilhã", "Viseu"],
+        "respostaCorreta": "Guarda",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama o parque natural que protege o troço do rio Douro que serve de fronteira entre Portugal e Espanha?",
+        "opcoes": ["Parque Natural do Douro Internacional", "Parque Natural de Montesinho", "Parque Natural da Serra da Estrela", "Parque Nacional da Peneda-Gerês"],
+        "respostaCorreta": "Parque Natural do Douro Internacional",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Como ficou conhecido o mito segundo o qual o rei D. Sebastião regressaria, num dia de nevoeiro, para salvar Portugal, depois de ter desaparecido na batalha de Alcácer Quibir?",
+        "opcoes": ["Sebastianismo", "Encobrismo", "Restauracionismo", "Iberismo"],
+        "respostaCorreta": "Sebastianismo",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se designa o movimento militar que organizou e executou o golpe de 25 de Abril de 1974?",
+        "opcoes": ["Movimento das Forças Armadas", "Junta de Salvação Nacional", "Conselho da Revolução", "Partido Comunista Português"],
+        "respostaCorreta": "Movimento das Forças Armadas",
+        "dificuldade": "facil"
+      }
+    ]
+  }
+}
