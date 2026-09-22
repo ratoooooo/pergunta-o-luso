@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que ano foi o Fado reconhecido pela UNESCO como Património Cultural Imaterial da Humanidade?",
+        "opcoes": ["2011", "2013", "2009", "2015"],
+        "respostaCorreta": "2011",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que edifício de Lisboa está instalado o Museu Nacional do Azulejo?",
+        "opcoes": ["Convento da Madre de Deus", "Mosteiro dos Jerónimos", "Palácio Nacional da Ajuda", "Convento do Carmo"],
+        "respostaCorreta": "Convento da Madre de Deus",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que estádio se disputou a final da primeira edição da Liga das Nações da UEFA, vencida por Portugal em 2019?",
+        "opcoes": ["Estádio do Dragão", "Estádio da Luz", "Estádio José Alvalade", "Estádio D. Afonso Henriques"],
+        "respostaCorreta": "Estádio do Dragão",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Rosa Mota conquistou a medalha de ouro na maratona em que Jogos Olímpicos?",
+        "opcoes": ["Seul 1988", "Los Angeles 1984", "Barcelona 1992", "Atlanta 1996"],
+        "respostaCorreta": "Seul 1988",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Espinho?",
+        "opcoes": ["Espinhense", "Espinhoense", "Espinhal", "Espinheirense"],
+        "respostaCorreta": "Espinhense",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Como se chama quem nasce em Chaves?",
+        "opcoes": ["Flaviense", "Chavense", "Chaviense", "Transmontano"],
+        "respostaCorreta": "Flaviense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é o ponto mais alto de todo o território português, incluindo as ilhas?",
+        "opcoes": ["Ponta do Pico (Açores)", "Torre (Serra da Estrela)", "Pico Ruivo (Madeira)", "Monte Brasil (Terceira)"],
+        "respostaCorreta": "Ponta do Pico (Açores)",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama a albufeira formada pela Barragem do Alqueva, o maior lago artificial da Europa Ocidental?",
+        "opcoes": ["Alqueva", "Castelo de Bode", "Aguieira", "Caia"],
+        "respostaCorreta": "Alqueva",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano assinou Portugal o Tratado de Tordesilhas com Castela, que dividia as zonas de exploração no Atlântico?",
+        "opcoes": ["1494", "1481", "1500", "1506"],
+        "respostaCorreta": "1494",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Quem foi o primeiro Presidente da República Portuguesa, eleito em 1911?",
+        "opcoes": ["Manuel de Arriaga", "Teófilo Braga", "Bernardino Machado", "Sidónio Pais"],
+        "respostaCorreta": "Manuel de Arriaga",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
