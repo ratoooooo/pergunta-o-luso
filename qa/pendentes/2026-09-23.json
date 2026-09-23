@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Qual é o doce conventual típico de Aveiro, feito de gemas de ovo envoltas em massa de hóstia, com forma de conchas ou peixes?",
+        "opcoes": ["Ovos moles", "Pastéis de nata", "Fatias douradas", "Trouxas de ovos"],
+        "respostaCorreta": "Ovos moles",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Que instrumento tradicional português, também conhecido por 'machete', esteve na origem do ukulele havaiano?",
+        "opcoes": ["Cavaquinho", "Guitarra portuguesa", "Viola braguesa", "Bandolim"],
+        "respostaCorreta": "Cavaquinho",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Fernanda Ribeiro conquistou a medalha de ouro olímpica nos 10.000 metros em que edição dos Jogos Olímpicos?",
+        "opcoes": ["Atlanta 1996", "Barcelona 1992", "Sydney 2000", "Atenas 2004"],
+        "respostaCorreta": "Atlanta 1996",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "O judoca português Jorge Fonseca sagrou-se campeão do mundo em 2019 em que categoria de peso?",
+        "opcoes": ["-100 kg", "-90 kg", "-81 kg", "+100 kg"],
+        "respostaCorreta": "-100 kg",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Qual é o gentílico de quem é natural da região de Trás-os-Montes?",
+        "opcoes": ["Transmontano", "Minhoto", "Beirão", "Ribatejano"],
+        "respostaCorreta": "Transmontano",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama um natural da região histórica portuguesa da Estremadura?",
+        "opcoes": ["Estremenho", "Ribatejano", "Alentejano", "Algarvio"],
+        "respostaCorreta": "Estremenho",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "A Reserva Natural da Serra da Malcata, no distrito de Castelo Branco, é um dos últimos refúgios naturais de que espécie ameaçada?",
+        "opcoes": ["Lince-ibérico", "Lobo-ibérico", "Urso-pardo", "Águia-real"],
+        "respostaCorreta": "Lince-ibérico",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "O Parque Natural de Montesinho situa-se em que distrito de Portugal?",
+        "opcoes": ["Bragança", "Vila Real", "Viseu", "Guarda"],
+        "respostaCorreta": "Bragança",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Qual era o título pelo qual D. João I era conhecido antes de se tornar rei de Portugal?",
+        "opcoes": ["Mestre de Avis", "Duque de Bragança", "Condestável do Reino", "Infante Regente"],
+        "respostaCorreta": "Mestre de Avis",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Quem comandou as tropas francesas durante a primeira invasão de Portugal, em 1807?",
+        "opcoes": ["General Junot", "Marechal Soult", "General Masséna", "Napoleão Bonaparte"],
+        "respostaCorreta": "General Junot",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
