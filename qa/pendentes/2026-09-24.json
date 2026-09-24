@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Como se chamava a mascote oficial do Campeonato Europeu de Futebol de 2004, organizado em Portugal?",
+        "opcoes": [
+          "Kinas",
+          "Trix e Flix",
+          "Slavek e Slavko",
+          "Benelucky"
+        ],
+        "respostaCorreta": "Kinas",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que ano a cidade de Guimarães foi Capital Europeia da Cultura?",
+        "opcoes": [
+          "2012",
+          "2001",
+          "1994",
+          "2005"
+        ],
+        "respostaCorreta": "2012",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que modalidade Portugal conquistou o título de campeão do mundo pela primeira vez, em 2021, ao vencer a Argentina na final?",
+        "opcoes": [
+          "Futsal",
+          "Andebol",
+          "Hóquei em patins",
+          "Voleibol"
+        ],
+        "respostaCorreta": "Futsal",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que treinador português orientou a seleção nacional do Irão em dois Campeonatos do Mundo de futebol (2014 e 2018)?",
+        "opcoes": [
+          "Carlos Queiroz",
+          "José Mourinho",
+          "Fernando Santos",
+          "Jorge Jesus"
+        ],
+        "respostaCorreta": "Carlos Queiroz",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama, tradicionalmente, quem vive na zona de fronteira entre Portugal e Espanha, junto à chamada 'raia'?",
+        "opcoes": [
+          "Raiano",
+          "Estremenho",
+          "Beirão",
+          "Alentejano"
+        ],
+        "respostaCorreta": "Raiano",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama, tradicionalmente, o antigo habitante da província romana da Lusitânia, que corresponde a grande parte do atual Portugal?",
+        "opcoes": [
+          "Lusitano",
+          "Galaico",
+          "Cartaginês",
+          "Vândalo"
+        ],
+        "respostaCorreta": "Lusitano",
+        "dificuldade": "facil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é a segunda maior ilha do arquipélago dos Açores em área, depois de São Miguel?",
+        "opcoes": [
+          "Pico",
+          "Terceira",
+          "Faial",
+          "São Jorge"
+        ],
+        "respostaCorreta": "Pico",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o maior rio que nasce e desagua inteiramente em território português, sem atravessar Espanha?",
+        "opcoes": [
+          "Mondego",
+          "Tejo",
+          "Douro",
+          "Vouga"
+        ],
+        "respostaCorreta": "Mondego",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Como ficou conhecido o movimento literário e filosófico português do início do século XX, liderado por Teixeira de Pascoaes e ligado à revista 'A Águia'?",
+        "opcoes": [
+          "Saudosismo",
+          "Neorrealismo",
+          "Integralismo Lusitano",
+          "Simbolismo"
+        ],
+        "respostaCorreta": "Saudosismo",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que tratado, assinado em Lisboa em 1668, pôs fim à Guerra da Restauração com o reconhecimento da independência de Portugal por Espanha?",
+        "opcoes": [
+          "Tratado de Lisboa (1668)",
+          "Tratado de Utrecht",
+          "Tratado de Zamora",
+          "Tratado dos Pirenéus"
+        ],
+        "respostaCorreta": "Tratado de Lisboa (1668)",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
