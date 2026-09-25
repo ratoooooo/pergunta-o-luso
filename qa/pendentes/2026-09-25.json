@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Que pequeno instrumento de cordas português, originário do Minho, deu origem ao ukulele havaiano?",
+        "opcoes": ["Cavaquinho", "Viola braguesa", "Bandolim", "Rabeca"],
+        "respostaCorreta": "Cavaquinho",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Portugal é o maior produtor mundial de que matéria-prima, extraída do sobreiro?",
+        "opcoes": ["Cortiça", "Resina", "Celulose", "Linho"],
+        "respostaCorreta": "Cortiça",
+        "dificuldade": "facil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que ano a seleção portuguesa de futsal conquistou o seu primeiro título mundial?",
+        "opcoes": ["2021", "2016", "2012", "2018"],
+        "respostaCorreta": "2021",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Portugal destaca-se historicamente nos Jogos Paralímpicos em que modalidade, com numerosas medalhas de ouro conquistadas?",
+        "opcoes": ["Boccia", "Halterofilismo", "Ciclismo adaptado", "Esgrima em cadeira de rodas"],
+        "respostaCorreta": "Boccia",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Santa Maria da Feira?",
+        "opcoes": ["Feirense", "Feirano", "Santamariense", "Feirenho"],
+        "respostaCorreta": "Feirense",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual é o gentílico associado à região do Douro?",
+        "opcoes": ["Duriense", "Dourense", "Duriano", "Douriano"],
+        "respostaCorreta": "Duriense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Com cerca de 17 quilómetros, que ponte portuguesa foi durante muitos anos a mais longa da Europa?",
+        "opcoes": ["Ponte Vasco da Gama", "Ponte 25 de Abril", "Ponte de Dom Luís I", "Ponte Internacional sobre o Rio Minho"],
+        "respostaCorreta": "Ponte Vasco da Gama",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Portugal, apesar do pequeno território terrestre, tem uma das maiores Zonas Económicas Exclusivas (ZEE) do mundo, graças sobretudo a que arquipélagos?",
+        "opcoes": ["Açores e Madeira", "Apenas os Açores", "Apenas a Madeira", "Ilhas Selvagens e Desertas"],
+        "respostaCorreta": "Açores e Madeira",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano Gago Coutinho e Sacadura Cabral realizaram a primeira travessia aérea do Atlântico Sul?",
+        "opcoes": ["1922", "1919", "1927", "1931"],
+        "respostaCorreta": "1922",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Onde se localizam as ruínas romanas de Conímbriga, um dos maiores sítios arqueológicos romanos de Portugal?",
+        "opcoes": ["Condeixa-a-Nova", "Coimbra", "Montemor-o-Velho", "Figueira da Foz"],
+        "respostaCorreta": "Condeixa-a-Nova",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
