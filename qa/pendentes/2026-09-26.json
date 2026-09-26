@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que zona de Lisboa nasceu o famoso Pastel de Belém, criado no século XIX?",
+        "opcoes": [
+          "Belém",
+          "Alfama",
+          "Chiado",
+          "Bairro Alto"
+        ],
+        "respostaCorreta": "Belém",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "O Queijo da Serra da Estrela, um dos mais afamados queijos portugueses, é tradicionalmente produzido com leite de que animal?",
+        "opcoes": [
+          "Ovelha",
+          "Vaca",
+          "Cabra",
+          "Búfala"
+        ],
+        "respostaCorreta": "Ovelha",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Que ciclista português foi Campeão do Mundo de fundo em estrada em 2013?",
+        "opcoes": [
+          "Rui Costa",
+          "João Almeida",
+          "Nelson Évora",
+          "Joaquim Agostinho"
+        ],
+        "respostaCorreta": "Rui Costa",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que ano a Seleção Portuguesa de futebol feminino participou por primeira vez num Campeonato do Mundo?",
+        "opcoes": [
+          "2023",
+          "2019",
+          "2015",
+          "2011"
+        ],
+        "respostaCorreta": "2023",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Azeitão?",
+        "opcoes": [
+          "Azeitonense",
+          "Azeitanense",
+          "Azeitoense",
+          "Azeitense"
+        ],
+        "respostaCorreta": "Azeitonense",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Como se chama quem nasce em Colares, no concelho de Sintra?",
+        "opcoes": [
+          "Colarense",
+          "Colariense",
+          "Colarês",
+          "Colarino"
+        ],
+        "respostaCorreta": "Colarense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Como se chama o arquipélago português mais próximo das Ilhas Canárias, um importante refúgio de aves marinhas?",
+        "opcoes": [
+          "Ilhas Selvagens",
+          "Ilhas Desertas",
+          "Ilhas Berlengas",
+          "Ilhas Formigas"
+        ],
+        "respostaCorreta": "Ilhas Selvagens",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "As Ilhas Desertas, no arquipélago da Madeira, são um importante refúgio para que espécie ameaçada?",
+        "opcoes": [
+          "Foca-monge",
+          "Lince-ibérico",
+          "Águia-de-Bonelli",
+          "Lobo-ibérico"
+        ],
+        "respostaCorreta": "Foca-monge",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano o Reino Unido enviou a Portugal o 'Ultimato Inglês', relativo às pretensões coloniais portuguesas em África?",
+        "opcoes": [
+          "1890",
+          "1885",
+          "1900",
+          "1875"
+        ],
+        "respostaCorreta": "1890",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Durante a Guerra Civil Portuguesa (1832-1834), que cidade resistiu a um cerco de cerca de um ano imposto pelas tropas de D. Miguel?",
+        "opcoes": [
+          "Porto",
+          "Coimbra",
+          "Braga",
+          "Aveiro"
+        ],
+        "respostaCorreta": "Porto",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
