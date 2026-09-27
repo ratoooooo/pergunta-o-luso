@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Que artesanato tradicional alentejano, ligado ao fabrico e toque de chocalhos para gado, foi reconhecido pela UNESCO em 2015 como Património Imaterial a Necessitar de Salvaguarda Urgente?",
+        "opcoes": [
+          "Sons de Chocalhos",
+          "Cante Alentejano",
+          "Renda de Bilros",
+          "Bonecos de Estremoz"
+        ],
+        "respostaCorreta": "Sons de Chocalhos",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "A Confeitaria Nacional, fundada em 1829 em Lisboa, é apontada como pioneira na venda de que doce tradicional de Natal em Portugal?",
+        "opcoes": [
+          "Bolo Rei",
+          "Rabanadas",
+          "Bolo de Noiva",
+          "Sonhos"
+        ],
+        "respostaCorreta": "Bolo Rei",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Que judoca português se sagrou campeão do mundo na categoria -100 kg, em Tóquio, em 2019?",
+        "opcoes": [
+          "Jorge Fonseca",
+          "Nuno Delgado",
+          "Rui Bragança",
+          "Telma Monteiro"
+        ],
+        "respostaCorreta": "Jorge Fonseca",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que ano a seleção portuguesa de râguebi se estreou num Campeonato do Mundo?",
+        "opcoes": [
+          "2007",
+          "1999",
+          "2015",
+          "2019"
+        ],
+        "respostaCorreta": "2007",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como é tradicionalmente conhecido o habitante das zonas rurais que rodeiam Lisboa, como as de Mafra ou Loures?",
+        "opcoes": [
+          "Saloio",
+          "Ribatejano",
+          "Alfacinha",
+          "Estremenho"
+        ],
+        "respostaCorreta": "Saloio",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se designam tradicionalmente os naturais e habitantes da região vinhateira do Douro?",
+        "opcoes": [
+          "Durienses",
+          "Dourenses",
+          "Duriates",
+          "Douradenses"
+        ],
+        "respostaCorreta": "Durienses",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Onde se localiza a cascata das Fisgas de Ermelo, uma das mais altas de Portugal?",
+        "opcoes": [
+          "Serra do Alvão",
+          "Serra da Estrela",
+          "Serra de Monchique",
+          "Serra do Caldeirão"
+        ],
+        "respostaCorreta": "Serra do Alvão",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "A Estrada Nacional 2 (EN2), por vezes comparada à norte-americana Route 66, liga que duas cidades portuguesas?",
+        "opcoes": [
+          "Chaves e Faro",
+          "Braga e Lisboa",
+          "Porto e Faro",
+          "Bragança e Sagres"
+        ],
+        "respostaCorreta": "Chaves e Faro",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "As chamadas 'Cortes de Lamego', que teriam definido em 1143 as regras de sucessão da coroa portuguesa, são hoje consideradas pelos historiadores como:",
+        "opcoes": [
+          "Uma invenção historiográfica posterior, sem comprovação documental da época",
+          "Um documento original preservado na Torre do Tombo",
+          "Uma lei ratificada pelo Papa em Roma",
+          "Um tratado assinado com Castela"
+        ],
+        "respostaCorreta": "Uma invenção historiográfica posterior, sem comprovação documental da época",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em 1511, Afonso de Albuquerque conquistou para Portugal uma importante cidade-porto no Sueste Asiático, controlando uma das principais rotas das especiarias. Qual foi essa cidade?",
+        "opcoes": [
+          "Malaca",
+          "Goa",
+          "Ormuz",
+          "Macau"
+        ],
+        "respostaCorreta": "Malaca",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
