@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Onde se encontra a famosa Capela dos Ossos, situada junto à Igreja de São Francisco, cujas paredes estão revestidas com milhares de ossos e caveiras humanas?",
+        "opcoes": ["Évora", "Faro", "Monsaraz", "Beja"],
+        "respostaCorreta": "Évora",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Na Biblioteca Joanina, em Coimbra, vivem há séculos colónias de morcegos que ajudam a proteger o valioso espólio de livros, caçando à noite que tipo de ameaça?",
+        "opcoes": ["Insetos", "Roedores", "Fungos", "Aranhas"],
+        "respostaCorreta": "Insetos",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que Grande Prémio de 2020 o piloto português Miguel Oliveira conquistou a primeira vitória de sempre de um português na categoria rainha do Mundial de MotoGP?",
+        "opcoes": ["GP da Estíria", "GP de Portugal", "GP de Espanha", "GP de Itália"],
+        "respostaCorreta": "GP da Estíria",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Em que ano a triatleta portuguesa Vanessa Fernandes conquistou o título de Campeã do Mundo de triatlo, organizado pela ITU?",
+        "opcoes": ["2007", "2005", "2006", "2009"],
+        "respostaCorreta": "2007",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Santa Maria da Feira?",
+        "opcoes": ["Feirense", "Feirano", "Feirenho", "Feirês"],
+        "respostaCorreta": "Feirense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Ponte da Barca?",
+        "opcoes": ["Barquense", "Pontense", "Barquês", "Barcaense"],
+        "respostaCorreta": "Barquense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é o rio mais extenso de toda a Península Ibérica, com nascente em Espanha e foz junto a Lisboa?",
+        "opcoes": ["Tejo", "Douro", "Guadiana", "Ebro"],
+        "respostaCorreta": "Tejo",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o maior distrito de Portugal continental em área?",
+        "opcoes": ["Beja", "Évora", "Santarém", "Faro"],
+        "respostaCorreta": "Beja",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Que princesa portuguesa, filha de D. João IV, se tornou rainha consorte de Inglaterra ao casar com Carlos II, sendo-lhe atribuída a popularização do hábito de tomar chá na corte britânica?",
+        "opcoes": ["D. Catarina de Bragança", "D. Filipa de Lencastre", "D. Leonor Teles", "D. Maria I"],
+        "respostaCorreta": "D. Catarina de Bragança",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que infante português, filho de D. João I, morreu em cativeiro em Fez em 1443, após o fracasso da expedição a Tânger, ficando conhecido como o Infante Santo?",
+        "opcoes": ["D. Fernando", "D. Henrique", "D. Pedro", "D. Duarte"],
+        "respostaCorreta": "D. Fernando",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
