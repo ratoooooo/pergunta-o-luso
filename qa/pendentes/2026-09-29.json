@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Como se chama o motivo tradicional de joalharia do Minho, em filigrana de prata ou oiro, com a forma de um coração coroado, que se tornou um dos símbolos mais conhecidos do artesanato português?",
+        "opcoes": [
+          "Coração de Viana",
+          "Galo de Barcelos",
+          "Brincos de Viana",
+          "Coração de Ouro"
+        ],
+        "respostaCorreta": "Coração de Viana",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que realizador português, nascido no Porto em 1908 e falecido em 2015, é considerado o cineasta com a carreira mais longa da história do cinema, tendo continuado a rodar filmes até perto dos 106 anos?",
+        "opcoes": [
+          "Manoel de Oliveira",
+          "João César Monteiro",
+          "Paulo Rocha",
+          "Pedro Costa"
+        ],
+        "respostaCorreta": "Manoel de Oliveira",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Que ciclista português foi Campeão do Mundo de Ciclismo de Estrada em 2013, na prova realizada em Florença?",
+        "opcoes": [
+          "Rui Costa",
+          "Nelson Oliveira",
+          "Sérgio Paulinho",
+          "Joaquim Agostinho"
+        ],
+        "respostaCorreta": "Rui Costa",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Quem foi o primeiro tenista português a vencer um torneio da ATP em singulares?",
+        "opcoes": [
+          "João Sousa",
+          "Frederico Gil",
+          "Rui Machado",
+          "Nuno Marques"
+        ],
+        "respostaCorreta": "João Sousa",
+        "dificuldade": "medio"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Qual é o gentílico de quem nasce na Ericeira?",
+        "opcoes": [
+          "ericeirense",
+          "mafrense",
+          "torreense",
+          "sintrense"
+        ],
+        "respostaCorreta": "ericeirense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Fátima?",
+        "opcoes": [
+          "fatimense",
+          "tomarense",
+          "batalhense",
+          "leiriense"
+        ],
+        "respostaCorreta": "fatimense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Qual é o rio mais longo que nasce e desagua totalmente em território português, sem atravessar fronteira?",
+        "opcoes": [
+          "Mondego",
+          "Vouga",
+          "Sado",
+          "Lima"
+        ],
+        "respostaCorreta": "Mondego",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que região vinícola portuguesa, demarcada em 1756 por decisão do Marquês de Pombal, é considerada uma das mais antigas regiões vinícolas regulamentadas do mundo?",
+        "opcoes": [
+          "Douro",
+          "Vinho Verde",
+          "Dão",
+          "Alentejo"
+        ],
+        "respostaCorreta": "Douro",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Que rei de Portugal reinava quando o país recebeu o célebre Ultimato Inglês de 1890?",
+        "opcoes": [
+          "D. Carlos I",
+          "D. Luís I",
+          "D. Manuel II",
+          "D. Pedro V"
+        ],
+        "respostaCorreta": "D. Carlos I",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que convenção, assinada em 1834, pôs fim às Guerras Liberais em Portugal com o exílio de D. Miguel?",
+        "opcoes": [
+          "Convenção de Évora-Monte",
+          "Tratado de Tordesilhas",
+          "Concordata de 1940",
+          "Pacto Ibérico"
+        ],
+        "respostaCorreta": "Convenção de Évora-Monte",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
