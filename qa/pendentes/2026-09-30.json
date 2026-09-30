@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Os \"Lenços dos Namorados\", bordados tradicionalmente por raparigas solteiras para oferecer aos seus pretendentes, são uma tradição típica de que região de Portugal?",
+        "opcoes": [
+          "Minho",
+          "Algarve",
+          "Alentejo",
+          "Trás-os-Montes"
+        ],
+        "respostaCorreta": "Minho",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Em que praça de Lisboa foi aplicado, em 1848, o icónico padrão em ondas que popularizou a calçada portuguesa?",
+        "opcoes": [
+          "Rossio",
+          "Praça do Comércio",
+          "Praça da Figueira",
+          "Praça de Camões"
+        ],
+        "respostaCorreta": "Rossio",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que edição dos Jogos Olímpicos a atleta portuguesa Fernanda Ribeiro conquistou a medalha de ouro nos 10.000 metros?",
+        "opcoes": [
+          "Atlanta 1996",
+          "Barcelona 1992",
+          "Sydney 2000",
+          "Atenas 2004"
+        ],
+        "respostaCorreta": "Atlanta 1996",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que ano conquistou a seleção portuguesa de futsal o seu primeiro título de campeã mundial?",
+        "opcoes": [
+          "2021",
+          "2016",
+          "2012",
+          "2018"
+        ],
+        "respostaCorreta": "2021",
+        "dificuldade": "facil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Santa Maria da Feira?",
+        "opcoes": [
+          "Feirense",
+          "Feirano",
+          "Feirista",
+          "Santamariense"
+        ],
+        "respostaCorreta": "Feirense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o gentílico dos naturais da Região Autónoma dos Açores?",
+        "opcoes": [
+          "Açoriano",
+          "Açorense",
+          "Acoriense",
+          "Ilhéu"
+        ],
+        "respostaCorreta": "Açoriano",
+        "dificuldade": "facil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "O estuário do Tejo, um dos maiores da Europa, está classificado como zona húmida de importância internacional segundo que convenção?",
+        "opcoes": [
+          "Convenção de Ramsar",
+          "Convenção de Basileia",
+          "Protocolo de Quioto",
+          "Convenção de Berna"
+        ],
+        "respostaCorreta": "Convenção de Ramsar",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "A Gruta das Torres, um dos maiores tubos de lava da Europa, situa-se em que ilha dos Açores?",
+        "opcoes": [
+          "Pico",
+          "Faial",
+          "Terceira",
+          "São Miguel"
+        ],
+        "respostaCorreta": "Pico",
+        "dificuldade": "dificil"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano foi assinado o Tratado de Alcáçovas, que antecedeu o Tratado de Tordesilhas na divisão das zonas de exploração atlântica entre Portugal e Castela?",
+        "opcoes": [
+          "1479",
+          "1494",
+          "1460",
+          "1500"
+        ],
+        "respostaCorreta": "1479",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "O Padrão dos Descobrimentos, em Belém, foi inaugurado em 1960 para assinalar os 500 anos da morte de que figura histórica portuguesa?",
+        "opcoes": [
+          "Infante D. Henrique",
+          "D. Manuel I",
+          "Vasco da Gama",
+          "D. João II"
+        ],
+        "respostaCorreta": "Infante D. Henrique",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
