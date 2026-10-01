@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que ano foi fundada a centenária pastelaria em Belém, Lisboa, onde se vendem os originais pastéis de nata segundo a receita tradicional?",
+        "opcoes": ["1837", "1902", "1920", "1950"],
+        "respostaCorreta": "1837",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Em que ano foi criada a Região Demarcada do Douro, a mais antiga região vitivinícola demarcada e regulamentada de Portugal?",
+        "opcoes": ["1756", "1865", "1900", "1703"],
+        "respostaCorreta": "1756",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que modalidade de automobilismo o piloto português António Félix da Costa se sagrou campeão do mundo em 2020?",
+        "opcoes": ["Fórmula E", "Fórmula 1", "Rali", "Fórmula 3"],
+        "respostaCorreta": "Fórmula E",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que categoria de peso o judoca português Jorge Fonseca se sagrou campeão do mundo em 2019?",
+        "opcoes": ["-100 kg", "-90 kg", "-81 kg", "-73 kg"],
+        "respostaCorreta": "-100 kg",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Monsanto, aldeia histórica do concelho de Idanha-a-Nova?",
+        "opcoes": ["Monsantino", "Idanhense", "Egitaniense", "Beirão"],
+        "respostaCorreta": "Monsantino",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Como se chama quem nasce em Santa Maria da Feira?",
+        "opcoes": ["Feirense", "Santamariense", "Feirano", "Feirês"],
+        "respostaCorreta": "Feirense",
+        "dificuldade": "facil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Como se chama a queda de água situada na Serra do Alvão, considerada uma das mais altas de Portugal continental?",
+        "opcoes": ["Fisgas de Ermelo", "Poço do Inferno", "Cascata do Arado", "Cascata da Pedra Bela"],
+        "respostaCorreta": "Fisgas de Ermelo",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é a ilha mais pequena e menos povoada do arquipélago dos Açores?",
+        "opcoes": ["Corvo", "Graciosa", "Santa Maria", "Flores"],
+        "respostaCorreta": "Corvo",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "O 'Ultimato Britânico' de 1890 exigiu que Portugal desistisse de ligar territorialmente que duas colónias africanas, projeto conhecido como 'Mapa Cor-de-Rosa'?",
+        "opcoes": ["Angola e Moçambique", "Angola e Cabo Verde", "Moçambique e Guiné", "Cabo Verde e São Tomé"],
+        "respostaCorreta": "Angola e Moçambique",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que ano Bartolomeu Dias dobrou o Cabo da Boa Esperança, abrindo caminho para a rota marítima até à Índia?",
+        "opcoes": ["1488", "1498", "1500", "1460"],
+        "respostaCorreta": "1488",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
