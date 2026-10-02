@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que ano o Carnaval dos Caretos de Podence foi classificado pela UNESCO como Património Cultural Imaterial da Humanidade?",
+        "opcoes": ["2015", "2017", "2019", "2021"],
+        "respostaCorreta": "2019",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que paisagem vinícola portuguesa foi classificada Património Mundial da UNESCO em 2001?",
+        "opcoes": ["Paisagem do Alto Douro Vinhateiro", "Região Demarcada da Bairrada", "Vale do Dão", "Serra da Arrábida"],
+        "respostaCorreta": "Paisagem do Alto Douro Vinhateiro",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que Jogos Olímpicos Fernanda Ribeiro conquistou a medalha de ouro nos 10.000 metros?",
+        "opcoes": ["Barcelona 1992", "Atlanta 1996", "Sydney 2000", "Atenas 2004"],
+        "respostaCorreta": "Atlanta 1996",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que prova Fernando Pimenta conquistou a medalha de prata olímpica em Tóquio 2020?",
+        "opcoes": ["K1 1000 metros", "K2 1000 metros", "K1 500 metros", "K4 1000 metros"],
+        "respostaCorreta": "K1 1000 metros",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce na ilha das Flores, nos Açores?",
+        "opcoes": ["Florentino", "Faialense", "Corvino", "Jorgense"],
+        "respostaCorreta": "Florentino",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem é natural da região histórica da Estremadura?",
+        "opcoes": ["Estremenho", "Ribatejano", "Beirão", "Minhoto"],
+        "respostaCorreta": "Estremenho",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Como é apelidada a ilha da Madeira, numa referência turística à sua beleza natural?",
+        "opcoes": ["Pérola do Atlântico", "Jardim da Europa", "Ilha Dourada", "Esmeralda do Oceano"],
+        "respostaCorreta": "Pérola do Atlântico",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual é o tipo de rocha predominante no maciço montanhoso da Serra da Estrela?",
+        "opcoes": ["Granito", "Calcário", "Basalto", "Arenito"],
+        "respostaCorreta": "Granito",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano Portugal foi admitido como membro das Nações Unidas (ONU)?",
+        "opcoes": ["1945", "1955", "1960", "1974"],
+        "respostaCorreta": "1955",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que padre jesuíta português do século XVII ficou célebre pelos seus sermões e pela defesa dos indígenas no Brasil?",
+        "opcoes": ["Padre António Vieira", "Padre Manuel da Nóbrega", "Padre Fernando Oliveira", "Padre Bartolomeu de Gusmão"],
+        "respostaCorreta": "Padre António Vieira",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
