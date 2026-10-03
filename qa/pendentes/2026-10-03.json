@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Qual é a segunda língua oficial de Portugal, reconhecida por lei em 1999 e falada sobretudo em Miranda do Douro?",
+        "opcoes": [
+          "Mirandês",
+          "Galego",
+          "Leonês",
+          "Asturiano"
+        ],
+        "respostaCorreta": "Mirandês",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que animal vive na Biblioteca Joanina, em Coimbra, e ajuda a proteger os livros antigos dos insetos durante a noite?",
+        "opcoes": [
+          "Morcegos",
+          "Gatos",
+          "Corujas",
+          "Aranhas"
+        ],
+        "respostaCorreta": "Morcegos",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que estádio se realiza tradicionalmente a final da Taça de Portugal de futebol?",
+        "opcoes": [
+          "Estádio Nacional do Jamor",
+          "Estádio da Luz",
+          "Estádio do Dragão",
+          "Estádio José Alvalade"
+        ],
+        "respostaCorreta": "Estádio Nacional do Jamor",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual é a alcunha tradicional do Sporting Clube de Portugal?",
+        "opcoes": [
+          "Leões",
+          "Dragões",
+          "Águias",
+          "Arsenalistas"
+        ],
+        "respostaCorreta": "Leões",
+        "dificuldade": "facil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se denomina um natural da Covilhã?",
+        "opcoes": [
+          "Covilhanense",
+          "Covilhense",
+          "Covilhês",
+          "Covilhano"
+        ],
+        "respostaCorreta": "Covilhanense",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Setúbal?",
+        "opcoes": [
+          "Setubalense",
+          "Setubalês",
+          "Setubalino",
+          "Sadense"
+        ],
+        "respostaCorreta": "Setubalense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "A ilha de Porto Santo, conhecida pela sua praia de areia dourada, pertence a que arquipélago português?",
+        "opcoes": [
+          "Madeira",
+          "Açores",
+          "Berlengas",
+          "Desertas"
+        ],
+        "respostaCorreta": "Madeira",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "O Cabo de São Vicente, no Algarve, é tradicionalmente apontado como quê?",
+        "opcoes": [
+          "O extremo sudoeste da Europa continental",
+          "O ponto mais alto de Portugal continental",
+          "A fronteira entre Portugal e Espanha",
+          "O ponto mais a norte de Portugal"
+        ],
+        "respostaCorreta": "O extremo sudoeste da Europa continental",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Que acordo, assinado em 1834, pôs fim à Guerra Civil Portuguesa entre D. Pedro e D. Miguel?",
+        "opcoes": [
+          "Convenção de Évora-Monte",
+          "Tratado de Tordesilhas",
+          "Convenção de Gramido",
+          "Tratado de Badajoz"
+        ],
+        "respostaCorreta": "Convenção de Évora-Monte",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Quem foi o estadista português responsável pelo arranque da rede ferroviária nacional, com a inauguração da primeira linha de caminho de ferro em 1856?",
+        "opcoes": [
+          "Fontes Pereira de Melo",
+          "Marquês de Pombal",
+          "Marquês de Sá da Bandeira",
+          "Duque de Saldanha"
+        ],
+        "respostaCorreta": "Fontes Pereira de Melo",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
