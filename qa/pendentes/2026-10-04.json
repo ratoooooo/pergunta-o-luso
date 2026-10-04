@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que cidade portuguesa se situam as tradicionais caves de envelhecimento do Vinho do Porto?",
+        "opcoes": ["Vila Nova de Gaia", "Porto", "Peso da Régua", "Viana do Castelo"],
+        "respostaCorreta": "Vila Nova de Gaia",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama o prato tradicional português feito com carne de cabra velha, cozinhada lentamente em vinho tinto, típico da região de Coimbra?",
+        "opcoes": ["Chanfana", "Caldeirada", "Cozido à portuguesa", "Feijoada"],
+        "respostaCorreta": "Chanfana",
+        "dificuldade": "facil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que ano foi fundado o Sporting Clube de Braga?",
+        "opcoes": ["1921", "1906", "1935", "1914"],
+        "respostaCorreta": "1921",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é a alcunha da seleção portuguesa de râguebi?",
+        "opcoes": ["Os Lobos", "Os Navegadores", "Os Leões", "A Armada"],
+        "respostaCorreta": "Os Lobos",
+        "dificuldade": "facil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem nasce em Santa Maria da Feira?",
+        "opcoes": ["Feirense", "Feirano", "Feirista", "Santamariense"],
+        "respostaCorreta": "Feirense",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Castanheira de Pêra?",
+        "opcoes": ["Perense", "Castanheirense", "Pedrense", "Serrano"],
+        "respostaCorreta": "Perense",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Quantos municípios (concelhos) tem a Região Autónoma dos Açores?",
+        "opcoes": ["19", "11", "23", "15"],
+        "respostaCorreta": "19",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em quantos grupos geográficos se dividem as ilhas do arquipélago dos Açores?",
+        "opcoes": ["3", "2", "4", "5"],
+        "respostaCorreta": "3",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano foi canonizado D. Nuno Álvares Pereira, conhecido como o 'Santo Condestável'?",
+        "opcoes": ["2009", "1918", "1999", "1960"],
+        "respostaCorreta": "2009",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Quem foi o ministro responsável pela Lei da Separação do Estado das Igrejas, em 1911?",
+        "opcoes": ["Afonso Costa", "Teófilo Braga", "Bernardino Machado", "Manuel de Arriaga"],
+        "respostaCorreta": "Afonso Costa",
+        "dificuldade": "dificil"
+      }
+    ]
+  }
+}
