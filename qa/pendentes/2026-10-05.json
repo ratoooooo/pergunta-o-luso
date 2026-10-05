@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "A pastelaria que detém a receita secreta original do pastel de nata, fundada em 1837, situa-se em que freguesia de Lisboa?",
+        "opcoes": [
+          "Belém",
+          "Alfama",
+          "Mouraria",
+          "Benfica"
+        ],
+        "respostaCorreta": "Belém",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "As Marchas Populares de Lisboa, com os desfiles coloridos dos vários bairros na Avenida da Liberdade, celebram a noite de que santo popular, a 12 de junho?",
+        "opcoes": [
+          "Santo António",
+          "São João",
+          "São Pedro",
+          "São Marçal"
+        ],
+        "respostaCorreta": "Santo António",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "O judoca português Jorge Fonseca sagrou-se campeão mundial em 2019, no Japão, em que categoria de peso?",
+        "opcoes": [
+          "-100 kg",
+          "-90 kg",
+          "-73 kg",
+          "+100 kg"
+        ],
+        "respostaCorreta": "-100 kg",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "A atleta portuguesa Naide Gomes sagrou-se campeã do mundo em pista coberta, em Doha, em 2010, em que disciplina do atletismo?",
+        "opcoes": [
+          "Salto em comprimento",
+          "Triplo salto",
+          "Salto em altura",
+          "Lançamento do peso"
+        ],
+        "respostaCorreta": "Salto em comprimento",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se denomina um natural de Santa Maria da Feira?",
+        "opcoes": [
+          "Feirense",
+          "Santamariense",
+          "Mariense",
+          "Feirano"
+        ],
+        "respostaCorreta": "Feirense",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Fátima?",
+        "opcoes": [
+          "Fatimense",
+          "Fatimano",
+          "Fatimeiro",
+          "Fatimita"
+        ],
+        "respostaCorreta": "Fatimense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "A Ponte 25 de Abril, sobre o rio Tejo, liga Lisboa a que município, na margem sul?",
+        "opcoes": [
+          "Almada",
+          "Seixal",
+          "Barreiro",
+          "Setúbal"
+        ],
+        "respostaCorreta": "Almada",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Quantos municípios tem Portugal, somando o continente, os Açores e a Madeira?",
+        "opcoes": [
+          "308",
+          "278",
+          "296",
+          "320"
+        ],
+        "respostaCorreta": "308",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Como ficou conhecida a força militar que Portugal enviou para combater na Primeira Guerra Mundial, na Flandres?",
+        "opcoes": [
+          "Corpo Expedicionário Português",
+          "Legião Portuguesa",
+          "Exército de Operações",
+          "Milícia Popular"
+        ],
+        "respostaCorreta": "Corpo Expedicionário Português",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que navegador português foi o primeiro europeu a dobrar o Cabo Bojador, em 1434, abrindo caminho à exploração da costa africana?",
+        "opcoes": [
+          "Gil Eanes",
+          "Bartolomeu Dias",
+          "Diogo Cão",
+          "Nuno Tristão"
+        ],
+        "respostaCorreta": "Gil Eanes",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
