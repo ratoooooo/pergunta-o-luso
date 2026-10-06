@@ -1,0 +1,74 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "O estilo manuelino, característico de monumentos portugueses como a Torre de Belém, recebeu o nome em homenagem a que rei?",
+        "opcoes": ["D. Manuel I", "D. João II", "D. Afonso V", "D. Manuel II"],
+        "respostaCorreta": "D. Manuel I",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Em que ano foi criada a Região Demarcada do Douro, pelo Marquês de Pombal, considerada a mais antiga região vinícola demarcada e regulamentada do mundo?",
+        "opcoes": ["1756", "1640", "1820", "1910"],
+        "respostaCorreta": "1756",
+        "dificuldade": "medio"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Na tourada à portuguesa, como se designa o momento em que um grupo de forcados enfrenta o touro a pé e sem armas, imobilizando-o apenas com a força dos braços?",
+        "opcoes": ["A pega", "A faena", "A alternativa", "A capeia"],
+        "respostaCorreta": "A pega",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "A praia de Supertubos, conhecida pelas suas ondas e por receber etapas do circuito mundial de surf (WSL), situa-se em que localidade portuguesa?",
+        "opcoes": ["Peniche", "Ericeira", "Nazaré", "Sagres"],
+        "respostaCorreta": "Peniche",
+        "dificuldade": "facil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Qual é o gentílico de quem nasce em Fátima?",
+        "opcoes": ["Fatimense", "Fatimano", "Fatimês", "Fatiense"],
+        "respostaCorreta": "Fatimense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Qual é o gentílico de quem nasce na Ericeira?",
+        "opcoes": ["Ericeirense", "Ericeirano", "Ericeirês", "Ericeiriano"],
+        "respostaCorreta": "Ericeirense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "A Fecha de Barjas, considerada a queda de água mais alta de Portugal continental, localiza-se em que parque nacional?",
+        "opcoes": ["Parque Nacional da Peneda-Gerês", "Parque Natural da Serra da Estrela", "Parque Natural de Montesinho", "Parque Natural da Arrábida"],
+        "respostaCorreta": "Parque Nacional da Peneda-Gerês",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Qual é o único grande rio português que nasce e desagua inteiramente em território nacional, sem atravessar fronteira?",
+        "opcoes": ["Mondego", "Tejo", "Douro", "Guadiana"],
+        "respostaCorreta": "Mondego",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que ano o Marquês de Pombal decretou a expulsão dos jesuítas de Portugal e dos seus domínios?",
+        "opcoes": ["1759", "1750", "1773", "1640"],
+        "respostaCorreta": "1759",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "O Tratado de Tordesilhas, assinado em 1494, dividiu as terras a descobrir entre Portugal e qual outro reino?",
+        "opcoes": ["Reino de Castela", "Reino de Aragão", "Reino de Inglaterra", "Sacro Império Romano-Germânico"],
+        "respostaCorreta": "Reino de Castela",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
