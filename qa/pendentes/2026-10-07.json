@@ -1,0 +1,124 @@
+{
+  "adicionar": {
+    "Cultura Geral": [
+      {
+        "pergunta": "Em que cidade portuguesa foi criada a francesinha, sanduíche típica recheada com vários tipos de carne e coberta de queijo derretido e salsa picante?",
+        "opcoes": [
+          "Porto",
+          "Lisboa",
+          "Coimbra",
+          "Braga"
+        ],
+        "respostaCorreta": "Porto",
+        "dificuldade": "facil"
+      },
+      {
+        "pergunta": "Qual destes é um dos heterónimos criados pelo poeta português Fernando Pessoa?",
+        "opcoes": [
+          "Álvaro de Campos",
+          "Eça de Queirós",
+          "Camilo Castelo Branco",
+          "Almeida Garrett"
+        ],
+        "respostaCorreta": "Álvaro de Campos",
+        "dificuldade": "facil"
+      }
+    ],
+    "Desporto": [
+      {
+        "pergunta": "Em que modalidade o atleta português Rui Bragança conquistou uma medalha de bronze nos Jogos Olímpicos de Atenas 2004?",
+        "opcoes": [
+          "Taekwondo",
+          "Judo",
+          "Boxe",
+          "Luta Olímpica"
+        ],
+        "respostaCorreta": "Taekwondo",
+        "dificuldade": "dificil"
+      },
+      {
+        "pergunta": "Que judoca português se sagrou Campeão Mundial de Judo em 2019, tornando-se o primeiro português a conquistar esse título?",
+        "opcoes": [
+          "Jorge Fonseca",
+          "Nuno Delgado",
+          "Telma Monteiro",
+          "Joana Ramos"
+        ],
+        "respostaCorreta": "Jorge Fonseca",
+        "dificuldade": "dificil"
+      }
+    ],
+    "Gentílicos": [
+      {
+        "pergunta": "Como se chama quem é natural de Fátima, vila famosa pelo santuário mariano?",
+        "opcoes": [
+          "Fatimense",
+          "Fatimano",
+          "Fatimês",
+          "Fatimita"
+        ],
+        "respostaCorreta": "Fatimense",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Como se chama quem nasce na Ericeira, vila costeira conhecida pelas ondas e pelo surf?",
+        "opcoes": [
+          "Ericeirense",
+          "Ericeirano",
+          "Ericeirês",
+          "Ericeirino"
+        ],
+        "respostaCorreta": "Ericeirense",
+        "dificuldade": "medio"
+      }
+    ],
+    "Geografia": [
+      {
+        "pergunta": "Em que distrito se localiza o Parque Natural de Montesinho, uma das maiores áreas protegidas de Portugal continental?",
+        "opcoes": [
+          "Bragança",
+          "Guarda",
+          "Vila Real",
+          "Viseu"
+        ],
+        "respostaCorreta": "Bragança",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Que rio é represado pela Barragem de Castelo de Bode, importante reserva de água para a região de Lisboa?",
+        "opcoes": [
+          "Zêzere",
+          "Tejo",
+          "Mondego",
+          "Sado"
+        ],
+        "respostaCorreta": "Zêzere",
+        "dificuldade": "medio"
+      }
+    ],
+    "História": [
+      {
+        "pergunta": "Em que batalha de 1385 D. João I garantiu a independência de Portugal face a Castela?",
+        "opcoes": [
+          "Batalha de Aljubarrota",
+          "Batalha do Salado",
+          "Batalha de Ourique",
+          "Batalha de Valverde"
+        ],
+        "respostaCorreta": "Batalha de Aljubarrota",
+        "dificuldade": "medio"
+      },
+      {
+        "pergunta": "Em que ano ocorreram os trágicos incêndios florestais de Pedrógão Grande, que causaram mais de 60 mortes em Portugal?",
+        "opcoes": [
+          "2017",
+          "2016",
+          "2019",
+          "2003"
+        ],
+        "respostaCorreta": "2017",
+        "dificuldade": "medio"
+      }
+    ]
+  }
+}
